@@ -1,2 +1,2 @@
-# jLego
+# Legojs
 ES6 MVC development framework
