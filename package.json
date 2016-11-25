@@ -1,6 +1,6 @@
 {
   "name": "lego-core",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "ES6 MVC development framework",
   "main": "dist/lego.js",
   "directories": {

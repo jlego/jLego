@@ -1,9 +1,9 @@
-class Lego{
-    constructor(name){
+class Lego {
+    constructor(name) {
         this.name = name;
     }
-    sayhi(){
-        const tmpl = addrs => `
+    sayhi() {
+            const tmpl = addrs => `
           <table>
           ${addrs.map(addr => `
             <tr><td>${addr.first}</td></tr>
