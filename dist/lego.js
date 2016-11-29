@@ -1,17 +1,15 @@
 /**
- * lego.js v0.0.5
+ * lego.js v0.0.6
  * (c) 2016 Evan You
  * @license MIT
  */
 "use strict";
 
-var EventClass = function EventClass() {
-    this.width = 10;
-};
+function _interopDefault(ex) {
+    return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
+}
 
-EventClass.prototype.ok = function ok() {
-    return this.width;
-};
+var EventClass = _interopDefault(require("events"));
 
 var Lego = function Lego(name) {
     this.name = name;
@@ -31,7 +29,10 @@ Lego.prototype.sayhi = function sayhi() {
         last: "bbbb"
     } ];
     var anyObject = new EventClass();
-    console.warn(anyObject.ok());
+    anyObject.on("change", function(data) {
+        console.log("change event :", data);
+    });
+    anyObject.emit("change", "Hello 3 !");
     return tmpl(data);
 };
 

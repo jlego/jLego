@@ -1,5 +1,6 @@
 import 'babel-polyfill';
 import page from 'page';
+// import EventEmitter from 'events';
 import Lego from '../../dist/lego';
 import People from 'test/People';
 // import EventClass from "event-class";
@@ -65,13 +66,3 @@ page({
 
 let LegoObj = new Lego('dddddddd');
 console.warn(LegoObj.sayhi());
-
-// let anyObject = new EventClass();
-
-// function namedFunction(data){
-//     console.log("change event :", data);
-// }
-
-// // Listen to the 'change' event
-// anyObject.on("change", namedFunction);
-// anyObject.trigger("change:attribute", "Hello 3 !");

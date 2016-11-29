@@ -20,12 +20,10 @@ class Lego {
 
         let anyObject = new EventClass();
 
-        function namedFunction(data){
+        anyObject.on("change", (data) => {
             console.log("change event :", data);
-        }
-
-        anyObject.on("change", namedFunction);
-        anyObject.emit("change:attribute", "Hello 3 !");
+        });
+        anyObject.emit("change", "Hello 3 !");
         return tmpl(data);
     }
 }
