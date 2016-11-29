@@ -1,6 +1,7 @@
 var path = require("path");
 module.exports = {
-    entry: './src/index.js', //演示单入口文件
+    entry: './src/main.js', //演示单入口文件
+    format: 'cjs',
     output: {
         path: path.join(__dirname, 'dist'), //打包输出的路径
         publicPath: "./", //html引用路径，在这里是本地地址。
@@ -14,7 +15,7 @@ module.exports = {
         loaders: [{
                 test: /\.js$/,
                 loader: "babel-loader",
-                exclude: /node_modules/,
+                // exclude: /node_modules/,
                 query: {
                     presets: ['es2015', "stage-3"]
                 }

@@ -1,4 +1,6 @@
 .npmignore
 .babelrc
+.eslintrc
 webpack.config.js
+rollup.config.js
 test/
