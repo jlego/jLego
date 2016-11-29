@@ -1,4 +1,4 @@
-import EventClass from "./core/test";
+import EventClass from "events";
 
 class Lego {
     constructor(name) {
@@ -19,14 +19,13 @@ class Lego {
         ];
 
         let anyObject = new EventClass();
-        console.warn(anyObject.ok());
 
-        // function namedFunction(data){
-        //     console.log("change event :", data);
-        // }
+        function namedFunction(data){
+            console.log("change event :", data);
+        }
 
-        // anyObject.on("change", namedFunction);
-        // anyObject.trigger("change:attribute", "Hello 3 !");
+        anyObject.on("change", namedFunction);
+        anyObject.emit("change:attribute", "Hello 3 !");
         return tmpl(data);
     }
 }
