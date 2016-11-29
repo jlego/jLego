@@ -1,2 +1,2 @@
 # Legojs
-ES6 MVC development framework
+ES6 webApp development framework
