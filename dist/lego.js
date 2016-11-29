@@ -32,7 +32,7 @@ Lego.prototype.sayhi = function sayhi() {
     anyObject.on("change", function(data) {
         console.log("change event :", data);
     });
-    anyObject.emit("change", "Hello 3 !");
+    anyObject.emit("change", "Hello 3778 !");
     return tmpl(data);
 };
 

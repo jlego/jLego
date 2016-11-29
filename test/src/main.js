@@ -1,8 +1,8 @@
 import 'babel-polyfill';
 import page from 'page';
-// import EventEmitter from 'events';
 import Lego from '../../dist/lego';
 import People from 'test/People';
+// import EventEmitter from 'events';
 // import EventClass from "event-class";
 // let EventClass = require("event-class");
 // import People from 'winbonshello';

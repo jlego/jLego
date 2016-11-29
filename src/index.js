@@ -23,7 +23,7 @@ class Lego {
         anyObject.on("change", (data) => {
             console.log("change event :", data);
         });
-        anyObject.emit("change", "Hello 377 !");
+        anyObject.emit("change", "Hello 3778 !");
         return tmpl(data);
     }
 }

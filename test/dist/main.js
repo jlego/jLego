@@ -62,12 +62,11 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+	// import EventEmitter from 'events';
 	// import EventClass from "event-class";
 	// let EventClass = require("event-class");
 	// import People from 'winbonshello';
 	// page.base('/#!');
-
-	// import EventEmitter from 'events';
 	(0, _page2.default)('/home/:id', function (ctx, next) {
 	    var p = new _People2.default("Tom6");
 	    // document.write(p.sayhi() + '<br/>');
@@ -9369,7 +9368,7 @@
 	    anyObject.on("change", function (data) {
 	        console.log("change event :", data);
 	    });
-	    anyObject.emit("change", "Hello 3 !");
+	    anyObject.emit("change", "Hello 3778 !");
 	    return tmpl(data);
 	};
 
