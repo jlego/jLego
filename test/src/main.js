@@ -1,9 +1,10 @@
-import 'babel-polyfill';
+// import 'babel-polyfill';
 import { Router } from 'director';
 import $ from 'jquery';
 import Lego from '../../dist/lego';
 import People from 'test/People';
 import MyRouter from 'test/MyRouter';
+// window.HBY = Lego;
 window.$ = $;
 
 class Home {

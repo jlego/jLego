@@ -58,11 +58,10 @@
 	    function MyRouter(name) {
 	        _classCallCheck(this, MyRouter);
 
-	        var router = {
+	        return {
 	            '/test/:id': this.americas,
 	            '/test/read/:id': this.china
 	        };
-	        return router;
 	    }
 
 	    _createClass(MyRouter, [{

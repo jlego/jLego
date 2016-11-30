@@ -3,7 +3,7 @@ var webpack = require("webpack");
 
 module.exports = {
     entry: {
-        'home/app': './src/test/home',
+        'home/app': './src/test/MyRouter',
         'main': './src/main'
     }, //演示单入口文件
     output: {
