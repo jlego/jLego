@@ -1,4 +1,4 @@
-export default class People{
+class People{
 	constructor(name){
 		this.name = name;
 	}
@@ -20,3 +20,4 @@ export default class People{
 		return tmpl(data);
 	}
 }
+export default People;

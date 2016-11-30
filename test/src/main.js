@@ -1,42 +1,46 @@
 import 'babel-polyfill';
-import page from 'page';
+import { Router } from 'director';
+import $ from 'jquery';
 import Lego from '../../dist/lego';
 import People from 'test/People';
-// import EventEmitter from 'events';
-// import EventClass from "event-class";
-// let EventClass = require("event-class");
-// import People from 'winbonshello';
-// page.base('/#!');
-page('/home/:id', (ctx, next) => {
-    let p = new People("Tom6");
-    // document.write(p.sayhi() + '<br/>');
-    document.body.innerHTML = 'hhh<a href="/test/88">gggggggg</a>ggg_' + ctx.params.id;
-    // page.redirect('/test/88');
-    // next();
-});
+import MyRouter from 'test/MyRouter';
+window.$ = $;
 
-page('/test/:id', (ctx, next) => {
-    document.body.innerHTML = 'ee<a href="/home/20">eeeeee</a>eee' + ctx.params.id;
-    // next();
-});
+class Home {
+    constructor(name) {
+        return {
+            '/home/:id': this.americas,
+            '/home/read/:id': this.china,
+        };
+    }
+    americas(id) {
+        let LegoObj = new Lego('dddddddd');
+        console.warn(LegoObj.sayhi());
+        document.body.innerHTML = 'ee<a href="#/test/3">bbbbbbbbb</a>eee' + id;
+        $.ajax({
+            type: "GET",
+            url: '/test/dist/home/app.js',
+            dataType: "script",
+            crossDomain: true,
+            cache: true,
+            success: function(e) {
+                console.warn('加载成功 4');
+            },
+            error: function(e) {
+                debug.warn('加载模块失败');
+            }
+        });
+    }
+    china(id) {
+        document.body.innerHTML = 'hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id;
+    }
+}
 
-page('/test2/:id', (ctx, next) => {
-    document.body.innerHTML = 'ee<a href="/home/20">uuuuuuuuu</a>eee' + ctx.params.id;
-    // next();
-});
-
-page('*', (ctx, next) => {
-    document.body.innerHTML = '无';
-});
-
-page.exit('*', (ctx, next) => {
-    document.body.innerHTML = '切换中...';
-    next();
-})
-
-page({
-    hashbang: true
-});
+let myRouter = new MyRouter();
+let home = new Home();
+let container = Object.assign(myRouter, home);
+// console.warn(myRouter);
+Router(container).configure().init();
 
 // let s = Symbol();
 // let f = Symbol();
@@ -63,6 +67,3 @@ page({
 // console.warn(hw.next());
 // console.warn(hw.next());
 // console.warn(hw.next());
-
-let LegoObj = new Lego('dddddddd');
-console.warn(LegoObj.sayhi());

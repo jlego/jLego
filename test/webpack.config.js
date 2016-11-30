@@ -1,4 +1,6 @@
 var path = require("path");
+var webpack = require("webpack");
+
 module.exports = {
     entry: {
         'home/app': './src/test/home',
@@ -13,17 +15,19 @@ module.exports = {
     // 新添加的module属性
     module: {
         loaders: [{
-                test: /\.js$/,
+                test: /\.js?$/,
                 loader: "babel-loader",
                 exclude: /node_modules/,
                 // include: path.resolve(__dirname, "/page/"),
                 query: {
-                    presets: ['es2015', "stage-0"]
+                    presets: ['es2015']
                 }
             },
             { test: /\.css$/, loader: "style!css" },
             { test: /\.(jpg|png)$/, loader: "url?limit=8192" },
-            { test: /\.scss$/, loader: "style!css!sass" }
+            { test: /\.scss$/, loader: "style!css!sass" },
+            { test: /\.json$/, loader: 'json' },
+            // { test: require.resolve("jquery"), loader: "imports-loader?$=jquery" }
         ]
 
         // loaders: [{
@@ -51,24 +55,21 @@ module.exports = {
     },
     resolve: {
         root: ['./src'],
-        alias: {},
+        alias: {
+            // jquery: "jquery/dist/jquery"
+        },
         extensions: ["", ".js"]
     },
-    externals: {
-        'jquery': 'jQuery',
-        '$': 'window.Zepto'
-    },
-    // plugins: [
-    //     new webpack.DefinePlugin({
-    //         __DEV__: JSON.stringify("true"),
-    //         VERSION: '1.1',
-
-    //     }),
-    //     new webpack.ProvidePlugin({
-    //         $: ('jquery'),
-    //         Mock: ('mockjs'),
-    //     }),
-    // ],
+    // externals: {
+    //     jquery: 'window.$'
+    // },
+    plugins: [
+        new webpack.ProvidePlugin({
+            $: "jquery",
+            jQuery: "jquery",
+            "window.jQuery": "jquery"
+        })
+    ],
     // devtool: "#source-map",
     // devServer: {
     //     contentBase: "./build",
