@@ -53,8 +53,10 @@
     "webpack": "^1.13.3"
   },
   "dependencies": {
-    "observejs": "0.0.2",
+    "director": "^1.2.8",
     "events": "^1.1.1",
-    "page": "^1.7.1"
+    "observejs": "0.0.2",
+    "virtual-dom": "^2.1.1",
+    "xhr": "^2.3.1"
   }
 }

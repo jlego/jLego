@@ -1,11 +1,17 @@
-// import 'babel-polyfill';
+import 'babel-polyfill';
 import { Router } from 'director';
 import $ from 'jquery';
 import Lego from '../../dist/lego';
 import People from 'test/People';
-import MyRouter from 'test/MyRouter';
-// window.HBY = Lego;
+import h from 'virtual-dom/h';
+import diff from 'virtual-dom/diff';
+import createElement from 'virtual-dom/create-element';
+import patch from 'virtual-dom/patch';
+// import xhr from 'xhr';
+
 window.$ = $;
+let router;
+let LegoObj = new Lego('dddddddd');
 
 class Home {
     constructor(name) {
@@ -15,9 +21,6 @@ class Home {
         };
     }
     americas(id) {
-        let LegoObj = new Lego('dddddddd');
-        console.warn(LegoObj.sayhi());
-        document.body.innerHTML = 'ee<a href="#/test/3">bbbbbbbbb</a>eee' + id;
         $.ajax({
             type: "GET",
             url: '/test/dist/home/app.js',
@@ -25,7 +28,8 @@ class Home {
             crossDomain: true,
             cache: true,
             success: function(e) {
-                console.warn('加载成功 4');
+                router = Router(window['app']).init();
+                document.body.innerHTML = LegoObj.sayhi(id);
             },
             error: function(e) {
                 debug.warn('加载模块失败');
@@ -33,15 +37,19 @@ class Home {
         });
     }
     china(id) {
-        document.body.innerHTML = 'hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id;
+        let leftNode = h("div.foo#dd", h('a', { href: '#/home/88' }, 'home'));
+
+        let rootNode = createElement(leftNode);
+        document.body.appendChild(rootNode);
+
+        // let patches = diff(leftNode, rightNode);
+        // patch(rootNode, patches);
     }
 }
 
-let myRouter = new MyRouter();
-let home = new Home();
-let container = Object.assign(myRouter, home);
+let container = new Home();
+router = Router(container).init();
 // console.warn(myRouter);
-Router(container).configure().init();
 
 // let s = Symbol();
 // let f = Symbol();

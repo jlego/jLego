@@ -30,10 +30,11 @@
     "url-loader": "^0.5.7"
   },
   "dependencies": {
-    "base-router": "^1.2.0",
     "director": "^1.2.8",
+    "events": "^1.1.1",
     "jquery": "^3.1.1",
     "lego-core": "0.0.6",
-    "virtual-dom": "^2.1.1"
+    "virtual-dom": "^2.1.1",
+    "xhr": "^2.3.1"
   }
 }

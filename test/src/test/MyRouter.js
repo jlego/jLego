@@ -13,3 +13,4 @@ class MyRouter {
     }
 }
 export default MyRouter;
+window['app'] = new MyRouter();

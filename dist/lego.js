@@ -15,17 +15,17 @@ var Lego = function Lego(name) {
     this.name = name;
 };
 
-Lego.prototype.sayhi = function sayhi() {
+Lego.prototype.sayhi = function sayhi(id) {
     var tmpl = function(addrs) {
         return "\n          <table>\n          " + addrs.map(function(addr) {
-            return "\n            <tr><td>" + addr.first + "</td></tr>\n            <tr><td>" + addr.last + "</td></tr>\n          ";
+            return '\n            <tr><td><a href="#/home/read/3">' + addr.first + '</a></td></tr>\n            <tr><td><a href="#/test/2">' + addr.last + "_" + id + "</a></td></tr>\n          ";
         }).join("") + "\n          </table>\n        ";
     };
     var data = [ {
-        first: "aaaa",
+        first: "home1",
         last: "Bond"
     }, {
-        first: "Lars",
+        first: "test",
         last: "bbbb"
     } ];
     var anyObject = new EventClass();

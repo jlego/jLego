@@ -81,5 +81,7 @@
 
 	exports.default = MyRouter;
 
+	window['app'] = new MyRouter();
+
 /***/ }
 /******/ ]);
