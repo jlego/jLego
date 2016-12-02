@@ -54,40 +54,34 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var HomeRouter = function () {
-	    function HomeRouter(name) {
-	        _classCallCheck(this, HomeRouter);
+	var MyRouter = function () {
+	    function MyRouter(option) {
+	        _classCallCheck(this, MyRouter);
 
 	        return {
-	            '/home/:id': this.americas,
-	            '/home/read/:id': this.china
+	            '/test/:id': this.americas,
+	            '/test/read/:id': this.china
 	        };
 	    }
 
-	    _createClass(HomeRouter, [{
+	    _createClass(MyRouter, [{
 	        key: 'americas',
 	        value: function americas(id) {
-	            document.body.innerHTML = 'hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id;
+	            document.body.innerHTML = 'ee<a href="#/test/read/3">bbbbbbbbb</a>eee' + id;
 	        }
 	    }, {
 	        key: 'china',
 	        value: function china(id) {
-	            var leftNode = h("div.foo#dd", h('a', { href: '#/test/88' }, 'home'));
-
-	            var rootNode = createElement(leftNode);
-	            document.body.appendChild(rootNode);
-
-	            // let patches = diff(leftNode, rightNode);
-	            // patch(rootNode, patches);
+	            document.body.innerHTML = 'hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id;
 	        }
 	    }]);
 
-	    return HomeRouter;
+	    return MyRouter;
 	}();
 
-	exports.default = HomeRouter;
+	exports.default = MyRouter;
 
-	HBY['router.home'] = new HomeRouter();
+	HBY['router.test'] = new MyRouter();
 
 /***/ }
 /******/ ]);

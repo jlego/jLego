@@ -1,54 +1,20 @@
 import 'babel-polyfill';
-import { Router } from 'director';
-import $ from 'jquery';
+import jQuery from 'jquery';
 import Lego from '../../dist/lego';
-import People from 'test/People';
 import h from 'virtual-dom/h';
 import diff from 'virtual-dom/diff';
 import createElement from 'virtual-dom/create-element';
 import patch from 'virtual-dom/patch';
 // import xhr from 'xhr';
 
-window.$ = $;
-let router;
-let LegoObj = new Lego('dddddddd');
+window.HBY = new Lego({
+    version: '20161202',
+    $: jQuery, //dom操作对象, 必须
+    pageEl: '', //页面渲染容器
+    defaultApp: 'home', //默认应用
+    rootUri: '/test/dist/', //根目录
+});
 
-class Home {
-    constructor(name) {
-        return {
-            '/home/:id': this.americas,
-            '/home/read/:id': this.china,
-        };
-    }
-    americas(id) {
-        $.ajax({
-            type: "GET",
-            url: '/test/dist/home/app.js',
-            dataType: "script",
-            crossDomain: true,
-            cache: true,
-            success: function(e) {
-                router = Router(window['app']).init();
-                document.body.innerHTML = LegoObj.sayhi(id);
-            },
-            error: function(e) {
-                debug.warn('加载模块失败');
-            }
-        });
-    }
-    china(id) {
-        let leftNode = h("div.foo#dd", h('a', { href: '#/home/88' }, 'home'));
-
-        let rootNode = createElement(leftNode);
-        document.body.appendChild(rootNode);
-
-        // let patches = diff(leftNode, rightNode);
-        // patch(rootNode, patches);
-    }
-}
-
-let container = new Home();
-router = Router(container).init();
 // console.warn(myRouter);
 
 // let s = Symbol();

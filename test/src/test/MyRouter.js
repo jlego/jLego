@@ -1,5 +1,5 @@
 class MyRouter {
-    constructor(name) {
+    constructor(option) {
         return {
             '/test/:id': this.americas,
             '/test/read/:id': this.china,
@@ -13,4 +13,4 @@ class MyRouter {
     }
 }
 export default MyRouter;
-window['app'] = new MyRouter();
+HBY['router.test'] = new MyRouter();
