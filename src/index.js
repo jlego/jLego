@@ -1,5 +1,4 @@
 import EventClass from "events";
-
 class Lego {
     constructor(name) {
         this.name = name;
@@ -27,5 +26,4 @@ class Lego {
         return tmpl(data);
     }
 }
-
 export default Lego;
