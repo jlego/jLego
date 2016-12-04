@@ -1,15 +1,19 @@
-// import 'babel-polyfill';
-import Events from "./core/event";
-import Router from './core/router';
+import 'babel-polyfill';
+import Events from "events";
+import { Router } from 'director';
+import View from "./core/view";
 
 class Lego {
     constructor(option = {}) {
+        let that = this;
         this.config = {
+            alias: 'Lego',
             version: '1.0.0',
-            isDebug: true,
             $: null,    //dom操作对象, 必须
-            hasAnimate: false,  //是否开启动画
-            hasPermit: false,  //是否开启操作权限
+            isDebug: true,
+            isAnimate: false,  //是否开启动画
+            isPermit: false,  //是否开启操作权限
+            isMultiWindow: false, //是否多窗口
             pageEl: '',     //页面渲染容器
             defaultApp: '', //默认应用
             rootUri: '',    //根目录
@@ -19,20 +23,30 @@ class Lego {
         Object.assign(this.config, option);
 
         this._debugger();
+        // console.warn(this.config.$);
         if(this.config.$){
-            window.$ = this.config.$;
+            window.$ = this.$ = this.config.$;
         }else{
             debug.error('请先设置参数$');
             return;
         }
         this.BaseEvent = Events;
+        this.BaseView = View;
         this.Events = new Events();
-        this.Router = Router({'/': () => {
-            
-        }}).init();
+        this.Router = Router({}).init();
+        window[this.config.alias] = window.Lego = this;
+        return this;
     }
     /**
-     * [_debugger 调试器]
+     * [create description]
+     * @param  {Object} option [description]
+     * @return {[type]}        [description]
+     */
+    create(option = {}){
+
+    }
+    /**
+     * _debugger 调试器
      * @return {[type]} [description]
      */
     _debugger() {
@@ -53,20 +67,22 @@ class Lego {
         }
     }
     /**
-     * [loader 应用加载器]
-     * @param  {[type]} option [description]
+     * loadApp 应用加载器
+     * @param  {object} option 参数
      * @return {[type]}        [description]
      */
-    loader(appPath, option) {
+    loadApp(appPath, option = {}) {
         let defaults = {
             onBefore: function() {},
             onAfter: function() {}
-        }, that = this, appName;
-        if (option) Object.assign(defaults, option);
-        appName = appPath || this.currentModule();
+        }, that = this, appName, index;
+        Object.assign(defaults, option);
+        appPath = appPath || window.location.hash.replace(/#/, '') || this.config.defaultApp;
+        index = appPath.indexOf('/');
+        appName = index >= 0 ? (appPath.substr(0, index) || appPath.substr(1, index)) : appPath;
         if (typeof defaults.onBefore == 'function') defaults.onBefore();
-        $(this.config.pageEl).scrollTop(0);
-        $.ajax({
+        this.$(this.config.pageEl).scrollTop(0);
+        this.$.ajax({
             type: "GET",
             url: this.config.rootUri + appName + '/app.js?' + this.config.version,
             dataType: "script",
@@ -74,47 +90,47 @@ class Lego {
             cache: true,
             success: function(e) {
                 that.Router = Router(that['app']).init();
-                window.location.hash = '#' + appPath;
-                that.Router.
+                that.Router.setRoute(appPath);
                 if (typeof defaults.onAfter == 'function') defaults.onAfter(e);
+                that['app'] = null;
             },
             error: function(e) {
-                debug.warn('加载模块失败');
+                debug.warn('加载应用模块失败');
             }
         });
     }
     /**
-     * [ns 命名空间方法]
-     * @type {[type]}
+     * ns 命名空间方法
+     * @type {object}
      */
-    ns(nameSpaceStr, obj) {
-        if (typeof nameSpaceStr !== 'string') {
-            debug.error('命名空间名字必须为字符串类型');
-            return null;
-        }
-        let nameSpaceArr = nameSpaceStr.split('.'),
-            tempArr = [],
-            obj = _.isObject(obj) ? obj : {};
+    // ns(nameSpaceStr, obj) {
+    //     if (typeof nameSpaceStr !== 'string') {
+    //         debug.error('命名空间名字必须为字符串类型');
+    //         return null;
+    //     }
+    //     let nameSpaceArr = nameSpaceStr.split('.'),
+    //         tempArr = [],
+    //         obj = typeof obj == 'object' ? obj : {};
 
-        function getNameSpace(nameSpaceObj, num) {
-            if (num < nameSpaceArr.length) {
-                let itemStr = nameSpaceArr[num];
-                tempArr.push(itemStr);
-                let allStr = tempArr.join('.');
-                let subObj = eval(allStr);
-                nameSpaceObj[itemStr] = _.isObject(subObj) ? subObj : {};
-                if (num == nameSpaceArr.length - 1 && _.isEmpty(nameSpaceObj[itemStr])) {
-                    nameSpaceObj[itemStr] = obj;
-                }
-                return arguments.callee(nameSpaceObj[itemStr], num + 1);
-            } else {
-                return nameSpaceObj;
-            }
-        }
-        return getNameSpace(this, 0);
-    }
+    //     function getNameSpace(nameSpaceObj, num) {
+    //         if (num < nameSpaceArr.length) {
+    //             let itemStr = nameSpaceArr[num];
+    //             tempArr.push(itemStr);
+    //             let allStr = tempArr.join('.');
+    //             let subObj = eval(allStr);
+    //             nameSpaceObj[itemStr] = typeof subObj == 'object' ? subObj : {};
+    //             if (num == nameSpaceArr.length - 1 && !nameSpaceObj[itemStr].length) {
+    //                 nameSpaceObj[itemStr] = obj;
+    //             }
+    //             return arguments.callee(nameSpaceObj[itemStr], num + 1);
+    //         } else {
+    //             return nameSpaceObj;
+    //         }
+    //     }
+    //     return getNameSpace(this, 0);
+    // }
     /**
-     * [getUrlParam 获取网址参数]
+     * getUrlParam 获取网址参数
      * @param  {[type]} name [description]
      * @return {[type]}      [description]
      */
@@ -126,8 +142,8 @@ class Lego {
         if (url.indexOf('?') >= 0) {
             let paramArr = url.substr(1).split('&'),
                 valArr = [];
-            for (let item of paramArr) {
-                valArr = item.split('=');
+            for (let i = 0; i < paramArr.length; i++) {
+                valArr = paramArr[i].split('=');
                 window.pageParams[valArr[0]] = valArr[1];
             }
             return window.pageParams[name] || '';
@@ -136,7 +152,7 @@ class Lego {
         }
     }
     /**
-     * [currentModule 当前模块]
+     * currentModule 当前模块
      * @return {[type]} [description]
      */
     currentModule() {

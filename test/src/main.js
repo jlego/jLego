@@ -1,21 +1,14 @@
-import 'babel-polyfill';
 import jQuery from 'jquery';
 import Lego from '../../dist/lego';
-import h from 'virtual-dom/h';
-import diff from 'virtual-dom/diff';
-import createElement from 'virtual-dom/create-element';
-import patch from 'virtual-dom/patch';
-// import xhr from 'xhr';
 
-window.HBY = new Lego({
+new Lego({
+    alias: 'HBY',
     version: '20161202',
     $: jQuery, //dom操作对象, 必须
-    pageEl: '', //页面渲染容器
+    pageEl: '#content', //页面渲染容器
     defaultApp: 'home', //默认应用
     rootUri: '/test/dist/', //根目录
-});
-
-// console.warn(myRouter);
+}).loadApp();
 
 // let s = Symbol();
 // let f = Symbol();

@@ -59,20 +59,20 @@
 	        _classCallCheck(this, MyRouter);
 
 	        return {
-	            '/test/:id': this.americas,
-	            '/test/read/:id': this.china
+	            '/test/:id': this.home,
+	            '/test/read/:id': this.read
 	        };
 	    }
 
 	    _createClass(MyRouter, [{
-	        key: 'americas',
-	        value: function americas(id) {
-	            document.body.innerHTML = 'ee<a href="#/test/read/3">bbbbbbbbb</a>eee' + id;
+	        key: 'home',
+	        value: function home(id) {
+	            HBY.$(HBY.config.pageEl).html('hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id);
 	        }
 	    }, {
-	        key: 'china',
-	        value: function china(id) {
-	            document.body.innerHTML = 'hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id;
+	        key: 'read',
+	        value: function read(id) {
+	            HBY.$(HBY.config.pageEl).html('hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id);
 	        }
 	    }]);
 
@@ -81,7 +81,7 @@
 
 	exports.default = MyRouter;
 
-	HBY['router.test'] = new MyRouter();
+	HBY['app'] = new MyRouter();
 
 /***/ }
 /******/ ]);
