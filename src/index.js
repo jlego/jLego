@@ -5,12 +5,13 @@ import h from 'virtual-dom/h';
 import diff from 'virtual-dom/diff';
 import createElement from 'virtual-dom/create-element';
 import patch from 'virtual-dom/patch';
-window.h = h;
-window.diff = diff;
-window.createElement = createElement;
-window.patch = patch;
+
 class Lego {
-    constructor(option = {}) {
+    constructor(options = {}) {
+        this.h = h;
+        this.createElement = createElement;
+        this.diff = diff;
+        this.patch = patch;
         let that = this;
         this.config = {
             alias: 'Lego',
@@ -26,7 +27,7 @@ class Lego {
             routerConfig: {},   //路由配置
             screenWidth: window.innerWidth  //应用窗口宽度
         };
-        Object.assign(this.config, option);
+        Object.assign(this.config, options);
 
         this._debugger();
         if(this.config.$){
@@ -48,32 +49,32 @@ class Lego {
      * @param  {Object} option [description]
      * @return {[type]}        [description]
      */
-    create(option = {}, context = this){
-        let that = context, vDom,
+    create(options = {}){
+        let that = this,
             defaults = {
                 el: this.config.pageEl, //视图容器选择符
                 inset: 'html',
                 config: {}, //视图参数
                 permis: null, //权限
-                view: null, //视图类或实例
-                data: null, //数据集类或实例
+                view: null, //视图类
                 animate: undefined, //动画效果
-                on: null, //事件列表对象
+                events: null, //事件列表对象
                 items: [],
                 onBefore() {}, //视图开始前回调
                 onAfter() {}, //视图执行后回调
                 onAnimateBefore() {}, //动画前回调
                 onAnimateAfter() {}, //动画后回调
             };
-        Object.assign(defaults, option);
+        Object.assign(defaults, options);
+        defaults.data = options.data || null;
         if (!defaults.el) return;
         let theKey = Symbol(defaults.el),
             el = defaults.el,
-            onBefore = defaults.onBefore.bind(that),
-            onAfter = defaults.onAfter.bind(that),
-            onAnimateBefore = defaults.onAnimateBefore.bind(that),
-            onAnimateAfter = defaults.onAnimateAfter.bind(that),
-            $el = el instanceof that.$ ? el : that.$(el);
+            onBefore = defaults.onBefore.bind(this),
+            onAfter = defaults.onAfter.bind(this),
+            onAnimateBefore = defaults.onAnimateBefore.bind(this),
+            onAnimateAfter = defaults.onAnimateAfter.bind(this),
+            $el = el instanceof this.$ ? el : that.$(el);
 
         // 操作权限
         if (defaults.permis) {
@@ -91,19 +92,19 @@ class Lego {
 
         //渲染视图
         let viewObj = new defaults.view(defaults);
-        vDom = viewObj.render();
-        if(typeof vDom === 'object') vDom = createElement(vDom);
-        $el[defaults.inset](vDom);
+        $el[defaults.inset](viewObj.render());
 
         // 绑定事件
-        if (defaults.on && !this.views.has($el)) {
+        if (defaults.events && !this.views.has($el)) {
             let eventSplitter = /\s+/;
-            for(let key in defaults.on) {
-                let callback = defaults.on[key];
+            for(let key in defaults.events) {
+                let callback = viewObj[defaults.events[key]];
                 if (eventSplitter.test(key)) {
                     let nameArr = key.split(eventSplitter);
                     if ($el.find(nameArr[1]).length) {
                         $el = $el.find(nameArr[1]);
+                    }else{
+                        continue;
                     }
                 }
                 $el.off(key).on(key, function(event, a, b, c) {
@@ -119,15 +120,15 @@ class Lego {
                 $(this).perfectScrollbar('update');
             });
         }
-
-        typeof onAfter === 'function' && onAfter();
         this.views.add($el);
         // 渲染子视图
         if(defaults.items.length) {
-            defaults.items.forEach(function(item){
-                this.create(item, context);
+            defaults.items.forEach(function(item, i){
+                that.create(item);
             });
         }
+
+        typeof onAfter === 'function' && onAfter();
         return $el;
     }
     /**
@@ -211,8 +212,9 @@ class Lego {
      * @return {[type]} [description]
      */
     currentApp() {
-        let hash = window.location.hash.replace(/#/, '').replace(/\//, ''),
-            hashArr = hash.split('/');
+        let hash = window.location.hash.replace(/#/, '');
+        if(hash.indexOf('/') == 0) hash = hash.replace(/\//, '');
+        let hashArr = hash.split('/');
         return hashArr[0];
     }
 }

@@ -23,16 +23,12 @@ var createElement = _interopDefault(require("virtual-dom/create-element"));
 
 var patch = _interopDefault(require("virtual-dom/patch"));
 
-window.h = h;
-
-window.diff = diff;
-
-window.createElement = createElement;
-
-window.patch = patch;
-
-var Lego = function Lego(option) {
-    if (option === void 0) option = {};
+var Lego = function Lego(options) {
+    if (options === void 0) options = {};
+    this.h = h;
+    this.createElement = createElement;
+    this.diff = diff;
+    this.patch = patch;
     var that = this;
     this.config = {
         alias: "Lego",
@@ -48,7 +44,7 @@ var Lego = function Lego(option) {
         routerConfig: {},
         screenWidth: window.innerWidth
     };
-    Object.assign(this.config, option);
+    Object.assign(this.config, options);
     this._debugger();
     if (this.config.$) {
         window.$ = this.$ = this.config.$;
@@ -65,29 +61,28 @@ var Lego = function Lego(option) {
     return this;
 };
 
-Lego.prototype.create = function create(option, context) {
-    if (option === void 0) option = {};
-    if (context === void 0) context = this;
-    var that = context, vDom, defaults = {
+Lego.prototype.create = function create(options) {
+    if (options === void 0) options = {};
+    var that = this, defaults = {
         el: this.config.pageEl,
         inset: "html",
         config: {},
         permis: null,
         view: null,
-        data: null,
         animate: undefined,
-        on: null,
+        events: null,
         items: [],
         onBefore: function onBefore$1() {},
         onAfter: function onAfter$1() {},
         onAnimateBefore: function onAnimateBefore$1() {},
         onAnimateAfter: function onAnimateAfter$1() {}
     };
-    Object.assign(defaults, option);
+    Object.assign(defaults, options);
+    defaults.data = options.data || null;
     if (!defaults.el) {
         return;
     }
-    var theKey = Symbol(defaults.el), el = defaults.el, onBefore = defaults.onBefore.bind(that), onAfter = defaults.onAfter.bind(that), onAnimateBefore = defaults.onAnimateBefore.bind(that), onAnimateAfter = defaults.onAnimateAfter.bind(that), $el = el instanceof that.$ ? el : that.$(el);
+    var theKey = Symbol(defaults.el), el = defaults.el, onBefore = defaults.onBefore.bind(this), onAfter = defaults.onAfter.bind(this), onAnimateBefore = defaults.onAnimateBefore.bind(this), onAnimateAfter = defaults.onAnimateAfter.bind(this), $el = el instanceof this.$ ? el : that.$(el);
     if (defaults.permis) {
         var module = defaults.permis.module, operate = defaults.permis.operate, hide = defaults.permis.hide, userId = defaults.permis.userid || 0;
         if (hide) {
@@ -98,19 +93,17 @@ Lego.prototype.create = function create(option, context) {
     }
     typeof onBefore === "function" && onBefore();
     var viewObj = new defaults.view(defaults);
-    vDom = viewObj.render();
-    if (typeof vDom === "object") {
-        vDom = createElement(vDom);
-    }
-    $el[defaults.inset](vDom);
-    if (defaults.on && !this.views.has($el)) {
+    $el[defaults.inset](viewObj.render());
+    if (defaults.events && !this.views.has($el)) {
         var eventSplitter = /\s+/;
         var loop = function(key) {
-            var callback = defaults.on[key];
+            var callback = viewObj[defaults.events[key]];
             if (eventSplitter.test(key)) {
                 var nameArr = key.split(eventSplitter);
                 if ($el.find(nameArr[1]).length) {
                     $el = $el.find(nameArr[1]);
+                } else {
+                    return;
                 }
             }
             $el.off(key).on(key, function(event, a, b, c) {
@@ -119,7 +112,7 @@ Lego.prototype.create = function create(option, context) {
                 }
             });
         };
-        for (var key in defaults.on) loop(key);
+        for (var key in defaults.events) loop(key);
     }
     if (defaults.scrollbar) {
         if (!$el.css("position")) {
@@ -130,13 +123,13 @@ Lego.prototype.create = function create(option, context) {
             $(this).perfectScrollbar("update");
         });
     }
-    typeof onAfter === "function" && onAfter();
     this.views.add($el);
     if (defaults.items.length) {
-        defaults.items.forEach(function(item) {
-            this.create(item, context);
+        defaults.items.forEach(function(item, i) {
+            that.create(item);
         });
     }
+    typeof onAfter === "function" && onAfter();
     return $el;
 };
 
@@ -216,7 +209,11 @@ Lego.prototype.getUrlParam = function getUrlParam(name) {
 };
 
 Lego.prototype.currentApp = function currentApp() {
-    var hash = window.location.hash.replace(/#/, "").replace(/\//, ""), hashArr = hash.split("/");
+    var hash = window.location.hash.replace(/#/, "");
+    if (hash.indexOf("/") == 0) {
+        hash = hash.replace(/\//, "");
+    }
+    var hashArr = hash.split("/");
     return hashArr[0];
 };
 
