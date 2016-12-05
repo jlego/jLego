@@ -25,6 +25,8 @@ const banner = `/**
 export default {
     entry: path.resolve(__dirname, './src/index.js'),
     dest: pkg['main'],
+    // entry: path.resolve(__dirname, './src/core/view.js'),
+    // dest: 'dist/view.js',
     format: 'cjs',
     moduleName: 'Legojs',
     plugins: [

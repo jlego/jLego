@@ -1,8 +1,14 @@
 import 'babel-polyfill';
 import Events from "events";
 import { Router } from 'director';
-import View from "./core/view";
-
+import h from 'virtual-dom/h';
+import diff from 'virtual-dom/diff';
+import createElement from 'virtual-dom/create-element';
+import patch from 'virtual-dom/patch';
+window.h = h;
+window.diff = diff;
+window.createElement = createElement;
+window.patch = patch;
 class Lego {
     constructor(option = {}) {
         let that = this;
@@ -23,7 +29,6 @@ class Lego {
         Object.assign(this.config, option);
 
         this._debugger();
-        // console.warn(this.config.$);
         if(this.config.$){
             window.$ = this.$ = this.config.$;
         }else{
@@ -31,19 +36,99 @@ class Lego {
             return;
         }
         this.BaseEvent = Events;
-        this.BaseView = View;
         this.Events = new Events();
+        this.views = new WeakSet(); //视图实例容器
+        this.permis = {};
         this.Router = Router({}).init();
         window[this.config.alias] = window.Lego = this;
         return this;
     }
     /**
-     * [create description]
+     * [create 实例化视图]
      * @param  {Object} option [description]
      * @return {[type]}        [description]
      */
-    create(option = {}){
+    create(option = {}, context = this){
+        let that = context, vDom,
+            defaults = {
+                el: this.config.pageEl, //视图容器选择符
+                inset: 'html',
+                config: {}, //视图参数
+                permis: null, //权限
+                view: null, //视图类或实例
+                data: null, //数据集类或实例
+                animate: undefined, //动画效果
+                on: null, //事件列表对象
+                items: [],
+                onBefore() {}, //视图开始前回调
+                onAfter() {}, //视图执行后回调
+                onAnimateBefore() {}, //动画前回调
+                onAnimateAfter() {}, //动画后回调
+            };
+        Object.assign(defaults, option);
+        if (!defaults.el) return;
+        let theKey = Symbol(defaults.el),
+            el = defaults.el,
+            onBefore = defaults.onBefore.bind(that),
+            onAfter = defaults.onAfter.bind(that),
+            onAnimateBefore = defaults.onAnimateBefore.bind(that),
+            onAnimateAfter = defaults.onAnimateAfter.bind(that),
+            $el = el instanceof that.$ ? el : that.$(el);
 
+        // 操作权限
+        if (defaults.permis) {
+            let module = defaults.permis.module,
+                operate = defaults.permis.operate,
+                hide = defaults.permis.hide,
+                userId = defaults.permis.userid || 0;
+            if (hide) {
+                if (!this.permis.check(module, operate, userId)) {
+                    return;
+                }
+            }
+        }
+        typeof onBefore === 'function' && onBefore();
+
+        //渲染视图
+        let viewObj = new defaults.view(defaults);
+        vDom = viewObj.render();
+        if(typeof vDom === 'object') vDom = createElement(vDom);
+        $el[defaults.inset](vDom);
+
+        // 绑定事件
+        if (defaults.on && !this.views.has($el)) {
+            let eventSplitter = /\s+/;
+            for(let key in defaults.on) {
+                let callback = defaults.on[key];
+                if (eventSplitter.test(key)) {
+                    let nameArr = key.split(eventSplitter);
+                    if ($el.find(nameArr[1]).length) {
+                        $el = $el.find(nameArr[1]);
+                    }
+                }
+                $el.off(key).on(key, function(event, a, b, c) {
+                    if (typeof callback == 'function') callback(event, a, b, c);
+                });
+            };
+        }
+        // 是否渲染滚动条
+        if (defaults.scrollbar) {
+            if (!$el.css('position')) $el.css('position', 'relative');
+            $el.perfectScrollbar(defaults.scrollbar);
+            $el.off("mousemove.ps").on("mousemove.ps", function() {
+                $(this).perfectScrollbar('update');
+            });
+        }
+
+        typeof onAfter === 'function' && onAfter();
+        this.views.add($el);
+        // 渲染子视图
+        if(defaults.items.length) {
+            defaults.items.forEach(function(item){
+                this.create(item, context);
+            });
+        }
+        return $el;
     }
     /**
      * _debugger 调试器
@@ -77,7 +162,7 @@ class Lego {
             onAfter: function() {}
         }, that = this, appName, index;
         Object.assign(defaults, option);
-        appPath = appPath || window.location.hash.replace(/#/, '') || this.config.defaultApp;
+        appPath = appPath || this.currentApp() || this.config.defaultApp;
         index = appPath.indexOf('/');
         appName = index >= 0 ? (appPath.substr(0, index) || appPath.substr(1, index)) : appPath;
         if (typeof defaults.onBefore == 'function') defaults.onBefore();
@@ -99,36 +184,6 @@ class Lego {
             }
         });
     }
-    /**
-     * ns 命名空间方法
-     * @type {object}
-     */
-    // ns(nameSpaceStr, obj) {
-    //     if (typeof nameSpaceStr !== 'string') {
-    //         debug.error('命名空间名字必须为字符串类型');
-    //         return null;
-    //     }
-    //     let nameSpaceArr = nameSpaceStr.split('.'),
-    //         tempArr = [],
-    //         obj = typeof obj == 'object' ? obj : {};
-
-    //     function getNameSpace(nameSpaceObj, num) {
-    //         if (num < nameSpaceArr.length) {
-    //             let itemStr = nameSpaceArr[num];
-    //             tempArr.push(itemStr);
-    //             let allStr = tempArr.join('.');
-    //             let subObj = eval(allStr);
-    //             nameSpaceObj[itemStr] = typeof subObj == 'object' ? subObj : {};
-    //             if (num == nameSpaceArr.length - 1 && !nameSpaceObj[itemStr].length) {
-    //                 nameSpaceObj[itemStr] = obj;
-    //             }
-    //             return arguments.callee(nameSpaceObj[itemStr], num + 1);
-    //         } else {
-    //             return nameSpaceObj;
-    //         }
-    //     }
-    //     return getNameSpace(this, 0);
-    // }
     /**
      * getUrlParam 获取网址参数
      * @param  {[type]} name [description]
@@ -152,14 +207,50 @@ class Lego {
         }
     }
     /**
-     * currentModule 当前模块
+     * currentApp 当前模块
      * @return {[type]} [description]
      */
-    currentModule() {
-        let hash = window.location.hash.replace(/#/, ''),
+    currentApp() {
+        let hash = window.location.hash.replace(/#/, '').replace(/\//, ''),
             hashArr = hash.split('/');
         return hashArr[0];
     }
 }
 
 export default Lego;
+
+// let s = Symbol();
+// let f = Symbol();
+// let a = {};
+// a[s] = 'cccc';
+// console.warn(a[s], s.toString());
+
+// let arr = ['a', 'b', 'c'];
+// let iter = arr[Symbol.iterator]();
+
+// console.warn(iter.next());
+// console.warn(iter.next());
+// console.warn(iter.next());
+// console.warn(iter.next());
+
+// function* helloWorldGenerator() {
+//     yield 'hello';
+//     yield 'world';
+//     return 'ending';
+// }
+
+// var hw = helloWorldGenerator();
+
+// console.warn(hw.next());
+// console.warn(hw.next());
+// console.warn(hw.next());
+
+// let anyObject = new EventClass();
+
+// anyObject.on("change", (data) => {
+//     console.log("change event :", data);
+// });
+// anyObject.emit("change", "Hello 3778 !");
+
+        // let patches = diff(leftNode, rightNode);
+        // patch(rootNode, patches);

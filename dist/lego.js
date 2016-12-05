@@ -15,15 +15,33 @@ var Events = _interopDefault(require("events"));
 
 var director = require("director");
 
+var h = _interopDefault(require("virtual-dom/h"));
+
+var diff = _interopDefault(require("virtual-dom/diff"));
+
+var createElement = _interopDefault(require("virtual-dom/create-element"));
+
+var patch = _interopDefault(require("virtual-dom/patch"));
+
+window.h = h;
+
+window.diff = diff;
+
+window.createElement = createElement;
+
+window.patch = patch;
+
 var Lego = function Lego(option) {
     if (option === void 0) option = {};
     var that = this;
     this.config = {
+        alias: "Lego",
         version: "1.0.0",
-        isDebug: true,
         $: null,
-        hasAnimate: false,
-        hasPermit: false,
+        isDebug: true,
+        isAnimate: false,
+        isPermit: false,
+        isMultiWindow: false,
         pageEl: "",
         defaultApp: "",
         rootUri: "",
@@ -40,7 +58,86 @@ var Lego = function Lego(option) {
     }
     this.BaseEvent = Events;
     this.Events = new Events();
+    this.views = new WeakSet();
+    this.permis = {};
     this.Router = director.Router({}).init();
+    window[this.config.alias] = window.Lego = this;
+    return this;
+};
+
+Lego.prototype.create = function create(option, context) {
+    if (option === void 0) option = {};
+    if (context === void 0) context = this;
+    var that = context, vDom, defaults = {
+        el: this.config.pageEl,
+        inset: "html",
+        config: {},
+        permis: null,
+        view: null,
+        data: null,
+        animate: undefined,
+        on: null,
+        items: [],
+        onBefore: function onBefore$1() {},
+        onAfter: function onAfter$1() {},
+        onAnimateBefore: function onAnimateBefore$1() {},
+        onAnimateAfter: function onAnimateAfter$1() {}
+    };
+    Object.assign(defaults, option);
+    if (!defaults.el) {
+        return;
+    }
+    var theKey = Symbol(defaults.el), el = defaults.el, onBefore = defaults.onBefore.bind(that), onAfter = defaults.onAfter.bind(that), onAnimateBefore = defaults.onAnimateBefore.bind(that), onAnimateAfter = defaults.onAnimateAfter.bind(that), $el = el instanceof that.$ ? el : that.$(el);
+    if (defaults.permis) {
+        var module = defaults.permis.module, operate = defaults.permis.operate, hide = defaults.permis.hide, userId = defaults.permis.userid || 0;
+        if (hide) {
+            if (!this.permis.check(module, operate, userId)) {
+                return;
+            }
+        }
+    }
+    typeof onBefore === "function" && onBefore();
+    var viewObj = new defaults.view(defaults);
+    vDom = viewObj.render();
+    if (typeof vDom === "object") {
+        vDom = createElement(vDom);
+    }
+    $el[defaults.inset](vDom);
+    if (defaults.on && !this.views.has($el)) {
+        var eventSplitter = /\s+/;
+        var loop = function(key) {
+            var callback = defaults.on[key];
+            if (eventSplitter.test(key)) {
+                var nameArr = key.split(eventSplitter);
+                if ($el.find(nameArr[1]).length) {
+                    $el = $el.find(nameArr[1]);
+                }
+            }
+            $el.off(key).on(key, function(event, a, b, c) {
+                if (typeof callback == "function") {
+                    callback(event, a, b, c);
+                }
+            });
+        };
+        for (var key in defaults.on) loop(key);
+    }
+    if (defaults.scrollbar) {
+        if (!$el.css("position")) {
+            $el.css("position", "relative");
+        }
+        $el.perfectScrollbar(defaults.scrollbar);
+        $el.off("mousemove.ps").on("mousemove.ps", function() {
+            $(this).perfectScrollbar("update");
+        });
+    }
+    typeof onAfter === "function" && onAfter();
+    this.views.add($el);
+    if (defaults.items.length) {
+        defaults.items.forEach(function(item) {
+            this.create(item, context);
+        });
+    }
+    return $el;
 };
 
 Lego.prototype._debugger = function _debugger() {
@@ -70,7 +167,7 @@ Lego.prototype.loadApp = function loadApp(appPath, option) {
         onAfter: function() {}
     }, that = this, appName, index;
     Object.assign(defaults, option);
-    appPath = appPath || window.location.hash.replace(/#/, "") || this.config.defaultApp;
+    appPath = appPath || this.currentApp() || this.config.defaultApp;
     index = appPath.indexOf("/");
     appName = index >= 0 ? appPath.substr(0, index) || appPath.substr(1, index) : appPath;
     if (typeof defaults.onBefore == "function") {
@@ -118,8 +215,8 @@ Lego.prototype.getUrlParam = function getUrlParam(name) {
     }
 };
 
-Lego.prototype.currentModule = function currentModule() {
-    var hash = window.location.hash.replace(/#/, ""), hashArr = hash.split("/");
+Lego.prototype.currentApp = function currentApp() {
+    var hash = window.location.hash.replace(/#/, "").replace(/\//, ""), hashArr = hash.split("/");
     return hashArr[0];
 };
 

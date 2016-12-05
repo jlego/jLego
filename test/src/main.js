@@ -9,29 +9,3 @@ new Lego({
     defaultApp: 'home', //默认应用
     rootUri: '/test/dist/', //根目录
 }).loadApp();
-
-// let s = Symbol();
-// let f = Symbol();
-// let a = {};
-// a[s] = 'cccc';
-// console.warn(a[s], s.toString());
-
-// let arr = ['a', 'b', 'c'];
-// let iter = arr[Symbol.iterator]();
-
-// console.warn(iter.next());
-// console.warn(iter.next());
-// console.warn(iter.next());
-// console.warn(iter.next());
-
-// function* helloWorldGenerator() {
-//     yield 'hello';
-//     yield 'world';
-//     return 'ending';
-// }
-
-// var hw = helloWorldGenerator();
-
-// console.warn(hw.next());
-// console.warn(hw.next());
-// console.warn(hw.next());

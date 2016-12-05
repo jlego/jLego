@@ -1,18 +1,31 @@
 import homeView from './homeView';
 
 class HomeRouter {
-    constructor(name) {
+    constructor() {
         return {
-            '/home/:id': this.home,
-            '/home/read/:id': this.detail,
+            '/home': [this.list, this.home],
+            '/home/list': this.list,
+            '/home/detail/:id': this.detail,
         };
     }
-    home(id) {
-        new homeView({id: id}); 
+    home() {
+        HBY.create({
+            // el: '#content',
+            view: homeView,
+            id: 20,
+            data: [
+                { first: 'home1', last: 'Bond' },
+                { first: 'test', last: 'bbbb' },
+            ],
+            items: []
+        });
+        // new homeView({ id: 20 });
+    }
+    list() {
+        console.warn('dddddddddddddd');
     }
     detail(id) {
-        
+        console.warn('pppppppppp');
     }
 }
-export default HomeRouter;
 HBY['app'] = new HomeRouter();
