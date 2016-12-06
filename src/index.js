@@ -39,9 +39,10 @@ class Lego {
             return;
         }
         this.BaseEvent = Events;
-        this.Events = new Events();
+        this.Events = new Events(); //全局事件对象
         this.views = new WeakSet(); //视图实例容器
-        this.permis = {};
+        this.permis = {};   //权限对象
+        this.datas = {};    //数据持久化容器
         this.Router = Router({}).init();
         window[this.config.alias] = window.Lego = this;
         return this;
@@ -163,11 +164,12 @@ class Lego {
         let defaults = {
             onBefore: function() {},
             onAfter: function() {}
-        }, that = this, appName, index;
+        }, that = this, appName, index, currentApp;
         Object.assign(defaults, option);
-        appPath = appPath || this.currentApp() || this.config.defaultApp;
+        appPath = appPath || currentApp || this.config.defaultApp;
         index = appPath.indexOf('/');
         appName = index >= 0 ? (appPath.substr(0, index) || appPath.substr(1, index)) : appPath;
+        this.datas[appName] = this.datas[appName] || new Map();
         if (typeof defaults.onBefore == 'function') defaults.onBefore();
         this.$(this.config.pageEl).scrollTop(0);
         this.$.ajax({
@@ -219,29 +221,16 @@ class Lego {
         let hashArr = hash.split('/');
         return hashArr[0];
     }
+    /**
+     * [currentDatas 取当前应用数据]
+     * @return {[type]} [description]
+     */
+    currentDatas() {
+        return this.datas[this.currentApp()];
+    }
 }
 
 export default Lego;
-
-// let s = Symbol();
-// let f = Symbol();
-// let a = {};
-// a[s] = 'cccc';
-// console.warn(a[s], s.toString());
-
-
-
-// function* helloWorldGenerator() {
-//     yield 'hello';
-//     yield 'world';
-//     return 'ending';
-// }
-
-// var hw = helloWorldGenerator();
-
-// console.warn(hw.next());
-// console.warn(hw.next());
-// console.warn(hw.next());
 
 // let anyObject = new EventClass();
 

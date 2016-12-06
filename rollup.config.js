@@ -6,7 +6,7 @@ import buble from 'rollup-plugin-buble';
 import replace from 'rollup-plugin-replace';
 import uglify from 'rollup-plugin-uglify';
 import async from 'rollup-plugin-async';
-// import regenerator from 'rollup-plugin-regenerator';
+import regenerator from 'rollup-plugin-regenerator';
 // import { minify } from 'uglify-js';
 // import istanbul from 'rollup-plugin-istanbul';
 // import flow from 'rollup-plugin-flow-no-whitespace';
@@ -30,8 +30,8 @@ export default {
     // dest: pkg['main'],
     // entry: path.resolve(__dirname, './src/core/view.js'),
     // dest: 'dist/view.js',
-    entry: path.resolve(__dirname, './src/core/data.js'),
-    dest: 'dist/data.js',
+    entry: path.resolve(__dirname, './src/core/api.js'),
+    dest: 'dist/api.js',
     format: 'cjs',
     moduleName: 'Legojs',
     plugins: [
@@ -40,7 +40,7 @@ export default {
         // node(),
         // cjs(),
         async(),
-        // regenerator(),
+        regenerator(),
         // babel(babelrc()),
         buble(),
         uglify({

@@ -1,15 +1,17 @@
 import homeView from './homeView';
 import listView from './listView';
+import dataList from './listData';
 
 class HomeRouter {
     constructor() {
         return {
-            '/home': [this.list, this.home],
+            '/home': [this.list],
             '/home/list': this.list,
             '/home/detail/:id': this.detail,
         };
     }
     home() {
+        // console.warn('kkkkkkkkk');
         HBY.create({
             view: listView,
             id: 20,
@@ -35,10 +37,19 @@ class HomeRouter {
                 ]
             }]
         });
+        // console.warn(Array.isArray([1,2]));
         // new homeView({ id: 20 });
     }
     list() {
-        console.warn('dddddddddddddd');
+        dataList.fetchData(['test', 'ok'], (resp) => {
+            let data = HBY.currentDatas().get('test').data;
+            console.warn('dddddddddddddd', resp, HBY.currentDatas().get('test'));
+            HBY.create({
+                view: listView,
+                id: 20,
+                data: data
+            });
+        });
     }
     detail(id) {
         console.warn('pppppppppp');
