@@ -1,8 +1,8 @@
 // import { Router } from 'director';
 
-class Model {
+class ViewModel {
     constructor(options = {}) {
         // super();
     }
 }
-export default Model;
+export default ViewModel;

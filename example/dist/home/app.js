@@ -121,7 +121,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _view = __webpack_require__(2);
+	var _view = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"../../../dist/view\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
 
 	var _view2 = _interopRequireDefault(_view);
 
@@ -186,39 +186,7 @@
 	exports.default = HomeView;
 
 /***/ },
-/* 2 */
-/***/ function(module, exports) {
-
-	/**
-	 * lego.js v0.0.6
-	 * (c) 2016 Evan You
-	 * @license MIT
-	 */
-	"use strict";
-
-	var View = function View(options) {
-	    if (options === void 0) options = {};
-	    var defaults = {
-	        el: "",
-	        tagName: "",
-	        events: {},
-	        permis: {},
-	        animate: null,
-	        config: {},
-	        scrollbar: false,
-	        items: []
-	    };
-	    this.options = Object.assign(defaults, options);
-	    this.options.data = options.data || null;
-	};
-
-	View.prototype.render = function render() {
-	    return null;
-	};
-
-	module.exports = View;
-
-/***/ },
+/* 2 */,
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -230,7 +198,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _view = __webpack_require__(2);
+	var _view = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"../../../dist/view\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
 
 	var _view2 = _interopRequireDefault(_view);
 

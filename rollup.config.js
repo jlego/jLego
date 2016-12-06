@@ -1,9 +1,12 @@
 import path from 'path';
+import { rollup } from 'rollup';
 import babel from 'rollup-plugin-babel';
 import babelrc from 'babelrc-rollup';
 import buble from 'rollup-plugin-buble';
 import replace from 'rollup-plugin-replace';
 import uglify from 'rollup-plugin-uglify';
+import async from 'rollup-plugin-async';
+// import regenerator from 'rollup-plugin-regenerator';
 // import { minify } from 'uglify-js';
 // import istanbul from 'rollup-plugin-istanbul';
 // import flow from 'rollup-plugin-flow-no-whitespace';
@@ -23,10 +26,12 @@ const banner = `/**
  */`
 
 export default {
-    entry: path.resolve(__dirname, './src/index.js'),
-    dest: pkg['main'],
+    // entry: path.resolve(__dirname, './src/index.js'),
+    // dest: pkg['main'],
     // entry: path.resolve(__dirname, './src/core/view.js'),
     // dest: 'dist/view.js',
+    entry: path.resolve(__dirname, './src/core/data.js'),
+    dest: 'dist/data.js',
     format: 'cjs',
     moduleName: 'Legojs',
     plugins: [
@@ -34,6 +39,9 @@ export default {
         replace(replaceConfig),
         // node(),
         // cjs(),
+        async(),
+        // regenerator(),
+        // babel(babelrc()),
         buble(),
         uglify({
             mangle: false,
@@ -47,7 +55,6 @@ export default {
                 }
             },
         }),
-        // babel(babelrc()),
         // istanbul({
         //     exclude: ['test/**/*', 'node_modules/**/*']
         // })

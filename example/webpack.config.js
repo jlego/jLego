@@ -21,7 +21,7 @@ module.exports = {
                 exclude: /node_modules/,
                 // include: path.resolve(__dirname, "/page/"),
                 query: {
-                    presets: ['es2015']
+                    presets: ['es2015', 'stage-3']
                 }
             },
             { test: /\.css$/, loader: "style!css" },

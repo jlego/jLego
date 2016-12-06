@@ -64,6 +64,20 @@
 	    defaultApp: 'home', //默认应用
 	    rootUri: '/example/dist/' }).loadApp();
 
+	// const asyncIterable = createAsyncIterable(['a', 'b']);
+	// const asyncIterator = asyncIterable[Symbol.asyncIterator]();
+
+	// asyncIterator.next()
+	//     .then(iterResult1 => {
+	//         console.log(iterResult1);
+	//         return asyncIterator.next();
+	//     }).then(iterResult2 => {
+	//         console.log(iterResult2);
+	//         return asyncIterator.next();
+	//     }).then(iterResult3 => {
+	//         console.log(iterResult3);
+	//     });
+
 /***/ },
 /* 1 */,
 /* 2 */,

@@ -5,6 +5,7 @@ import h from 'virtual-dom/h';
 import diff from 'virtual-dom/diff';
 import createElement from 'virtual-dom/create-element';
 import patch from 'virtual-dom/patch';
+import util from "./util/util";
 
 class Lego {
     constructor(options = {}) {
@@ -12,6 +13,7 @@ class Lego {
         this.createElement = createElement;
         this.diff = diff;
         this.patch = patch;
+        this.util = util;
         let that = this;
         this.config = {
             alias: 'Lego',
@@ -227,13 +229,7 @@ export default Lego;
 // a[s] = 'cccc';
 // console.warn(a[s], s.toString());
 
-// let arr = ['a', 'b', 'c'];
-// let iter = arr[Symbol.iterator]();
 
-// console.warn(iter.next());
-// console.warn(iter.next());
-// console.warn(iter.next());
-// console.warn(iter.next());
 
 // function* helloWorldGenerator() {
 //     yield 'hello';
