@@ -40,9 +40,8 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ({
-
-/***/ 0:
+/******/ ([
+/* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -53,7 +52,7 @@
 
 	var _homeView2 = _interopRequireDefault(_homeView);
 
-	var _listView = __webpack_require__(339);
+	var _listView = __webpack_require__(3);
 
 	var _listView2 = _interopRequireDefault(_listView);
 
@@ -111,8 +110,7 @@
 	HBY['app'] = new HomeRouter();
 
 /***/ },
-
-/***/ 1:
+/* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -188,8 +186,7 @@
 	exports.default = HomeView;
 
 /***/ },
-
-/***/ 2:
+/* 2 */
 /***/ function(module, exports) {
 
 	/**
@@ -222,8 +219,7 @@
 	module.exports = View;
 
 /***/ },
-
-/***/ 339:
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -282,5 +278,4 @@
 	exports.default = ListView;
 
 /***/ }
-
-/******/ });
+/******/ ]);
