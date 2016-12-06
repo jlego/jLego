@@ -42,8 +42,8 @@ class HomeRouter {
     }
     list() {
         dataList.fetchData(['test', 'ok'], (resp) => {
-            let data = HBY.currentDatas().get('test').data;
-            console.warn('dddddddddddddd', resp, HBY.currentDatas().get('test'));
+            let data = HBY.getDatas('test');
+            console.warn('dddddddddddddd', resp, HBY.getDatas('test'));
             HBY.create({
                 view: listView,
                 id: 20,

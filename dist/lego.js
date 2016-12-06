@@ -233,8 +233,12 @@ Lego$1.prototype.currentApp = function currentApp() {
     return hashArr[0];
 };
 
-Lego$1.prototype.currentDatas = function currentDatas() {
-    return this.datas[this.currentApp()];
+Lego$1.prototype.getDatas = function getDatas(appName) {
+    if (appName) {
+        return this.datas[this.currentApp()].get(appName).data;
+    } else {
+        return this.datas[this.currentApp()];
+    }
 };
 
 module.exports = Lego$1;

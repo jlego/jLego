@@ -225,8 +225,12 @@ class Lego {
      * [currentDatas 取当前应用数据]
      * @return {[type]} [description]
      */
-    currentDatas() {
-        return this.datas[this.currentApp()];
+    getDatas(appName) {
+        if(appName){
+            return this.datas[this.currentApp()].get(appName).data;
+        }else{
+            return this.datas[this.currentApp()];
+        }
     }
 }
 

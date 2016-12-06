@@ -463,7 +463,7 @@ function __async(g) {
 var Api = function Api(options) {
     var this$1 = this;
     if (options === void 0) options = {};
-    this.datas = Lego.currentDatas();
+    this.datas = Lego.getDatas();
     for (var key in options) {
         if (this$1.datas.has(key)) {
             Lego.util.extend(this$1.datas.get(key), options[key], true);

@@ -13,7 +13,7 @@ class Api {
      * @return {[type]}         [description]
      */
     constructor(options = {}) {
-        this.datas = Lego.currentDatas();
+        this.datas = Lego.getDatas();
         for(let key in options){
             if(this.datas.has(key)){
                 Lego.util.extend(this.datas.get(key), options[key], true);
