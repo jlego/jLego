@@ -1,44 +1,54 @@
 import 'whatwg-fetch'
 import Model from './model';
 
-class Api {
+class Data {
     /**
      * [constructor description]
      * @param  {Object} options [description]
      *  'apiName': {
      *      model: null,    //数据模型
+     *      listTarget: '',  //是列表的目标
      *      url: '' //接口地址
      *      data: null  //结果数据
      *  },
      * @return {[type]}         [description]
      */
     constructor(options = {}) {
-        this.datas = Lego.getDatas();
+        this.datas = Lego.getData();
         for(let key in options){
             if(this.datas.has(key)){
-                Lego.util.extend(this.datas.get(key), options[key], true);
+                this.datas.set(key, Lego.$.extend(true, this.datas.get(key) || {}, options[key]));
             }else{
                 this.datas.set(key, options[key]);
             }
+            this.datas.get(key).data = this.datas.get(key).data || null;
         }
     }
     /**
-     * [fetchData description]
+     * [fetchApi description]
      * @param  {[type]}   apiNameArr [description]
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    fetchData(apiNameArr, callback){
+    api(apiNameArr, callback){
         let that = this;
         apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [apiNameArr];
         this.__fetch(apiNameArr).then((data) => {
             apiNameArr.forEach((apiName, index)=> {
-                if(Array.isArray(data[index])){
-                    that.datas.get(apiName).data = data[index];
-                }else{
-                    if(data[index]) Lego.util.extend(that.datas.get(apiName).data, data[index], true);
+                let apiResp = data[index];
+                that.datas.get(apiName).data = apiResp;
+                if(apiResp && !Array.isArray(apiResp)){
+                    let listTarget = that.datas.get(apiName).listTarget,
+                        model = that.datas.get(apiName).model,
+                        datas = that.datas.get(apiName).data;
+                    if(listTarget && Array.isArray(apiResp[listTarget]) && model){
+                        apiResp[listTarget].forEach(function(item, i){
+                            datas[listTarget][i] = Lego.$.extend({}, model, item);
+                        });
+                    }
                 }
             });
+
             if(typeof callback == 'function') callback(that.parse(data));
         });
     }
@@ -87,4 +97,4 @@ class Api {
         return respArr;
     }
 }
-export default Api;
+export default Data;

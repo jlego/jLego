@@ -10528,20 +10528,9 @@
 
 	var patch = _interopDefault(__webpack_require__(339));
 
-	var Util = {
-	    extend: function extend(oldObj, newObj, isDepCopy) {
-	        if (oldObj === void 0) oldObj = {};
-	        if (newObj === void 0) newObj = {};
-	        if (isDepCopy === void 0) isDepCopy = false;
-	        if (isDepCopy) {
-	            return Lego.$.extend(true, oldObj, newObj);
-	        } else {
-	            return Lego.$.extend(oldObj, newObj);
-	        }
-	    }
-	};
+	var Util = {};
 
-	var Lego$1 = function Lego$1(options) {
+	var Lego = function Lego(options) {
 	    if (options === void 0) options = {};
 	    this.h = h;
 	    this.createElement = createElement;
@@ -10573,7 +10562,7 @@
 	    }
 	    this.BaseEvent = Events;
 	    this.Events = new Events();
-	    this.views = new WeakSet();
+	    this.views = new WeakMap();
 	    this.permis = {};
 	    this.datas = {};
 	    this.Router = director.Router({}).init();
@@ -10581,7 +10570,7 @@
 	    return this;
 	};
 
-	Lego$1.prototype.create = function create(options) {
+	Lego.prototype.create = function create(options) {
 	    if (options === void 0) options = {};
 	    var that = this,
 	        defaults = {
@@ -10624,7 +10613,7 @@
 	    typeof onBefore === "function" && onBefore();
 	    var viewObj = new defaults.view(defaults);
 	    $el[defaults.inset](viewObj.render());
-	    if (defaults.events && !this.views.has($el)) {
+	    if (defaults.events && !this.views.get($el)) {
 	        var eventSplitter = /\s+/;
 	        var loop = function loop(key) {
 	            var callback = viewObj[defaults.events[key]];
@@ -10655,7 +10644,7 @@
 	            $(this).perfectScrollbar("update");
 	        });
 	    }
-	    this.views.add($el);
+	    this.views.set($el, viewObj);
 	    if (defaults.items.length) {
 	        defaults.items.forEach(function (item, i) {
 	            that.create(item);
@@ -10665,7 +10654,7 @@
 	    return $el;
 	};
 
-	Lego$1.prototype._debugger = function _debugger() {
+	Lego.prototype._debugger = function _debugger() {
 	    window.debug = {};
 	    if (!window.console) {
 	        return function () {};
@@ -10685,7 +10674,7 @@
 	    }
 	};
 
-	Lego$1.prototype.loadApp = function loadApp(appPath, option) {
+	Lego.prototype.loadApp = function loadApp(appPath, option) {
 	    if (option === void 0) option = {};
 	    var defaults = {
 	        onBefore: function onBefore() {},
@@ -10724,7 +10713,7 @@
 	    });
 	};
 
-	Lego$1.prototype.getUrlParam = function getUrlParam(name) {
+	Lego.prototype.getUrlParam = function getUrlParam(name) {
 	    window.pageParams = {};
 	    if (window.pageParams[name]) {
 	        return window.pageParams[name];
@@ -10746,7 +10735,7 @@
 	    }
 	};
 
-	Lego$1.prototype.currentApp = function currentApp() {
+	Lego.prototype.currentApp = function currentApp() {
 	    var hash = window.location.hash.replace(/#/, "");
 	    if (hash.indexOf("/") == 0) {
 	        hash = hash.replace(/\//, "");
@@ -10755,15 +10744,16 @@
 	    return hashArr[0];
 	};
 
-	Lego$1.prototype.getDatas = function getDatas(appName) {
-	    if (appName) {
-	        return this.datas[this.currentApp()].get(appName).data;
+	Lego.prototype.getData = function getData(apiName, appName) {
+	    if (appName === void 0) appName = this.currentApp();
+	    if (apiName) {
+	        return this.datas[appName].get(apiName).data;
 	    } else {
-	        return this.datas[this.currentApp()];
+	        return this.datas[appName];
 	    }
 	};
 
-	module.exports = Lego$1;
+	module.exports = Lego;
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11)))
 
 /***/ },

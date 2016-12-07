@@ -7,41 +7,26 @@ import replace from 'rollup-plugin-replace';
 import uglify from 'rollup-plugin-uglify';
 import async from 'rollup-plugin-async';
 import regenerator from 'rollup-plugin-regenerator';
-// import { minify } from 'uglify-js';
-// import istanbul from 'rollup-plugin-istanbul';
-// import flow from 'rollup-plugin-flow-no-whitespace';
-// import cjs from 'rollup-plugin-commonjs';
-// import node from 'rollup-plugin-node-resolve';
 
-let pkg = require('./package.json');
+let pkg = require('../package.json');
 let external = Object.keys(pkg.dependencies);
 const version = process.env.VERSION || pkg['version']
 const replaceConfig = {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
 }
 const banner = `/**
- * lego.js v${version}
+ * view.js v${version}
  * (c) ${new Date().getFullYear()} Evan You
  * @license MIT
  */`
 
 export default {
-    // entry: path.resolve(__dirname, './src/index.js'),
-    // dest: pkg['main'],
-    // entry: path.resolve(__dirname, './src/core/view.js'),
-    // dest: 'dist/view.js',
-    entry: path.resolve(__dirname, './src/core/api.js'),
-    dest: 'dist/api.js',
+    entry: path.resolve(__dirname, '../src/core/view.js'),
+    dest: 'dist/view.js',
     format: 'cjs',
-    moduleName: 'Legojs',
+    moduleName: 'view.js',
     plugins: [
-        // flow(),
         replace(replaceConfig),
-        // node(),
-        // cjs(),
-        async(),
-        regenerator(),
-        // babel(babelrc()),
         buble(),
         uglify({
             mangle: false,
@@ -54,19 +39,7 @@ export default {
                     return /@preserve|@license|@cc_on/i.test(text);
                 }
             },
-        }),
-        // istanbul({
-        //     exclude: ['test/**/*', 'node_modules/**/*']
-        // })
-        // babel({
-        //     exclude: 'node_modules/**',
-        // }),
-        // eslint({
-        //     exclude: [
-        //         'src/styles/**',
-        //     ]
-        // }),
-        // (process.env.NODE_ENV === 'production' && uglify()),
+        })
     ],
     external: external,
     banner: banner

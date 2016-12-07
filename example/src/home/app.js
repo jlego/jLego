@@ -41,14 +41,14 @@ class HomeRouter {
         // new homeView({ id: 20 });
     }
     list() {
-        dataList.fetchData(['test', 'ok'], (resp) => {
-            let data = HBY.getDatas('test');
-            console.warn('dddddddddddddd', resp, HBY.getDatas('test'));
+        dataList.api(['test', 'ok'], (resp) => {
+            let data = HBY.getData('test').data;
             HBY.create({
                 view: listView,
                 id: 20,
                 data: data
             });
+            console.warn('dddddddddddddd', resp, HBY.getData('ok'));
         });
     }
     detail(id) {

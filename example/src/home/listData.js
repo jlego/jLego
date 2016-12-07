@@ -1,17 +1,22 @@
-import BaseApi from '../../../dist/api';
+import BaseData from '../../../dist/data';
 
-class ListData extends BaseApi {
+class ListData extends BaseData {
     constructor(options = {}) {
         let api = {
             'test': {
                 url: './content.json',
-                model: {}
+                listTarget: 'data',
+                model: {
+                    first: '',
+                    last: '',
+                    id: 0
+                }
             },
             'ok': {
                 url: './content.json'
             }
         };
-        HBY.util.extend(api, options, true);
+        HBY.$.extend(true, api, options);
         super(api);
     }
 }

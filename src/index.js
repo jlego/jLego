@@ -40,7 +40,7 @@ class Lego {
         }
         this.BaseEvent = Events;
         this.Events = new Events(); //全局事件对象
-        this.views = new WeakSet(); //视图实例容器
+        this.views = new WeakMap(); //视图实例容器
         this.permis = {};   //权限对象
         this.datas = {};    //数据持久化容器
         this.Router = Router({}).init();
@@ -98,7 +98,7 @@ class Lego {
         $el[defaults.inset](viewObj.render());
 
         // 绑定事件
-        if (defaults.events && !this.views.has($el)) {
+        if (defaults.events && !this.views.get($el)) {
             let eventSplitter = /\s+/;
             for(let key in defaults.events) {
                 let callback = viewObj[defaults.events[key]];
@@ -123,7 +123,7 @@ class Lego {
                 $(this).perfectScrollbar('update');
             });
         }
-        this.views.add($el);
+        this.views.set($el, viewObj);
         // 渲染子视图
         if(defaults.items.length) {
             defaults.items.forEach(function(item, i){
@@ -222,14 +222,14 @@ class Lego {
         return hashArr[0];
     }
     /**
-     * [currentDatas 取当前应用数据]
+     * [getData 取应用数据]
      * @return {[type]} [description]
      */
-    getDatas(appName) {
-        if(appName){
-            return this.datas[this.currentApp()].get(appName).data;
+    getData(apiName, appName = this.currentApp()) {
+        if(apiName){
+            return this.datas[appName].get(apiName).data;
         }else{
-            return this.datas[this.currentApp()];
+            return this.datas[appName];
         }
     }
 }

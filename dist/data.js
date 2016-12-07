@@ -460,29 +460,33 @@ function __async(g) {
     };
 }(typeof global === "object" ? global : typeof window === "object" ? window : typeof self === "object" ? self : undefined);
 
-var Api = function Api(options) {
+var Data = function Data(options) {
     var this$1 = this;
     if (options === void 0) options = {};
-    this.datas = Lego.getDatas();
+    this.datas = Lego.getData();
     for (var key in options) {
         if (this$1.datas.has(key)) {
-            Lego.util.extend(this$1.datas.get(key), options[key], true);
+            this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, options[key]));
         } else {
             this$1.datas.set(key, options[key]);
         }
+        this$1.datas.get(key).data = this$1.datas.get(key).data || null;
     }
 };
 
-Api.prototype.fetchData = function fetchData(apiNameArr, callback) {
+Data.prototype.api = function api(apiNameArr, callback) {
     var that = this;
     apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [ apiNameArr ];
     this.__fetch(apiNameArr).then(function(data) {
         apiNameArr.forEach(function(apiName, index) {
-            if (Array.isArray(data[index])) {
-                that.datas.get(apiName).data = data[index];
-            } else {
-                if (data[index]) {
-                    Lego.util.extend(that.datas.get(apiName).data, data[index], true);
+            var apiResp = data[index];
+            that.datas.get(apiName).data = apiResp;
+            if (apiResp && !Array.isArray(apiResp)) {
+                var listTarget = that.datas.get(apiName).listTarget, model = that.datas.get(apiName).model, datas = that.datas.get(apiName).data;
+                if (listTarget && Array.isArray(apiResp[listTarget]) && model) {
+                    apiResp[listTarget].forEach(function(item, i) {
+                        datas[listTarget][i] = Lego.$.extend({}, model, item);
+                    });
                 }
             }
         });
@@ -492,7 +496,7 @@ Api.prototype.fetchData = function fetchData(apiNameArr, callback) {
     });
 };
 
-Api.prototype.__fetch = function __fetch(apiNameArr) {
+Data.prototype.__fetch = function __fetch(apiNameArr) {
     return __async(regeneratorRuntime.mark(function callee$1$0() {
         var that, results, promisesArr, promise, t$2$0, t$2$1, res;
         return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
@@ -587,8 +591,8 @@ Api.prototype.__fetch = function __fetch(apiNameArr) {
     }).call(this));
 };
 
-Api.prototype.parse = function parse(respArr) {
+Data.prototype.parse = function parse(respArr) {
     return respArr;
 };
 
-module.exports = Api;
+module.exports = Data;

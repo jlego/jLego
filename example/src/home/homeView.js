@@ -3,7 +3,7 @@ import BaseView from '../../../dist/view';
 class HomeView extends BaseView {
     constructor(options = {}) {
         options.events = {
-            'click #400': 'theClick'
+            'click #test': 'theClick'
         };
         super(options);
     }
