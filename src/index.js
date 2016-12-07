@@ -39,7 +39,7 @@ class Lego {
             return;
         }
         this.BaseEvent = Events;
-        this.Events = new Events(); //全局事件对象
+        this.Eventer = new Events(); //全局事件对象
         this.views = new WeakMap(); //视图实例容器
         this.permis = {};   //权限对象
         this.datas = {};    //数据持久化容器
@@ -94,17 +94,18 @@ class Lego {
         typeof onBefore === 'function' && onBefore();
 
         //渲染视图
-        let viewObj = new defaults.view(defaults);
+        const viewObj = new defaults.view(defaults);
         $el[defaults.inset](viewObj.render());
-
+        defaults.events = this.$.extend(viewObj.options.events, defaults.events);
         // 绑定事件
         if (defaults.events && !this.views.get($el)) {
-            let eventSplitter = /\s+/;
+            const eventSplitter = /\s+/;
             for(let key in defaults.events) {
-                let callback = viewObj[defaults.events[key]];
+                const callback = viewObj[defaults.events[key]];
                 if (eventSplitter.test(key)) {
-                    let nameArr = key.split(eventSplitter);
+                    const nameArr = key.split(eventSplitter);
                     if ($el.find(nameArr[1]).length) {
+                        key = nameArr[0];
                         $el = $el.find(nameArr[1]);
                     }else{
                         continue;
@@ -116,13 +117,13 @@ class Lego {
             };
         }
         // 是否渲染滚动条
-        if (defaults.scrollbar) {
-            if (!$el.css('position')) $el.css('position', 'relative');
-            $el.perfectScrollbar(defaults.scrollbar);
-            $el.off("mousemove.ps").on("mousemove.ps", function() {
-                $(this).perfectScrollbar('update');
-            });
-        }
+        // if (defaults.scrollbar) {
+        //     if (!$el.css('position')) $el.css('position', 'relative');
+        //     $el.perfectScrollbar(defaults.scrollbar);
+        //     $el.off("mousemove.ps").on("mousemove.ps", function() {
+        //         $(this).perfectScrollbar('update');
+        //     });
+        // }
         this.views.set($el, viewObj);
         // 渲染子视图
         if(defaults.items.length) {
@@ -235,13 +236,3 @@ class Lego {
 }
 
 export default Lego;
-
-// let anyObject = new EventClass();
-
-// anyObject.on("change", (data) => {
-//     console.log("change event :", data);
-// });
-// anyObject.emit("change", "Hello 3778 !");
-
-        // let patches = diff(leftNode, rightNode);
-        // patch(rootNode, patches);

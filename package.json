@@ -64,7 +64,7 @@
     "director": "^1.2.8",
     "events": "^1.1.1",
     "jquery": "^3.1.1",
-    "observejs": "0.0.2",
+    "object.observe": "^0.2.6",
     "perfect-scrollbar": "^0.6.14",
     "virtual-dom": "^2.1.1",
     "xhr": "^2.3.1"

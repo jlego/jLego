@@ -6,12 +6,11 @@ class HomeRouter {
     constructor() {
         return {
             '/home': [this.list],
-            '/home/list': this.list,
+            '/home/list': this.home,
             '/home/detail/:id': this.detail,
         };
     }
     home() {
-        // console.warn('kkkkkkkkk');
         HBY.create({
             view: listView,
             id: 20,
@@ -37,7 +36,9 @@ class HomeRouter {
                 ]
             }]
         });
-        // console.warn(Array.isArray([1,2]));
+        let data = HBY.getData('test').data;
+        data[0].mm = 'only you';
+        console.warn(data);
         // new homeView({ id: 20 });
     }
     list() {

@@ -20,27 +20,25 @@ if (!fs.existsSync('dist')) {
     fs.mkdirSync('dist');
 }
 const resolve = _path => path.resolve(__dirname, '../', _path);
-build([
-    {
-        alias: 'lego',
-        entry: resolve('src/index.js'),
-        dest: resolve('dist/lego.js'),
-        format: 'cjs',
-        env: 'development'
-    }, {
-        alias: 'view',
-        entry: resolve('src/core/view.js'),
-        dest: resolve('dist/view.js'),
-        format: 'cjs',
-        env: 'development'
-    }, {
-        alias: 'data',
-        entry: resolve('src/core/data.js'),
-        dest: resolve('dist/data.js'),
-        format: 'cjs',
-        env: 'development'
-    }
-].map(genConfig));
+build([{
+    alias: 'lego',
+    entry: resolve('src/index.js'),
+    dest: resolve('dist/lego.js'),
+    format: 'cjs',
+    env: 'development'
+}, {
+    alias: 'view',
+    entry: resolve('src/core/view.js'),
+    dest: resolve('dist/view.js'),
+    format: 'cjs',
+    env: 'development'
+}, {
+    alias: 'data',
+    entry: resolve('src/core/data.js'),
+    dest: resolve('dist/data.js'),
+    format: 'cjs',
+    env: 'development'
+}].map(genConfig));
 
 function build(builds) {
     let built = 0
@@ -56,7 +54,7 @@ function build(builds) {
     next();
 }
 
-function makBanner(opts){
+function makBanner(opts) {
     const bannerTpl = `/**
  * ${opts.alias}.js v${version}
  * (c) ${new Date().getFullYear()} Evan You
@@ -73,10 +71,20 @@ function genConfig(opts) {
         format: opts.format,
         banner,
         moduleName: 'LegoJS',
-        plugins: [
-            // flow(),
-            // node(),
-            // cjs(),
+        plugins: []
+    };
+
+    if (opts.alias == 'observe') {
+        config.plugins = [flow(), node(), cjs()];
+    }
+    if (opts.alias == 'data') {
+        config.plugins = [async(), regenerator()];
+    }
+    if (opts.env) {
+        config.plugins.unshift(replace({
+            'process.env.NODE_ENV': JSON.stringify(opts.env)
+        }));
+        config.plugins.push(
             buble(),
             uglify({
                 mangle: false,
@@ -89,17 +97,7 @@ function genConfig(opts) {
                         return /@preserve|@license|@cc_on/i.test(text);
                     }
                 },
-            }),
-        ]
-    }
-
-    if(opts.alias == 'data'){
-        config.plugins.unshift(async(),regenerator());
-    }
-    if (opts.env) {
-        config.plugins.unshift(replace({
-            'process.env.NODE_ENV': JSON.stringify(opts.env)
-        }));
+            }));
     }
     return config;
 }

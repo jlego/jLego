@@ -56,7 +56,7 @@ var Lego = function Lego(options) {
         return;
     }
     this.BaseEvent = Events;
-    this.Events = new Events();
+    this.Eventer = new Events();
     this.views = new WeakMap();
     this.permis = {};
     this.datas = {};
@@ -98,6 +98,7 @@ Lego.prototype.create = function create(options) {
     typeof onBefore === "function" && onBefore();
     var viewObj = new defaults.view(defaults);
     $el[defaults.inset](viewObj.render());
+    defaults.events = this.$.extend(viewObj.options.events, defaults.events);
     if (defaults.events && !this.views.get($el)) {
         var eventSplitter = /\s+/;
         var loop = function(key) {
@@ -105,6 +106,7 @@ Lego.prototype.create = function create(options) {
             if (eventSplitter.test(key)) {
                 var nameArr = key.split(eventSplitter);
                 if ($el.find(nameArr[1]).length) {
+                    key = nameArr[0];
                     $el = $el.find(nameArr[1]);
                 } else {
                     return;
@@ -117,15 +119,6 @@ Lego.prototype.create = function create(options) {
             });
         };
         for (var key in defaults.events) loop(key);
-    }
-    if (defaults.scrollbar) {
-        if (!$el.css("position")) {
-            $el.css("position", "relative");
-        }
-        $el.perfectScrollbar(defaults.scrollbar);
-        $el.off("mousemove.ps").on("mousemove.ps", function() {
-            $(this).perfectScrollbar("update");
-        });
     }
     this.views.set($el, viewObj);
     if (defaults.items.length) {
