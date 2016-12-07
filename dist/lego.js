@@ -57,7 +57,7 @@ var Lego = function Lego(options) {
     }
     this.BaseEvent = Events;
     this.Eventer = new Events();
-    this.views = new WeakMap();
+    this.views = new Map();
     this.permis = {};
     this.datas = {};
     this.Router = director.Router({}).init();
@@ -68,6 +68,7 @@ var Lego = function Lego(options) {
 Lego.prototype.create = function create(options) {
     if (options === void 0) options = {};
     var that = this, defaults = {
+        alias: "",
         el: this.config.pageEl,
         inset: "html",
         config: {},
@@ -86,7 +87,7 @@ Lego.prototype.create = function create(options) {
     if (!defaults.el) {
         return;
     }
-    var theKey = Symbol(defaults.el), el = defaults.el, onBefore = defaults.onBefore.bind(this), onAfter = defaults.onAfter.bind(this), onAnimateBefore = defaults.onAnimateBefore.bind(this), onAnimateAfter = defaults.onAnimateAfter.bind(this), $el = el instanceof this.$ ? el : that.$(el);
+    var alias = defaults.alias || Symbol(), el = defaults.el, onBefore = defaults.onBefore.bind(this), onAfter = defaults.onAfter.bind(this), onAnimateBefore = defaults.onAnimateBefore.bind(this), onAnimateAfter = defaults.onAnimateAfter.bind(this), $el = el instanceof this.$ ? el : that.$(el);
     if (defaults.permis) {
         var module = defaults.permis.module, operate = defaults.permis.operate, hide = defaults.permis.hide, userId = defaults.permis.userid || 0;
         if (hide) {
@@ -96,31 +97,37 @@ Lego.prototype.create = function create(options) {
         }
     }
     typeof onBefore === "function" && onBefore();
-    var viewObj = new defaults.view(defaults);
-    $el[defaults.inset](viewObj.render());
-    defaults.events = this.$.extend(viewObj.options.events, defaults.events);
-    if (defaults.events && !this.views.get($el)) {
-        var eventSplitter = /\s+/;
-        var loop = function(key) {
-            var callback = viewObj[defaults.events[key]];
-            if (eventSplitter.test(key)) {
-                var nameArr = key.split(eventSplitter);
-                if ($el.find(nameArr[1]).length) {
-                    key = nameArr[0];
-                    $el = $el.find(nameArr[1]);
-                } else {
-                    return;
+    var viewObj;
+    if (!this.views.get(alias)) {
+        viewObj = new defaults.view(defaults);
+        defaults.events = this.$.extend(viewObj.options.events, defaults.events);
+        this.views.set(alias, viewObj);
+        $el[defaults.inset](viewObj.render());
+        if (defaults.events) {
+            var eventSplitter = /\s+/;
+            var loop = function(key) {
+                var callback = viewObj[defaults.events[key]];
+                if (eventSplitter.test(key)) {
+                    var nameArr = key.split(eventSplitter);
+                    if ($el.find(nameArr[1]).length) {
+                        key = nameArr[0];
+                        $el = $el.find(nameArr[1]);
+                    } else {
+                        return;
+                    }
                 }
-            }
-            $el.off(key).on(key, function(event, a, b, c) {
-                if (typeof callback == "function") {
-                    callback(event, a, b, c);
-                }
-            });
-        };
-        for (var key in defaults.events) loop(key);
+                $el.off(key).on(key, function(event, a, b, c) {
+                    if (typeof callback == "function") {
+                        callback(event, a, b, c);
+                    }
+                });
+            };
+            for (var key in defaults.events) loop(key);
+        }
+    } else {
+        viewObj = this.views.get(alias);
+        $el[defaults.inset](viewObj.render());
     }
-    this.views.set($el, viewObj);
     if (defaults.items.length) {
         defaults.items.forEach(function(item, i) {
             that.create(item);

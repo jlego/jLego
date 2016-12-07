@@ -22,7 +22,7 @@ class HomeView extends BaseView {
 
         data.forEach((model, i) => {
             subDom.push(HBY.h('a#' + that.options.id + i, {
-                href: 'javascript:;',
+                href: '#/home',
                 style: {
                     display: 'block'
                 }

@@ -12,6 +12,7 @@ class HomeRouter {
     }
     home() {
         HBY.create({
+            alias: 'home_1',
             view: listView,
             id: 20,
             data: [
@@ -19,6 +20,7 @@ class HomeRouter {
                 { first: 'test', last: 'bbbb' },
             ],
             items: [{
+                alias: 'home_1_0',
                 el: '#home',
                 view: homeView,
                 id: 30,
@@ -27,6 +29,7 @@ class HomeRouter {
                     { first: 'test2', last: 'bbbb2' },
                 ]
             }, {
+                alias: 'home_1_1',
                 el: '#test',
                 view: homeView,
                 id: 40,
@@ -36,20 +39,21 @@ class HomeRouter {
                 ]
             }]
         });
-        let data = HBY.getData('test').data;
-        data[0].mm = 'only you';
-        console.warn(data);
+        // let data = HBY.getData('test').data;
+        // data[0].mm = 'only you';
+        // console.warn(data);
         // new homeView({ id: 20 });
     }
     list() {
         dataList.api(['test', 'ok'], (resp) => {
             let data = HBY.getData('test').data;
             HBY.create({
+                alias: 'list_1',
                 view: listView,
                 id: 20,
                 data: data
             });
-            console.warn('dddddddddddddd', resp, HBY.getData('ok'));
+            // console.warn('dddddddddddddd', resp, HBY.getData('ok'));
         });
     }
     detail(id) {

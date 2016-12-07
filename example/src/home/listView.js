@@ -8,15 +8,6 @@ class ListView extends BaseView {
         super(options);
     }
     render() {
-
-        var object = { foo: null };
-        Object.observe(object, function(changes) {
-            console.log("Changes: ", changes);
-        });
-
-        object.foo = "bar";
-        object.foo = null;
-        
         let data = this.options.data || [],
             subDom = [];
 
@@ -32,7 +23,7 @@ class ListView extends BaseView {
     	return HBY.createElement(rootNode);
     }
     theClick(event){
-        console.warn('eeeeeeeeeeeeee');
+        console.warn('66666666666');
     }
 }
 export default ListView;

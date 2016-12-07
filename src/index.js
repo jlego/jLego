@@ -40,7 +40,7 @@ class Lego {
         }
         this.BaseEvent = Events;
         this.Eventer = new Events(); //全局事件对象
-        this.views = new WeakMap(); //视图实例容器
+        this.views = new Map(); //视图实例容器
         this.permis = {};   //权限对象
         this.datas = {};    //数据持久化容器
         this.Router = Router({}).init();
@@ -55,6 +55,7 @@ class Lego {
     create(options = {}){
         let that = this,
             defaults = {
+                alias: '',  //视图别名, 用来标识区分视图
                 el: this.config.pageEl, //视图容器选择符
                 inset: 'html',
                 config: {}, //视图参数
@@ -71,7 +72,7 @@ class Lego {
         Object.assign(defaults, options);
         defaults.data = options.data || null;
         if (!defaults.el) return;
-        let theKey = Symbol(defaults.el),
+        let alias = defaults.alias || Symbol(),
             el = defaults.el,
             onBefore = defaults.onBefore.bind(this),
             onAfter = defaults.onAfter.bind(this),
@@ -94,37 +95,36 @@ class Lego {
         typeof onBefore === 'function' && onBefore();
 
         //渲染视图
-        const viewObj = new defaults.view(defaults);
-        $el[defaults.inset](viewObj.render());
-        defaults.events = this.$.extend(viewObj.options.events, defaults.events);
-        // 绑定事件
-        if (defaults.events && !this.views.get($el)) {
-            const eventSplitter = /\s+/;
-            for(let key in defaults.events) {
-                const callback = viewObj[defaults.events[key]];
-                if (eventSplitter.test(key)) {
-                    const nameArr = key.split(eventSplitter);
-                    if ($el.find(nameArr[1]).length) {
-                        key = nameArr[0];
-                        $el = $el.find(nameArr[1]);
-                    }else{
-                        continue;
+        let viewObj;
+        if(!this.views.get(alias)){
+            viewObj = new defaults.view(defaults);
+            defaults.events = this.$.extend(viewObj.options.events, defaults.events);
+            this.views.set(alias, viewObj);
+            $el[defaults.inset](viewObj.render());
+            // 绑定事件
+            if (defaults.events) {
+                const eventSplitter = /\s+/;
+                for(let key in defaults.events) {
+                    const callback = viewObj[defaults.events[key]];
+                    if (eventSplitter.test(key)) {
+                        const nameArr = key.split(eventSplitter);
+                        if ($el.find(nameArr[1]).length) {
+                            key = nameArr[0];
+                            $el = $el.find(nameArr[1]);
+                        }else{
+                            continue;
+                        }
                     }
-                }
-                $el.off(key).on(key, function(event, a, b, c) {
-                    if (typeof callback == 'function') callback(event, a, b, c);
-                });
-            };
+                    $el.off(key).on(key, function(event, a, b, c) {
+                        if (typeof callback == 'function') callback(event, a, b, c);
+                    });
+                };
+            }
+        }else{
+            viewObj = this.views.get(alias);
+            $el[defaults.inset](viewObj.render());
         }
-        // 是否渲染滚动条
-        // if (defaults.scrollbar) {
-        //     if (!$el.css('position')) $el.css('position', 'relative');
-        //     $el.perfectScrollbar(defaults.scrollbar);
-        //     $el.off("mousemove.ps").on("mousemove.ps", function() {
-        //         $(this).perfectScrollbar('update');
-        //     });
-        // }
-        this.views.set($el, viewObj);
+
         // 渲染子视图
         if(defaults.items.length) {
             defaults.items.forEach(function(item, i){

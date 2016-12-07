@@ -10,14 +10,13 @@ class View extends Events {
     constructor(options = {}) {
         let defaults = {
             el: '',
-            tagName: '',
+            tagName: 'div',
             events: {},
             permis: {},
             animate: null,
             config: {},
             scrollbar: false,
-            items: [],
-            data: null
+            items: []
         };
         this.options = Lego.$.extend(true, defaults, options);
         this.options.data = options.data || null;
@@ -36,6 +35,14 @@ class View extends Events {
         //     console.warn(opts);
         // });
         // this.emit('data_update', {aa: 1});
+        // 是否渲染滚动条
+        // if (defaults.scrollbar) {
+        //     if (!$el.css('position')) $el.css('position', 'relative');
+        //     $el.perfectScrollbar(defaults.scrollbar);
+        //     $el.off("mousemove.ps").on("mousemove.ps", function() {
+        //         $(this).perfectScrollbar('update');
+        //     });
+        // }
     }
     /**
      * render 渲染视图
