@@ -2,7 +2,7 @@ import BaseData from '../../../dist/data';
 
 class ListData extends BaseData {
     constructor(options = {}) {
-        let api = {
+        const api = {
             'test': {
                 url: './content.json',
                 listTarget: 'data',

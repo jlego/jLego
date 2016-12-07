@@ -10,7 +10,7 @@ import regenerator from 'rollup-plugin-regenerator';
 // import { minify } from 'uglify-js';
 // import istanbul from 'rollup-plugin-istanbul';
 // import flow from 'rollup-plugin-flow-no-whitespace';
-// import cjs from 'rollup-plugin-commonjs';
+// import commonjs from 'rollup-plugin-commonjs';
 // import node from 'rollup-plugin-node-resolve';
 
 let pkg = require('../package.json');

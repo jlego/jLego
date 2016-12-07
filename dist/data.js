@@ -1,5 +1,5 @@
 /**
- * lego.js v0.0.6
+ * data.js v0.0.6
  * (c) 2016 Evan You
  * @license MIT
  */

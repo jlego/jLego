@@ -207,7 +207,7 @@
 /***/ function(module, exports) {
 
 	/**
-	 * lego.js v0.0.6
+	 * view.js v0.0.6
 	 * (c) 2016 Evan You
 	 * @license MIT
 	 */
@@ -1024,7 +1024,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global, module, process) {/**
-	 * lego.js v0.0.6
+	 * data.js v0.0.6
 	 * (c) 2016 Evan You
 	 * @license MIT
 	 */
