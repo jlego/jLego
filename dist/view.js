@@ -18,23 +18,25 @@ var View = function(Events$$1) {
         if (options === void 0) options = {};
         var defaults = {
             el: "",
-            tagName: "",
+            tagName: "div",
             events: {},
+            listen: null,
             permis: {},
             animate: null,
             config: {},
             scrollbar: false,
-            items: [],
-            data: null
+            items: []
         };
         this.options = Lego.$.extend(true, defaults, options);
         this.options.data = options.data || null;
         var el = defaults.el;
-        var $el = el instanceof Lego.$ ? el : Lego.$(el);
+        this.$el = el instanceof Lego.$ ? el : Lego.$(el);
         Events$$1.call(this);
         if (this.options.data) {
             Object.observe(this.options.data, function(changes) {
-                console.log(changes);
+                changes.forEach(function(change, i) {
+                    console.log(change);
+                });
             });
         }
     }
@@ -44,9 +46,15 @@ var View = function(Events$$1) {
     View.prototype.render = function render() {
         return null;
     };
-    View.prototype.destory = function destory() {
+    View.prototype.remove = function remove() {
         this.removeAllListeners();
-        $el.off().remove();
+        if (this.options.listen) {
+            for (var key in this.options.listen) {
+                Lego.Eventer.removeListener(key, options.listen[key]);
+                Lego.Eventer.on(key, options.listen[key]);
+            }
+        }
+        this.$el.off().remove();
     };
     return View;
 }(Events);

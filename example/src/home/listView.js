@@ -5,6 +5,11 @@ class ListView extends BaseView {
         options.events = {
             'click #test': 'theClick'
         };
+        options.listen = {
+            'data_update': (opts) => {
+                console.warn('pppppppppp', opts);
+            }
+        };
         super(options);
     }
     render() {

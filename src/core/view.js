@@ -12,6 +12,7 @@ class View extends Events {
             el: '',
             tagName: 'div',
             events: {},
+            listen: null,
             permis: {},
             animate: null,
             config: {},
@@ -21,20 +22,18 @@ class View extends Events {
         this.options = Lego.$.extend(true, defaults, options);
         this.options.data = options.data || null;
         const el = defaults.el;
-        let $el = el instanceof Lego.$ ? el : Lego.$(el);
+        this.$el = el instanceof Lego.$ ? el : Lego.$(el);
         super();
         // 监听数据变化
         if(this.options.data){
             Object.observe(this.options.data, (changes) =>{
-                console.log(changes);
+                changes.forEach(function(change, i){
+                    console.log(change);
+                });
                 // let patches = diff(leftNode, rightNode);
                 // patch(rootNode, patches);
             });
         }
-        // this.on('data_update', (opts) => {
-        //     console.warn(opts);
-        // });
-        // this.emit('data_update', {aa: 1});
         // 是否渲染滚动条
         // if (defaults.scrollbar) {
         //     if (!$el.css('position')) $el.css('position', 'relative');
@@ -52,13 +51,19 @@ class View extends Events {
         return null;
     }
     /**
-     * [destory 销毁视图]
+     * [remove 销毁视图]
      * @return {[type]} [description]
      */
-    destory(){
+    remove(){
         // 清理全部事件监听
         this.removeAllListeners();
-        $el.off().remove();
+        if(this.options.listen){
+            for(let key in this.options.listen) {
+                Lego.Eventer.removeListener(key, options.listen[key]);
+                Lego.Eventer.on(key, options.listen[key]);
+            }
+        }
+        this.$el.off().remove();
     }
 }
 export default View;

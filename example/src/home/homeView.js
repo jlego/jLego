@@ -3,7 +3,7 @@ import BaseView from '../../../dist/view';
 class HomeView extends BaseView {
     constructor(options = {}) {
         options.events = {
-            'click #test': 'theClick'
+            'click #400': 'theClick'
         };
         super(options);
     }
@@ -32,7 +32,9 @@ class HomeView extends BaseView {
     	return HBY.createElement(rootNode);
     }
     theClick(event){
-    	console.warn('ooooooooooo');
+        event.stopPropagation();
+        HBY.trigger('data_update', {aa: 1});
+        return
     }
 }
 export default HomeView;

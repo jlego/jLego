@@ -10,7 +10,8 @@ class ListData extends BaseData {
                     first: '',
                     last: '',
                     id: 0
-                }
+                },
+                // reset: true
             },
             'ok': {
                 url: './content.json'
@@ -18,6 +19,9 @@ class ListData extends BaseData {
         };
         HBY.$.extend(true, api, options);
         super(api);
+    }
+    parse(data){
+        return data;
     }
 }
 export default new ListData();

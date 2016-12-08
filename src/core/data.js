@@ -16,12 +16,12 @@ class Data {
     constructor(options = {}) {
         this.datas = Lego.getData();
         for(let key in options){
-            if(this.datas.has(key)){
+            if(this.datas.get(key)){
                 this.datas.set(key, Lego.$.extend(true, this.datas.get(key) || {}, options[key]));
             }else{
                 this.datas.set(key, options[key]);
             }
-            this.datas.get(key).data = this.datas.get(key).data || null;
+            this.datas.get(key).data = this.datas.get(key).data || {};
         }
     }
     /**
@@ -64,9 +64,9 @@ class Data {
             // 并发读取远程URL
             let promisesArr = apiNameArr.map(async apiName => {
                 let option = that.datas.get(apiName) || {};
-                if(option.data && !option.reset){
+                if(!Lego.$.isEmptyObject(option.data) && !option.reset){
                     return await option.data;
-                }else if(that.datas.has(apiName) && option.url && (!option.data || option.reset)){
+                }else if(that.datas.has(apiName) && option.url && (Lego.$.isEmptyObject(option.data) || option.reset)){
                     let req = new Request( option.url, {
                         method: option.method || "GET",
                         headers: option.headers || 'none',

@@ -55,19 +55,22 @@ var Lego = function Lego(options) {
         debug.error("请先设置参数$");
         return;
     }
+    this.currentApp = "index";
     this.BaseEvent = Events;
     this.Eventer = new Events();
-    this.views = new Map();
+    this.views = {};
     this.permis = {};
     this.datas = {};
     this.Router = director.Router({}).init();
     window[this.config.alias] = window.Lego = this;
+    this.startApp(this.currentApp);
     return this;
 };
 
-Lego.prototype.create = function create(options) {
-    if (options === void 0) options = {};
-    var that = this, defaults = {
+Lego.prototype.create = function create(opts) {
+    var this$1 = this;
+    if (opts === void 0) opts = {};
+    var that = this, options = {
         alias: "",
         el: this.config.pageEl,
         inset: "html",
@@ -76,20 +79,21 @@ Lego.prototype.create = function create(options) {
         view: null,
         animate: undefined,
         events: null,
+        listen: null,
         items: [],
         onBefore: function onBefore$1() {},
         onAfter: function onAfter$1() {},
         onAnimateBefore: function onAnimateBefore$1() {},
         onAnimateAfter: function onAnimateAfter$1() {}
     };
-    Object.assign(defaults, options);
-    defaults.data = options.data || null;
-    if (!defaults.el) {
+    Object.assign(options, opts);
+    options.data = opts.data || null;
+    if (!options.el) {
         return;
     }
-    var alias = defaults.alias || Symbol(), el = defaults.el, onBefore = defaults.onBefore.bind(this), onAfter = defaults.onAfter.bind(this), onAnimateBefore = defaults.onAnimateBefore.bind(this), onAnimateAfter = defaults.onAnimateAfter.bind(this), $el = el instanceof this.$ ? el : that.$(el);
-    if (defaults.permis) {
-        var module = defaults.permis.module, operate = defaults.permis.operate, hide = defaults.permis.hide, userId = defaults.permis.userid || 0;
+    var alias = options.alias || Symbol(), el = options.el, onBefore = options.onBefore.bind(this), onAfter = options.onAfter.bind(this), onAnimateBefore = options.onAnimateBefore.bind(this), onAnimateAfter = options.onAnimateAfter.bind(this), $el = el instanceof this.$ ? el : that.$(el);
+    if (options.permis) {
+        var module = options.permis.module, operate = options.permis.operate, hide = options.permis.hide, userId = options.permis.userid || 0;
         if (hide) {
             if (!this.permis.check(module, operate, userId)) {
                 return;
@@ -98,38 +102,50 @@ Lego.prototype.create = function create(options) {
     }
     typeof onBefore === "function" && onBefore();
     var viewObj;
-    if (!this.views.get(alias)) {
-        viewObj = new defaults.view(defaults);
-        defaults.events = this.$.extend(viewObj.options.events, defaults.events);
-        this.views.set(alias, viewObj);
-        $el[defaults.inset](viewObj.render());
-        if (defaults.events) {
-            var eventSplitter = /\s+/;
-            var loop = function(key) {
-                var callback = viewObj[defaults.events[key]];
-                if (eventSplitter.test(key)) {
-                    var nameArr = key.split(eventSplitter);
-                    if ($el.find(nameArr[1]).length) {
-                        key = nameArr[0];
-                        $el = $el.find(nameArr[1]);
-                    } else {
-                        return;
-                    }
-                }
-                $el.off(key).on(key, function(event, a, b, c) {
-                    if (typeof callback == "function") {
-                        callback(event, a, b, c);
-                    }
-                });
-            };
-            for (var key in defaults.events) loop(key);
-        }
+    if (!this.getView(alias)) {
+        viewObj = new options.view(options);
+        this.views[this.currentApp].set(alias, viewObj);
     } else {
-        viewObj = this.views.get(alias);
-        $el[defaults.inset](viewObj.render());
+        viewObj = this.getView(alias);
     }
-    if (defaults.items.length) {
-        defaults.items.forEach(function(item, i) {
+    $el[options.inset](viewObj.render());
+    options.events = this.$.extend(viewObj.options.events, options.events);
+    if (options.events) {
+        var eventSplitter = /\s+/;
+        var loop = function(key) {
+            var callback = viewObj[options.events[key]];
+            var _els = void 0;
+            if (eventSplitter.test(key)) {
+                var nameArr = key.split(eventSplitter);
+                var selectorStr = nameArr.slice(1).join(" ");
+                _els = $el.find(selectorStr);
+                if (_els.length) {
+                    key = nameArr[0];
+                } else {
+                    return;
+                }
+            }
+            if (_els.length) {
+                _els.each(function(index, el) {
+                    $(el).off(key).on(key, function(event, a, b, c) {
+                        if (typeof callback == "function") {
+                            callback(event, a, b, c);
+                        }
+                    });
+                });
+            }
+        };
+        for (var key in options.events) loop(key);
+    }
+    options.listen = this.$.extend(viewObj.options.listen, options.listen);
+    if (options.listen) {
+        for (var key$1 in options.listen) {
+            this$1.Eventer.removeListener(key$1, options.listen[key$1]);
+            this$1.Eventer.on(key$1, options.listen[key$1]);
+        }
+    }
+    if (options.items.length) {
+        options.items.forEach(function(item, i) {
             that.create(item);
         });
     }
@@ -157,19 +173,23 @@ Lego.prototype._debugger = function _debugger() {
     }
 };
 
-Lego.prototype.loadApp = function loadApp(appPath, option) {
-    if (option === void 0) option = {};
-    var defaults = {
-        onBefore: function() {},
-        onAfter: function() {}
-    }, that = this, appName, index, currentApp;
-    Object.assign(defaults, option);
-    appPath = appPath || currentApp || this.config.defaultApp;
-    index = appPath.indexOf("/");
-    appName = index >= 0 ? appPath.substr(0, index) || appPath.substr(1, index) : appPath;
+Lego.prototype.startApp = function startApp(appPath, opts) {
+    if (opts === void 0) opts = {};
+    var options = {
+        onBefore: function onBefore() {},
+        onAfter: function onAfter() {}
+    }, that = this, appName, index;
+    Object.assign(options, opts);
+    var hash = window.location.hash.replace(/#/, "") || this.Router.getRoute()[0];
+    var newHash = hash.indexOf("/") == 0 ? hash.replace(/\//, "") : "";
+    newHash = newHash !== "index" ? newHash : "";
+    appPath = appPath || newHash || this.config.defaultApp;
+    appName = appPath.indexOf("/") > 0 ? appPath.split("/")[0] : appPath;
+    this.currentApp = appName;
+    this.views[appName] = this.views[appName] || new Map();
     this.datas[appName] = this.datas[appName] || new Map();
-    if (typeof defaults.onBefore == "function") {
-        defaults.onBefore();
+    if (typeof options.onBefore == "function") {
+        options.onBefore();
     }
     this.$(this.config.pageEl).scrollTop(0);
     this.$.ajax({
@@ -179,15 +199,17 @@ Lego.prototype.loadApp = function loadApp(appPath, option) {
         crossDomain: true,
         cache: true,
         success: function(e) {
-            that.Router = director.Router(that["app"]).init();
-            that.Router.setRoute(appPath);
-            if (typeof defaults.onAfter == "function") {
-                defaults.onAfter(e);
+            if (appPath && appPath !== "index") {
+                that.Router = director.Router(that["app"]).init();
+                that.Router.setRoute(appPath);
+            }
+            if (typeof options.onAfter == "function") {
+                options.onAfter(e);
             }
             that["app"] = null;
         },
         error: function(e) {
-            debug.warn("加载应用模块失败");
+            debug.error("Failed to load application module!");
         }
     });
 };
@@ -198,9 +220,6 @@ Lego.prototype.getUrlParam = function getUrlParam(name) {
         return window.pageParams[name];
     }
     var url = decodeURI(document.location.search);
-    if (url.indexOf("||") >= 0) {
-        url = url.replace(/\|\|/g, "//");
-    }
     if (url.indexOf("?") >= 0) {
         var paramArr = url.substr(1).split("&"), valArr = [];
         for (var i = 0; i < paramArr.length; i++) {
@@ -213,22 +232,34 @@ Lego.prototype.getUrlParam = function getUrlParam(name) {
     }
 };
 
-Lego.prototype.currentApp = function currentApp() {
-    var hash = window.location.hash.replace(/#/, "");
-    if (hash.indexOf("/") == 0) {
-        hash = hash.replace(/\//, "");
-    }
-    var hashArr = hash.split("/");
-    return hashArr[0];
+Lego.prototype.trigger = function trigger(event, data) {
+    this.Eventer.emit(event, data);
+};
+
+Lego.prototype.getAppName = function getAppName() {
+    var appName = this.Router.getRoute()[0] !== "index" ? this.Router.getRoute()[0] : "";
+    return appName || this.config.defaultApp;
 };
 
 Lego.prototype.getData = function getData(apiName, appName) {
-    if (appName === void 0) appName = this.currentApp();
+    if (appName === void 0) appName = this.getAppName();
     if (apiName) {
-        return this.datas[appName].get(apiName).data;
+        return this.datas[appName].get(apiName) ? this.datas[appName].get(apiName).data : {};
     } else {
         return this.datas[appName];
     }
+};
+
+Lego.prototype.getView = function getView(alias, appName) {
+    if (appName === void 0) appName = this.getAppName();
+    if (this.views[appName]) {
+        if (alias) {
+            return this.views[appName].get(alias) ? this.views[appName].get(alias) : null;
+        } else {
+            return this.views[appName];
+        }
+    }
+    return null;
 };
 
 module.exports = Lego;

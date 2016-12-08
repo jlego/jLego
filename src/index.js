@@ -38,13 +38,15 @@ class Lego {
             debug.error('请先设置参数$');
             return;
         }
+        this.currentApp = 'index'; //当前应用名称
         this.BaseEvent = Events;
         this.Eventer = new Events(); //全局事件对象
-        this.views = new Map(); //视图实例容器
+        this.views = {}; //视图实例容器
         this.permis = {};   //权限对象
         this.datas = {};    //数据持久化容器
         this.Router = Router({}).init();
         window[this.config.alias] = window.Lego = this;
+        this.startApp(this.currentApp);
         return this;
     }
     /**
@@ -52,9 +54,9 @@ class Lego {
      * @param  {Object} option [description]
      * @return {[type]}        [description]
      */
-    create(options = {}){
+    create(opts = {}){
         let that = this,
-            defaults = {
+            options = {
                 alias: '',  //视图别名, 用来标识区分视图
                 el: this.config.pageEl, //视图容器选择符
                 inset: 'html',
@@ -63,29 +65,30 @@ class Lego {
                 view: null, //视图类
                 animate: undefined, //动画效果
                 events: null, //事件列表对象
+                listen: null, //监听全局事件
                 items: [],
                 onBefore() {}, //视图开始前回调
                 onAfter() {}, //视图执行后回调
                 onAnimateBefore() {}, //动画前回调
                 onAnimateAfter() {}, //动画后回调
             };
-        Object.assign(defaults, options);
-        defaults.data = options.data || null;
-        if (!defaults.el) return;
-        let alias = defaults.alias || Symbol(),
-            el = defaults.el,
-            onBefore = defaults.onBefore.bind(this),
-            onAfter = defaults.onAfter.bind(this),
-            onAnimateBefore = defaults.onAnimateBefore.bind(this),
-            onAnimateAfter = defaults.onAnimateAfter.bind(this),
+        Object.assign(options, opts);
+        options.data = opts.data || null;
+        if (!options.el) return;
+        let alias = options.alias || Symbol(),
+            el = options.el,
+            onBefore = options.onBefore.bind(this),
+            onAfter = options.onAfter.bind(this),
+            onAnimateBefore = options.onAnimateBefore.bind(this),
+            onAnimateAfter = options.onAnimateAfter.bind(this),
             $el = el instanceof this.$ ? el : that.$(el);
 
         // 操作权限
-        if (defaults.permis) {
-            let module = defaults.permis.module,
-                operate = defaults.permis.operate,
-                hide = defaults.permis.hide,
-                userId = defaults.permis.userid || 0;
+        if (options.permis) {
+            let module = options.permis.module,
+                operate = options.permis.operate,
+                hide = options.permis.hide,
+                userId = options.permis.userid || 0;
             if (hide) {
                 if (!this.permis.check(module, operate, userId)) {
                     return;
@@ -96,38 +99,50 @@ class Lego {
 
         //渲染视图
         let viewObj;
-        if(!this.views.get(alias)){
-            viewObj = new defaults.view(defaults);
-            defaults.events = this.$.extend(viewObj.options.events, defaults.events);
-            this.views.set(alias, viewObj);
-            $el[defaults.inset](viewObj.render());
-            // 绑定事件
-            if (defaults.events) {
-                const eventSplitter = /\s+/;
-                for(let key in defaults.events) {
-                    const callback = viewObj[defaults.events[key]];
-                    if (eventSplitter.test(key)) {
-                        const nameArr = key.split(eventSplitter);
-                        if ($el.find(nameArr[1]).length) {
-                            key = nameArr[0];
-                            $el = $el.find(nameArr[1]);
-                        }else{
-                            continue;
-                        }
-                    }
-                    $el.off(key).on(key, function(event, a, b, c) {
-                        if (typeof callback == 'function') callback(event, a, b, c);
-                    });
-                };
-            }
+        if(!this.getView(alias)){
+            viewObj = new options.view(options);
+            this.views[this.currentApp].set(alias, viewObj);
         }else{
-            viewObj = this.views.get(alias);
-            $el[defaults.inset](viewObj.render());
+            viewObj = this.getView(alias);
+        }
+        $el[options.inset](viewObj.render());
+        options.events = this.$.extend(viewObj.options.events, options.events);
+        // 绑定事件
+        if (options.events) {
+            const eventSplitter = /\s+/;
+            for(let key in options.events) {
+                const callback = viewObj[options.events[key]];
+                let _els;
+                if (eventSplitter.test(key)) {
+                    const nameArr = key.split(eventSplitter);
+                    const selectorStr = nameArr.slice(1).join(' ');
+                    _els = $el.find(selectorStr);
+                    if (_els.length) {
+                        key = nameArr[0];
+                    }else{
+                        continue;
+                    }
+                }
+                if(_els.length){
+                    _els.each((index, el) => {
+                        $(el).off(key).on(key, (event, a, b, c) => {
+                            if (typeof callback == 'function') callback(event, a, b, c);
+                        });
+                    });
+                }
+            };
+        }
+        options.listen = this.$.extend(viewObj.options.listen, options.listen);
+        if(options.listen){
+            for(let key in options.listen) {
+                this.Eventer.removeListener(key, options.listen[key]);
+                this.Eventer.on(key, options.listen[key]);
+            }
         }
 
         // 渲染子视图
-        if(defaults.items.length) {
-            defaults.items.forEach(function(item, i){
+        if(options.items.length) {
+            options.items.forEach(function(item, i){
                 that.create(item);
             });
         }
@@ -157,21 +172,25 @@ class Lego {
         }
     }
     /**
-     * loadApp 应用加载器
-     * @param  {object} option 参数
+     * startApp 应用加载器
+     * @param  {object} opts 参数
      * @return {[type]}        [description]
      */
-    loadApp(appPath, option = {}) {
-        let defaults = {
-            onBefore: function() {},
-            onAfter: function() {}
-        }, that = this, appName, index, currentApp;
-        Object.assign(defaults, option);
-        appPath = appPath || currentApp || this.config.defaultApp;
-        index = appPath.indexOf('/');
-        appName = index >= 0 ? (appPath.substr(0, index) || appPath.substr(1, index)) : appPath;
+    startApp(appPath, opts = {}) {
+        let options = {
+            onBefore() {},
+            onAfter() {}
+        }, that = this, appName, index;
+        Object.assign(options, opts);
+        const hash = window.location.hash.replace(/#/, '') || this.Router.getRoute()[0];
+        let newHash = hash.indexOf('/') == 0 ? hash.replace(/\//, '') : '';
+        newHash = newHash !== 'index' ? newHash : '';
+        appPath = appPath || newHash || this.config.defaultApp;
+        appName = appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath;
+        this.currentApp = appName;
+        this.views[appName] = this.views[appName] || new Map();
         this.datas[appName] = this.datas[appName] || new Map();
-        if (typeof defaults.onBefore == 'function') defaults.onBefore();
+        if (typeof options.onBefore == 'function') options.onBefore();
         this.$(this.config.pageEl).scrollTop(0);
         this.$.ajax({
             type: "GET",
@@ -180,13 +199,15 @@ class Lego {
             crossDomain: true,
             cache: true,
             success: function(e) {
-                that.Router = Router(that['app']).init();
-                that.Router.setRoute(appPath);
-                if (typeof defaults.onAfter == 'function') defaults.onAfter(e);
+                if(appPath && appPath !== 'index'){
+                    that.Router = Router(that['app']).init();
+                    that.Router.setRoute(appPath);
+                }
+                if (typeof options.onAfter == 'function') options.onAfter(e);
                 that['app'] = null;
             },
             error: function(e) {
-                debug.warn('加载应用模块失败');
+                debug.error('Failed to load application module!');
             }
         });
     }
@@ -199,7 +220,6 @@ class Lego {
         window.pageParams = {};
         if (window.pageParams[name]) return window.pageParams[name];
         let url = decodeURI(document.location.search);
-        if (url.indexOf('||') >= 0) url = url.replace(/\|\|/g, '//');
         if (url.indexOf('?') >= 0) {
             let paramArr = url.substr(1).split('&'),
                 valArr = [];
@@ -213,25 +233,48 @@ class Lego {
         }
     }
     /**
-     * currentApp 当前模块
+     * [trigger 触发事件]
+     * @param  {[type]} event [description]
+     * @param  {[type]} data  [description]
+     * @return {[type]}       [description]
+     */
+    trigger(event, data){
+        this.Eventer.emit(event, data);
+    }
+    /**
+     * getAppName 当前模块名称
      * @return {[type]} [description]
      */
-    currentApp() {
-        let hash = window.location.hash.replace(/#/, '');
-        if(hash.indexOf('/') == 0) hash = hash.replace(/\//, '');
-        let hashArr = hash.split('/');
-        return hashArr[0];
+    getAppName() {
+        const appName = this.Router.getRoute()[0] !== 'index' ? this.Router.getRoute()[0] : '';
+        return appName || this.config.defaultApp;
     }
     /**
      * [getData 取应用数据]
      * @return {[type]} [description]
      */
-    getData(apiName, appName = this.currentApp()) {
+    getData(apiName, appName = this.getAppName()) {
         if(apiName){
-            return this.datas[appName].get(apiName).data;
+            return this.datas[appName].get(apiName) ? this.datas[appName].get(apiName).data : {};
         }else{
             return this.datas[appName];
         }
+    }
+    /**
+     * [getView 取应用视图]
+     * @param  {[type]} alias   [description]
+     * @param  {[type]} appName [description]
+     * @return {[type]}         [description]
+     */
+    getView(alias, appName = this.getAppName()){
+        if(this.views[appName]){
+            if(alias){
+                return this.views[appName].get(alias) ? this.views[appName].get(alias) : null;
+            }else{
+                return this.views[appName];
+            }
+        }
+        return null;
     }
 }
 

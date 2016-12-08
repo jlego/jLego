@@ -8,4 +8,4 @@ new Lego({
     pageEl: '#content', //页面渲染容器
     defaultApp: 'home', //默认应用
     rootUri: '/example/dist/', //根目录
-}).loadApp();
+});

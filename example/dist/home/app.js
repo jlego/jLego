@@ -161,7 +161,7 @@
 	        _classCallCheck(this, HomeView);
 
 	        options.events = {
-	            'click #test': 'theClick'
+	            'click #400': 'theClick'
 	        };
 	        return _possibleConstructorReturn(this, (HomeView.__proto__ || Object.getPrototypeOf(HomeView)).call(this, options));
 	    }
@@ -195,7 +195,9 @@
 	    }, {
 	        key: 'theClick',
 	        value: function theClick(event) {
-	            console.warn('ooooooooooo');
+	            event.stopPropagation();
+	            HBY.trigger('data_update', { aa: 1 });
+	            return;
 	        }
 	    }]);
 
@@ -230,23 +232,25 @@
 	        if (options === void 0) options = {};
 	        var defaults = {
 	            el: "",
-	            tagName: "",
+	            tagName: "div",
 	            events: {},
+	            listen: null,
 	            permis: {},
 	            animate: null,
 	            config: {},
 	            scrollbar: false,
-	            items: [],
-	            data: null
+	            items: []
 	        };
 	        this.options = Lego.$.extend(true, defaults, options);
 	        this.options.data = options.data || null;
 	        var el = defaults.el;
-	        var $el = el instanceof Lego.$ ? el : Lego.$(el);
+	        this.$el = el instanceof Lego.$ ? el : Lego.$(el);
 	        Events$$1.call(this);
 	        if (this.options.data) {
 	            Object.observe(this.options.data, function (changes) {
-	                console.log(changes);
+	                changes.forEach(function (change, i) {
+	                    console.log(change);
+	                });
 	            });
 	        }
 	    }
@@ -256,9 +260,15 @@
 	    View.prototype.render = function render() {
 	        return null;
 	    };
-	    View.prototype.destory = function destory() {
+	    View.prototype.remove = function remove() {
 	        this.removeAllListeners();
-	        $el.off().remove();
+	        if (this.options.listen) {
+	            for (var key in this.options.listen) {
+	                Lego.Eventer.removeListener(key, options.listen[key]);
+	                Lego.Eventer.on(key, options.listen[key]);
+	            }
+	        }
+	        this.$el.off().remove();
 	    };
 	    return View;
 	}(Events);
@@ -1355,6 +1365,11 @@
 	        options.events = {
 	            'click #test': 'theClick'
 	        };
+	        options.listen = {
+	            'data_update': function data_update(opts) {
+	                console.warn('pppppppppp', opts);
+	            }
+	        };
 	        return _possibleConstructorReturn(this, (ListView.__proto__ || Object.getPrototypeOf(ListView)).call(this, options));
 	    }
 
@@ -1397,6 +1412,8 @@
 	    value: true
 	});
 
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 	var _data = __webpack_require__(7);
 
 	var _data2 = _interopRequireDefault(_data);
@@ -1434,6 +1451,13 @@
 	        HBY.$.extend(true, api, options);
 	        return _possibleConstructorReturn(this, (ListData.__proto__ || Object.getPrototypeOf(ListData)).call(this, api));
 	    }
+
+	    _createClass(ListData, [{
+	        key: 'parse',
+	        value: function parse(data) {
+	            return data;
+	        }
+	    }]);
 
 	    return ListData;
 	}(_data2.default);
@@ -1915,12 +1939,12 @@
 	    if (options === void 0) options = {};
 	    this.datas = Lego.getData();
 	    for (var key in options) {
-	        if (this$1.datas.has(key)) {
+	        if (this$1.datas.get(key)) {
 	            this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, options[key]));
 	        } else {
 	            this$1.datas.set(key, options[key]);
 	        }
-	        this$1.datas.get(key).data = this$1.datas.get(key).data || null;
+	        this$1.datas.get(key).data = this$1.datas.get(key).data || {};
 	    }
 	};
 
@@ -1966,7 +1990,7 @@
 	                                        switch (context$4$0.prev = context$4$0.next) {
 	                                            case 0:
 	                                                option = that.datas.get(apiName) || {};
-	                                                if (!(option.data && !option.reset)) {
+	                                                if (!(!Lego.$.isEmptyObject(option.data) && !option.reset)) {
 	                                                    context$4$0.next = 7;
 	                                                    break;
 	                                                }
@@ -1977,7 +2001,7 @@
 	                                                return context$4$0.abrupt("return", context$4$0.sent);
 
 	                                            case 7:
-	                                                if (!(that.datas.has(apiName) && option.url && (!option.data || option.reset))) {
+	                                                if (!(that.datas.has(apiName) && option.url && (Lego.$.isEmptyObject(option.data) || option.reset))) {
 	                                                    context$4$0.next = 13;
 	                                                    break;
 	                                                }

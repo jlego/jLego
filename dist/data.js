@@ -465,12 +465,12 @@ var Data = function Data(options) {
     if (options === void 0) options = {};
     this.datas = Lego.getData();
     for (var key in options) {
-        if (this$1.datas.has(key)) {
+        if (this$1.datas.get(key)) {
             this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, options[key]));
         } else {
             this$1.datas.set(key, options[key]);
         }
-        this$1.datas.get(key).data = this$1.datas.get(key).data || null;
+        this$1.datas.get(key).data = this$1.datas.get(key).data || {};
     }
 };
 
@@ -514,7 +514,7 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
                                     switch (context$4$0.prev = context$4$0.next) {
                                       case 0:
                                         option = that.datas.get(apiName) || {};
-                                        if (!(option.data && !option.reset)) {
+                                        if (!(!Lego.$.isEmptyObject(option.data) && !option.reset)) {
                                             context$4$0.next = 7;
                                             break;
                                         }
@@ -525,7 +525,7 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
                                         return context$4$0.abrupt("return", context$4$0.sent);
 
                                       case 7:
-                                        if (!(that.datas.has(apiName) && option.url && (!option.data || option.reset))) {
+                                        if (!(that.datas.has(apiName) && option.url && (Lego.$.isEmptyObject(option.data) || option.reset))) {
                                             context$4$0.next = 13;
                                             break;
                                         }
