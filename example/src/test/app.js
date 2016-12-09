@@ -13,4 +13,4 @@ class MyRouter {
         HBY.$(HBY.config.pageEl).html('hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id);
     }
 }
-HBY['app'] = new MyRouter();
+HBY.router = new MyRouter();

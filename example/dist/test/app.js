@@ -75,7 +75,7 @@
 	    return MyRouter;
 	}();
 
-	HBY['app'] = new MyRouter();
+	HBY.router = new MyRouter();
 
 /***/ }
 /******/ ]);

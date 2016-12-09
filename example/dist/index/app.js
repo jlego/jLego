@@ -81,7 +81,7 @@
 	    return MainRouter;
 	}();
 
-	HBY['app'] = new MainRouter();
+	HBY.router = new MainRouter();
 
 /***/ },
 /* 1 */,

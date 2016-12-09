@@ -10992,7 +10992,7 @@
 	        cache: true,
 	        success: function success(e) {
 	            if (appPath && appPath !== "index") {
-	                that.Router = director.Router(that["app"]).init();
+	                that.Router = director.Router(that["router"]).init();
 	                that.Router.setRoute(appPath);
 	            }
 	            that.currentApp = appName;

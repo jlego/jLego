@@ -58,4 +58,4 @@ class HomeRouter {
         console.warn('pppppppppp');
     }
 }
-HBY['app'] = new HomeRouter();
+HBY.router = new HomeRouter();

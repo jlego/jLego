@@ -178,7 +178,7 @@ Lego.prototype.startApp = function startApp(appPath, opts) {
         cache: true,
         success: function(e) {
             if (appPath && appPath !== "index") {
-                that.Router = director.Router(that["app"]).init();
+                that.Router = director.Router(that["router"]).init();
                 that.Router.setRoute(appPath);
             }
             that.currentApp = appName;

@@ -18,4 +18,4 @@ class MainRouter {
         HBY.startApp();
     }
 }
-HBY['app'] = new MainRouter();
+HBY.router = new MainRouter();

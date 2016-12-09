@@ -183,7 +183,7 @@ class Lego {
             cache: true,
             success: function(e) {
                 if(appPath && appPath !== 'index'){
-                    that.Router = Router(that['app']).init();
+                    that.Router = Router(that['router']).init();
                     that.Router.setRoute(appPath);
                 }
                 that.currentApp = appName;

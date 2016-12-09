@@ -124,7 +124,7 @@
 	    return HomeRouter;
 	}();
 
-	HBY['app'] = new HomeRouter();
+	HBY.router = new HomeRouter();
 
 /***/ },
 /* 1 */
