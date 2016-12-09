@@ -11,14 +11,6 @@ class HomeView extends BaseView {
         let data = this.options.data || [],
             that = this,
             subDom = [];
-        // const tmpl = addrs => `
-        //   <table>
-        //   ${addrs.map(addr => `
-        //     <tr><td><a href="#/home/read/3">${addr.first}</a></td></tr>
-        //     <tr><td><a href="#/test/2">${addr.last}_${this.options.id}</a></td></tr>
-        //   `).join('')}
-        //   </table>`;
-        // return tmpl(data);
 
         data.forEach((model, i) => {
             subDom.push(HBY.h('a#' + that.options.id + i, {
@@ -30,8 +22,6 @@ class HomeView extends BaseView {
         });
         let rootNode = HBY.h('div#uuu88', subDom);
         this.$el.html(HBY.createElement(rootNode));
-        console.warn(this.$el);
-        // return this;
     }
     theClick(event){
         event.stopPropagation();

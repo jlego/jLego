@@ -1,7 +1,8 @@
 import 'whatwg-fetch'
+import Events from "events";
 import Model from './model';
 
-class Data {
+class Data extends Events {
     /**
      * [constructor description]
      * @param  {Object} options [description]

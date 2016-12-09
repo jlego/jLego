@@ -27,8 +27,6 @@ class ListView extends BaseView {
         });
         let rootNode = HBY.h('div#uuu', subDom);
         this.$el.html(HBY.createElement(rootNode));
-        console.warn('ggggggggggg', this.$el);
-    	// return this;
     }
     theClick(event){
         console.warn('66666666666');

@@ -60,26 +60,27 @@ class Lego {
         let that = this,
             options = {
                 el: this.config.pageEl,
-                alias: '',  //视图别名, 用来标识区分视图
+                // alias: '',  //视图别名, 用来标识区分视图
                 config: {}, //视图参数
                 permis: null, //权限
                 view: null, //视图类
                 items: [],
-                context: this,
+                context: null,
+                events: null,
+                listen: null,
                 onBefore() {}, //视图开始前回调
                 onAfter() {}, //视图执行后回调
                 onAnimateBefore() {}, //动画前回调
                 onAnimateAfter() {} //动画后回调
             };
         Object.assign(options, opts);
-        let alias = options.alias || Symbol(),
+        let key = Symbol(),
             el = options.el,
             context = options.context,
             onBefore = options.onBefore.bind(this),
             onAfter = options.onAfter.bind(this),
             onAnimateBefore = options.onAnimateBefore.bind(this),
             onAnimateAfter = options.onAnimateAfter.bind(this);
-            // $el = el instanceof this.$ ? el : that.$(el);
 
         // 操作权限
         if (options.permis) {
@@ -97,32 +98,34 @@ class Lego {
 
         //渲染视图
         let viewObj;
-        if(!this.config.isMultiWindow && this.prevApp !== 'index'){
-            this.views[this.prevApp].forEach(function(value, key, map){
-                value.remove();
-            });
-            this.views[this.prevApp].clear();
-        }
-        if(!this.views[this.currentApp].has(alias)){
+        if(!this.views[this.currentApp].get(this.$(el)) && !this.config.isMultiWindow){
             viewObj = new options.view({
                 el: el,
                 context: context,
+                events: options.events,
+                listen: options.listen,
                 permis: options.permis,
                 config: options.config,
                 scrollbar: options.scrollbar,
                 items: options.items,
                 data: options.data
             });
-            this.views[this.currentApp].set(alias, viewObj);
+            this.views[this.currentApp].set(this.$(el), viewObj);
         }else{
-            viewObj = this.getView(alias);
+            viewObj = this.getView(this.$(el));
         }
         viewObj.render();
+        if(options.listen){
+            for(let key in options.listen) {
+                this.Eventer.removeListener(key);
+                this.Eventer.on(key, options.listen[key]);
+            }
+        }
 
         // 渲染子视图
         if(options.items.length) {
             options.items.forEach(function(item, i){
-                item.context = viewObj;
+                item.context = viewObj.$el;
                 that.create(item);
             });
         }
@@ -168,7 +171,7 @@ class Lego {
         appPath = appPath || newHash || this.config.defaultApp;
         appName = appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath;
         this.prevApp =this.currentApp;
-        this.views[appName] = this.views[appName] || new Map();
+        this.views[appName] = this.views[appName] || new WeakMap();
         this.datas[appName] = this.datas[appName] || new Map();
         if (typeof options.onBefore == 'function') options.onBefore();
         this.$(this.config.pageEl).scrollTop(0);
@@ -247,13 +250,12 @@ class Lego {
      * @param  {[type]} appName [description]
      * @return {[type]}         [description]
      */
-    getView(alias, appName = this.getAppName()){
-        this.views[appName] = this.views[appName] || new Map();
-        if(alias){
-            return this.views[appName].get(alias) ? this.views[appName].get(alias) : null;
-        }else{
-            return this.views[appName];
+    getView(el, appName = this.getAppName()){
+        el = el instanceof this.$ ? el : this.$(el);
+        if(el.length && this.views[appName].get(el)){
+            return this.views[appName].get(el);
         }
+        return null;
     }
 }
 

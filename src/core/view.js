@@ -12,9 +12,9 @@ class View extends Events {
         const that = this;
         let options = {
             el: '',
-            context: Lego,
+            context: null,
             tagName: 'div',
-            events: {},
+            events: null,
             listen: null,
             permis: {},
             animate: null,
@@ -23,52 +23,58 @@ class View extends Events {
             items: []
         };
         this.options = Lego.$.extend(true, options, opts);
-        this._setElement(options.el);
+        this._ensureElement();
         // 监听数据变化
         if(this.options.data){
             Object.observe(this.options.data, (changes) =>{
                 changes.forEach(function(change, i){
                     console.log(change);
-                    // that.render();
+                    that.render();
                 });
                 // let patches = diff(leftNode, rightNode);
                 // patch(rootNode, patches);
             });
         }
-        console.warn(this.options.context, this.$el);
-        // 绑定事件
-        this.$el.undelegate().off();
-        if (options.events) {
-            const eventSplitter = /\s+/;
-            for(let key in options.events) {
-                const callback = typeof options.events[key] == 'string' ? this[options.events[key]] : options.events[key];
-                let _els;
-                if (eventSplitter.test(key)) {
-                    const nameArr = key.split(eventSplitter);
-                    const selectorStr = nameArr.slice(1).join(' ');
-                    key = nameArr[0];
-                    if (typeof callback == 'function'){
-                        this.$el.delegate(selectorStr, key, callback);
-                    }
-                }else{
-                    if (typeof callback == 'function') this.$el.on(key, callback);
-                }
-            };
+    }
+    /**
+     * [setElement description]
+     * @param {[type]} element [description]
+     */
+    setElement(element) {
+        this.undelegateEvents();
+        this._setElement(element);
+        this.delegateEvents();
+        return this;
+    } 
+
+    delegateEvents() {
+        const events = this.options.events;
+        const delegateEventSplitter = /^(\S+)\s*(.*)$/;
+        if (!events) return this;
+        this.undelegateEvents();
+        for (let key in events) {
+            let method = events[key];
+            if (typeof method !== 'function') method = this[method];
+            if (!method) continue;
+            let match = key.match(delegateEventSplitter);
+            this.delegate(match[1], match[2], method.bind(this));
         }
-        if(options.listen){
-            for(let key in options.listen) {
-                Lego.Eventer.removeListener(key, options.listen[key]);
-                Lego.Eventer.on(key, options.listen[key]);
-            }
-        }
-        // 是否渲染滚动条
-        // if (defaults.scrollbar) {
-        //     if (!$el.css('position')) $el.css('position', 'relative');
-        //     $el.perfectScrollbar(defaults.scrollbar);
-        //     $el.off("mousemove.ps").on("mousemove.ps", function() {
-        //         $(this).perfectScrollbar('update');
-        //     });
-        // }
+        return this;
+    }
+
+    delegate(eventName, selector, listener) {
+        this.$el.on(eventName + '.delegateEvents' + this.options.alias, selector, listener);
+        return this;
+    }
+
+    undelegateEvents() {
+        if (this.$el) this.$el.off('.delegateEvents' + this.options.alias);
+        return this;
+    }
+
+    undelegate(eventName, selector, listener) {
+        this.$el.off(eventName + '.delegateEvents' + this.options.alias, selector, listener);
+        return this;
     }
     /**
      * [$ description]
@@ -76,22 +82,33 @@ class View extends Events {
      * @return {[type]}          [description]
      */
     $(selector) {
-      return this.$el.find(selector);
+        return this.$el.find(selector);
     }
     /**
      * [_setElement description]
      * @param {[type]} el [description]
      */
     _setElement(el){
-        this.$el = el instanceof Lego.$ ? el : this.options.context.$(el);
+        this.$el = el instanceof Lego.$ ? el : Lego.$(el);
         this.el = this.$el[0];
+    }
+    /**
+     * [_ensureElement description]
+     * @return {[type]} [description]
+     */
+    _ensureElement() {
+        if (!this.options.el) {
+            this.setElement(document.createElement(this.options.tagName));
+        } else {
+            this.setElement(this.options.el);
+        }
     }
     /**
      * render 渲染视图
      * @return {[type]} [description]
      */
     render() {
-        return null;
+        return this;
     }
     /**
      * [remove 销毁视图]
@@ -100,13 +117,7 @@ class View extends Events {
     remove(){
         // 清理全部事件监听
         this.removeAllListeners();
-        if(this.options.listen){
-            for(let key in this.options.listen) {
-                Lego.Eventer.removeListener(key, this.options.listen[key]);
-                Lego.Eventer.on(key, this.options.listen[key]);
-            }
-        }
-        this.$el.off().remove();
+        this.$el.remove();
     }
 }
 export default View;

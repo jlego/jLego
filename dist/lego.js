@@ -70,22 +70,24 @@ var Lego = function Lego(options) {
 };
 
 Lego.prototype.create = function create(opts) {
+    var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this, options = {
         el: this.config.pageEl,
-        alias: "",
         config: {},
         permis: null,
         view: null,
         items: [],
-        context: this,
+        context: null,
+        events: null,
+        listen: null,
         onBefore: function onBefore$1() {},
         onAfter: function onAfter$1() {},
         onAnimateBefore: function onAnimateBefore$1() {},
         onAnimateAfter: function onAnimateAfter$1() {}
     };
     Object.assign(options, opts);
-    var alias = options.alias || Symbol(), el = options.el, context = options.context, onBefore = options.onBefore.bind(this), onAfter = options.onAfter.bind(this), onAnimateBefore = options.onAnimateBefore.bind(this), onAnimateAfter = options.onAnimateAfter.bind(this);
+    var key = Symbol(), el = options.el, context = options.context, onBefore = options.onBefore.bind(this), onAfter = options.onAfter.bind(this), onAnimateBefore = options.onAnimateBefore.bind(this), onAnimateAfter = options.onAnimateAfter.bind(this);
     if (options.permis) {
         var module = options.permis.module, operate = options.permis.operate, hide = options.permis.hide, userId = options.permis.userid || 0;
         if (hide) {
@@ -96,30 +98,32 @@ Lego.prototype.create = function create(opts) {
     }
     typeof onBefore === "function" && onBefore();
     var viewObj;
-    if (!this.config.isMultiWindow && this.prevApp !== "index") {
-        this.views[this.prevApp].forEach(function(value, key, map) {
-            value.remove();
-        });
-        this.views[this.prevApp].clear();
-    }
-    if (!this.views[this.currentApp].has(alias)) {
+    if (!this.views[this.currentApp].get(this.$(el)) && !this.config.isMultiWindow) {
         viewObj = new options.view({
             el: el,
             context: context,
+            events: options.events,
+            listen: options.listen,
             permis: options.permis,
             config: options.config,
             scrollbar: options.scrollbar,
             items: options.items,
             data: options.data
         });
-        this.views[this.currentApp].set(alias, viewObj);
+        this.views[this.currentApp].set(this.$(el), viewObj);
     } else {
-        viewObj = this.getView(alias);
+        viewObj = this.getView(this.$(el));
     }
     viewObj.render();
+    if (options.listen) {
+        for (var key$1 in options.listen) {
+            this$1.Eventer.removeListener(key$1);
+            this$1.Eventer.on(key$1, options.listen[key$1]);
+        }
+    }
     if (options.items.length) {
         options.items.forEach(function(item, i) {
-            item.context = viewObj;
+            item.context = viewObj.$el;
             that.create(item);
         });
     }
@@ -160,7 +164,7 @@ Lego.prototype.startApp = function startApp(appPath, opts) {
     appPath = appPath || newHash || this.config.defaultApp;
     appName = appPath.indexOf("/") > 0 ? appPath.split("/")[0] : appPath;
     this.prevApp = this.currentApp;
-    this.views[appName] = this.views[appName] || new Map();
+    this.views[appName] = this.views[appName] || new WeakMap();
     this.datas[appName] = this.datas[appName] || new Map();
     if (typeof options.onBefore == "function") {
         options.onBefore();
@@ -225,14 +229,13 @@ Lego.prototype.getData = function getData(apiName, appName) {
     }
 };
 
-Lego.prototype.getView = function getView(alias, appName) {
+Lego.prototype.getView = function getView(el, appName) {
     if (appName === void 0) appName = this.getAppName();
-    this.views[appName] = this.views[appName] || new Map();
-    if (alias) {
-        return this.views[appName].get(alias) ? this.views[appName].get(alias) : null;
-    } else {
-        return this.views[appName];
+    el = el instanceof this.$ ? el : this.$(el);
+    if (el.length && this.views[appName].get(el)) {
+        return this.views[appName].get(el);
     }
+    return null;
 };
 
 module.exports = Lego;

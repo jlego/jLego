@@ -22,7 +22,6 @@ class MainView extends BaseView {
         return this;
     }
     clickNav(event){
-        console.warn('dddddddddd');
         const target = HBY.$(event.currentTarget),
             app = target.data('app');
         HBY.startApp(app);

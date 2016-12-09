@@ -5,7 +5,13 @@
  */
 "use strict";
 
+function _interopDefault(ex) {
+    return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
+}
+
 var whatwgFetch = require("whatwg-fetch");
+
+var Events = _interopDefault(require("events"));
 
 function __async(g) {
     return new Promise(function(s, j) {
@@ -460,139 +466,142 @@ function __async(g) {
     };
 }(typeof global === "object" ? global : typeof window === "object" ? window : typeof self === "object" ? self : undefined);
 
-var Data = function Data(opts) {
-    var this$1 = this;
-    if (opts === void 0) opts = {};
-    this.datas = Lego.getData();
-    for (var key in opts) {
-        if (this$1.datas.get(key)) {
-            this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, opts[key]));
-        } else {
-            this$1.datas.set(key, opts[key]);
+var Data = function(Events$$1) {
+    function Data(opts) {
+        var this$1 = this;
+        if (opts === void 0) opts = {};
+        this.datas = Lego.getData();
+        for (var key in opts) {
+            if (this$1.datas.get(key)) {
+                this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, opts[key]));
+            } else {
+                this$1.datas.set(key, opts[key]);
+            }
+            this$1.datas.get(key).data = this$1.datas.get(key).data || {};
         }
-        this$1.datas.get(key).data = this$1.datas.get(key).data || {};
     }
-};
-
-Data.prototype.api = function api(apiNameArr, callback) {
-    var that = this;
-    apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [ apiNameArr ];
-    this.__fetch(apiNameArr).then(function(data) {
-        apiNameArr.forEach(function(apiName, index) {
-            var apiResp = data[index];
-            that.datas.get(apiName).data = apiResp;
-            if (apiResp && !Array.isArray(apiResp)) {
-                var listTarget = that.datas.get(apiName).listTarget, model = that.datas.get(apiName).model, datas = that.datas.get(apiName).data;
-                if (listTarget && Array.isArray(apiResp[listTarget]) && model) {
-                    apiResp[listTarget].forEach(function(item, i) {
-                        datas[listTarget][i] = Lego.$.extend({}, model, item);
-                    });
+    if (Events$$1) Data.__proto__ = Events$$1;
+    Data.prototype = Object.create(Events$$1 && Events$$1.prototype);
+    Data.prototype.constructor = Data;
+    Data.prototype.api = function api(apiNameArr, callback) {
+        var that = this;
+        apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [ apiNameArr ];
+        this.__fetch(apiNameArr).then(function(data) {
+            apiNameArr.forEach(function(apiName, index) {
+                var apiResp = data[index];
+                that.datas.get(apiName).data = apiResp;
+                if (apiResp && !Array.isArray(apiResp)) {
+                    var listTarget = that.datas.get(apiName).listTarget, model = that.datas.get(apiName).model, datas = that.datas.get(apiName).data;
+                    if (listTarget && Array.isArray(apiResp[listTarget]) && model) {
+                        apiResp[listTarget].forEach(function(item, i) {
+                            datas[listTarget][i] = Lego.$.extend({}, model, item);
+                        });
+                    }
                 }
+            });
+            if (typeof callback == "function") {
+                callback(that.parse(data));
             }
         });
-        if (typeof callback == "function") {
-            callback(that.parse(data));
-        }
-    });
-};
+    };
+    Data.prototype.__fetch = function __fetch(apiNameArr) {
+        return __async(regeneratorRuntime.mark(function callee$1$0() {
+            var that, results, promisesArr, promise, t$2$0, t$2$1, res;
+            return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
+                var this$1 = this;
+                while (1) {
+                    switch (context$2$0.prev = context$2$0.next) {
+                      case 0:
+                        that = this$1, results = [];
+                        context$2$0.prev = 1;
+                        promisesArr = apiNameArr.map(function(apiName) {
+                            return __async(regeneratorRuntime.mark(function callee$3$0() {
+                                var option, req, response;
+                                return regeneratorRuntime.wrap(function callee$3$0$(context$4$0) {
+                                    while (1) {
+                                        switch (context$4$0.prev = context$4$0.next) {
+                                          case 0:
+                                            option = that.datas.get(apiName) || {};
+                                            if (!(!Lego.$.isEmptyObject(option.data) && !option.reset)) {
+                                                context$4$0.next = 7;
+                                                break;
+                                            }
+                                            context$4$0.next = 4;
+                                            return option.data;
 
-Data.prototype.__fetch = function __fetch(apiNameArr) {
-    return __async(regeneratorRuntime.mark(function callee$1$0() {
-        var that, results, promisesArr, promise, t$2$0, t$2$1, res;
-        return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
-            var this$1 = this;
-            while (1) {
-                switch (context$2$0.prev = context$2$0.next) {
-                  case 0:
-                    that = this$1, results = [];
-                    context$2$0.prev = 1;
-                    promisesArr = apiNameArr.map(function(apiName) {
-                        return __async(regeneratorRuntime.mark(function callee$3$0() {
-                            var option, req, response;
-                            return regeneratorRuntime.wrap(function callee$3$0$(context$4$0) {
-                                while (1) {
-                                    switch (context$4$0.prev = context$4$0.next) {
-                                      case 0:
-                                        option = that.datas.get(apiName) || {};
-                                        if (!(!Lego.$.isEmptyObject(option.data) && !option.reset)) {
-                                            context$4$0.next = 7;
-                                            break;
+                                          case 4:
+                                            return context$4$0.abrupt("return", context$4$0.sent);
+
+                                          case 7:
+                                            if (!(that.datas.has(apiName) && option.url && (Lego.$.isEmptyObject(option.data) || option.reset))) {
+                                                context$4$0.next = 13;
+                                                break;
+                                            }
+                                            req = new Request(option.url, {
+                                                method: option.method || "GET",
+                                                headers: option.headers || "none",
+                                                mode: "same-origin",
+                                                credentials: "include",
+                                                body: option.body || undefined
+                                            });
+                                            context$4$0.next = 11;
+                                            return fetch(req);
+
+                                          case 11:
+                                            response = context$4$0.sent;
+                                            return context$4$0.abrupt("return", response.json());
+
+                                          case 13:
+                                          case "end":
+                                            return context$4$0.stop();
                                         }
-                                        context$4$0.next = 4;
-                                        return option.data;
-
-                                      case 4:
-                                        return context$4$0.abrupt("return", context$4$0.sent);
-
-                                      case 7:
-                                        if (!(that.datas.has(apiName) && option.url && (Lego.$.isEmptyObject(option.data) || option.reset))) {
-                                            context$4$0.next = 13;
-                                            break;
-                                        }
-                                        req = new Request(option.url, {
-                                            method: option.method || "GET",
-                                            headers: option.headers || "none",
-                                            mode: "same-origin",
-                                            credentials: "include",
-                                            body: option.body || undefined
-                                        });
-                                        context$4$0.next = 11;
-                                        return fetch(req);
-
-                                      case 11:
-                                        response = context$4$0.sent;
-                                        return context$4$0.abrupt("return", response.json());
-
-                                      case 13:
-                                      case "end":
-                                        return context$4$0.stop();
                                     }
-                                }
-                            }, callee$3$0, this);
-                        })());
-                    });
-                    t$2$0 = regeneratorRuntime.values(promisesArr);
+                                }, callee$3$0, this);
+                            })());
+                        });
+                        t$2$0 = regeneratorRuntime.values(promisesArr);
 
-                  case 4:
-                    if ((t$2$1 = t$2$0.next()).done) {
-                        context$2$0.next = 12;
+                      case 4:
+                        if ((t$2$1 = t$2$0.next()).done) {
+                            context$2$0.next = 12;
+                            break;
+                        }
+                        promise = t$2$1.value;
+                        context$2$0.next = 8;
+                        return promise;
+
+                      case 8:
+                        res = context$2$0.sent;
+                        results.push(res);
+
+                      case 10:
+                        context$2$0.next = 4;
                         break;
+
+                      case 12:
+                        context$2$0.next = 17;
+                        break;
+
+                      case 14:
+                        context$2$0.prev = 14;
+                        context$2$0.t0 = context$2$0["catch"](1);
+                        debug.log(context$2$0.t0);
+
+                      case 17:
+                        return context$2$0.abrupt("return", results);
+
+                      case 18:
+                      case "end":
+                        return context$2$0.stop();
                     }
-                    promise = t$2$1.value;
-                    context$2$0.next = 8;
-                    return promise;
-
-                  case 8:
-                    res = context$2$0.sent;
-                    results.push(res);
-
-                  case 10:
-                    context$2$0.next = 4;
-                    break;
-
-                  case 12:
-                    context$2$0.next = 17;
-                    break;
-
-                  case 14:
-                    context$2$0.prev = 14;
-                    context$2$0.t0 = context$2$0["catch"](1);
-                    debug.log(context$2$0.t0);
-
-                  case 17:
-                    return context$2$0.abrupt("return", results);
-
-                  case 18:
-                  case "end":
-                    return context$2$0.stop();
                 }
-            }
-        }, callee$1$0, this, [ [ 1, 14 ] ]);
-    }).call(this));
-};
-
-Data.prototype.parse = function parse(respArr) {
-    return respArr;
-};
+            }, callee$1$0, this, [ [ 1, 14 ] ]);
+        }).call(this));
+    };
+    Data.prototype.parse = function parse(respArr) {
+        return respArr;
+    };
+    return Data;
+}(Events);
 
 module.exports = Data;

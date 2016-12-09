@@ -5,14 +5,13 @@ import dataList from './listData';
 class HomeRouter {
     constructor() {
         return {
-            '/home': [this.list],
+            '/home': this.list,
             '/home/list': this.home,
             '/home/detail/:id': this.detail,
         };
     }
     home() {
         HBY.create({
-            alias: 'home_1',
             view: listView,
             id: 20,
             data: {data: [
@@ -20,7 +19,6 @@ class HomeRouter {
                 { first: 'test', last: 'bbbb' },
             ]},
             items: [{
-                alias: 'home_1_0',
                 el: '#home',
                 view: homeView,
                 id: 30,
@@ -29,7 +27,6 @@ class HomeRouter {
                     { first: 'test2', last: 'bbbb2' },
                 ]
             }, {
-                alias: 'home_1_1',
                 el: '#test',
                 view: homeView,
                 id: 40,
@@ -39,7 +36,7 @@ class HomeRouter {
                 ]
             }]
         });
-            // console.warn('前', HBY.getView('list_1').options.data.data);
+        // console.warn('前', HBY.getView('list_1').options.data.data);
         // HBY.getView('list_1').options.data.status = 300;
             // console.warn('后',HBY.getView('list_1').options.data);
         // let data = HBY.getData('test').data;
@@ -51,7 +48,6 @@ class HomeRouter {
         dataList.api(['test', 'ok'], (resp) => {
             let data = HBY.getData('test');
             HBY.create({
-                alias: 'list_1',
                 view: listView,
                 id: 20,
                 data: data

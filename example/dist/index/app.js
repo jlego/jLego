@@ -107,15 +107,14 @@
 
 	var View = function (Events$$1) {
 	    function View(opts) {
-	        var this$1 = this;
 	        if (opts === void 0) opts = {};
 	        Events$$1.call(this);
 	        var that = this;
 	        var options = {
 	            el: "",
-	            context: Lego,
+	            context: null,
 	            tagName: "div",
-	            events: {},
+	            events: null,
 	            listen: null,
 	            permis: {},
 	            animate: null,
@@ -124,65 +123,80 @@
 	            items: []
 	        };
 	        this.options = Lego.$.extend(true, options, opts);
-	        this._setElement(options.el);
+	        this._ensureElement();
 	        if (this.options.data) {
 	            Object.observe(this.options.data, function (changes) {
 	                changes.forEach(function (change, i) {
 	                    console.log(change);
+	                    that.render();
 	                });
 	            });
-	        }
-	        console.warn(this.options.context, this.$el);
-	        this.$el.undelegate().off();
-	        if (options.events) {
-	            var eventSplitter = /\s+/;
-	            for (var key in options.events) {
-	                var callback = typeof options.events[key] == "string" ? this$1[options.events[key]] : options.events[key];
-	                var _els = void 0;
-	                if (eventSplitter.test(key)) {
-	                    var nameArr = key.split(eventSplitter);
-	                    var selectorStr = nameArr.slice(1).join(" ");
-	                    key = nameArr[0];
-	                    if (typeof callback == "function") {
-	                        this$1.$el.delegate(selectorStr, key, callback);
-	                    }
-	                } else {
-	                    if (typeof callback == "function") {
-	                        this$1.$el.on(key, callback);
-	                    }
-	                }
-	            }
-	        }
-	        if (options.listen) {
-	            for (var key$1 in options.listen) {
-	                Lego.Eventer.removeListener(key$1, options.listen[key$1]);
-	                Lego.Eventer.on(key$1, options.listen[key$1]);
-	            }
 	        }
 	    }
 	    if (Events$$1) View.__proto__ = Events$$1;
 	    View.prototype = Object.create(Events$$1 && Events$$1.prototype);
 	    View.prototype.constructor = View;
+	    View.prototype.setElement = function setElement(element) {
+	        this.undelegateEvents();
+	        this._setElement(element);
+	        this.delegateEvents();
+	        return this;
+	    };
+	    View.prototype.delegateEvents = function delegateEvents() {
+	        var this$1 = this;
+	        var events = this.options.events;
+	        var delegateEventSplitter = /^(\S+)\s*(.*)$/;
+	        if (!events) {
+	            return this;
+	        }
+	        this.undelegateEvents();
+	        for (var key in events) {
+	            var method = events[key];
+	            if (typeof method !== "function") {
+	                method = this$1[method];
+	            }
+	            if (!method) {
+	                continue;
+	            }
+	            var match = key.match(delegateEventSplitter);
+	            this$1.delegate(match[1], match[2], method.bind(this$1));
+	        }
+	        return this;
+	    };
+	    View.prototype.delegate = function delegate(eventName, selector, listener) {
+	        this.$el.on(eventName + ".delegateEvents" + this.options.alias, selector, listener);
+	        return this;
+	    };
+	    View.prototype.undelegateEvents = function undelegateEvents() {
+	        if (this.$el) {
+	            this.$el.off(".delegateEvents" + this.options.alias);
+	        }
+	        return this;
+	    };
+	    View.prototype.undelegate = function undelegate(eventName, selector, listener) {
+	        this.$el.off(eventName + ".delegateEvents" + this.options.alias, selector, listener);
+	        return this;
+	    };
 	    View.prototype.$ = function $(selector) {
 	        return this.$el.find(selector);
 	    };
 	    View.prototype._setElement = function _setElement(el) {
-	        this.$el = el instanceof Lego.$ ? el : this.options.context.$(el);
+	        this.$el = el instanceof Lego.$ ? el : Lego.$(el);
 	        this.el = this.$el[0];
 	    };
+	    View.prototype._ensureElement = function _ensureElement() {
+	        if (!this.options.el) {
+	            this.setElement(document.createElement(this.options.tagName));
+	        } else {
+	            this.setElement(this.options.el);
+	        }
+	    };
 	    View.prototype.render = function render() {
-	        return null;
+	        return this;
 	    };
 	    View.prototype.remove = function remove() {
-	        var this$1 = this;
 	        this.removeAllListeners();
-	        if (this.options.listen) {
-	            for (var key in this.options.listen) {
-	                Lego.Eventer.removeListener(key, this$1.options.listen[key]);
-	                Lego.Eventer.on(key, this$1.options.listen[key]);
-	            }
-	        }
-	        this.$el.off().remove();
+	        this.$el.remove();
 	    };
 	    return View;
 	}(Events);
@@ -1299,7 +1313,6 @@
 	    }, {
 	        key: 'clickNav',
 	        value: function clickNav(event) {
-	            console.warn('dddddddddd');
 	            var target = HBY.$(event.currentTarget),
 	                app = target.data('app');
 	            HBY.startApp(app);
