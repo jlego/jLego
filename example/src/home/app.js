@@ -15,10 +15,10 @@ class HomeRouter {
             alias: 'home_1',
             view: listView,
             id: 20,
-            data: [
+            data: {data: [
                 { first: 'home', last: 'Bond' },
                 { first: 'test', last: 'bbbb' },
-            ],
+            ]},
             items: [{
                 alias: 'home_1_0',
                 el: '#home',
@@ -39,6 +39,9 @@ class HomeRouter {
                 ]
             }]
         });
+            // console.warn('前', HBY.getView('list_1').options.data.data);
+        // HBY.getView('list_1').options.data.status = 300;
+            // console.warn('后',HBY.getView('list_1').options.data);
         // let data = HBY.getData('test').data;
         // data[0].mm = 'only you';
         // console.warn(data);
@@ -46,14 +49,13 @@ class HomeRouter {
     }
     list() {
         dataList.api(['test', 'ok'], (resp) => {
-            let data = HBY.getData('test').data;
+            let data = HBY.getData('test');
             HBY.create({
                 alias: 'list_1',
                 view: listView,
                 id: 20,
                 data: data
             });
-            // console.warn('dddddddddddddd', resp, HBY.getData('ok'));
         });
     }
     detail(id) {

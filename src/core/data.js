@@ -13,13 +13,13 @@ class Data {
      *  },
      * @return {[type]}         [description]
      */
-    constructor(options = {}) {
+    constructor(opts = {}) {
         this.datas = Lego.getData();
-        for(let key in options){
+        for(let key in opts){
             if(this.datas.get(key)){
-                this.datas.set(key, Lego.$.extend(true, this.datas.get(key) || {}, options[key]));
+                this.datas.set(key, Lego.$.extend(true, this.datas.get(key) || {}, opts[key]));
             }else{
-                this.datas.set(key, options[key]);
+                this.datas.set(key, opts[key]);
             }
             this.datas.get(key).data = this.datas.get(key).data || {};
         }
@@ -37,6 +37,7 @@ class Data {
             apiNameArr.forEach((apiName, index)=> {
                 let apiResp = data[index];
                 that.datas.get(apiName).data = apiResp;
+                // 添加模型数据
                 if(apiResp && !Array.isArray(apiResp)){
                     let listTarget = that.datas.get(apiName).listTarget,
                         model = that.datas.get(apiName).model,

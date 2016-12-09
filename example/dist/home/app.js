@@ -82,7 +82,7 @@
 	                alias: 'home_1',
 	                view: _listView2.default,
 	                id: 20,
-	                data: [{ first: 'home', last: 'Bond' }, { first: 'test', last: 'bbbb' }],
+	                data: { data: [{ first: 'home', last: 'Bond' }, { first: 'test', last: 'bbbb' }] },
 	                items: [{
 	                    alias: 'home_1_0',
 	                    el: '#home',
@@ -97,6 +97,9 @@
 	                    data: [{ first: 'home3', last: 'Bond3' }, { first: 'test3', last: 'bbbb3' }]
 	                }]
 	            });
+	            // console.warn('前', HBY.getView('list_1').options.data.data);
+	            // HBY.getView('list_1').options.data.status = 300;
+	            // console.warn('后',HBY.getView('list_1').options.data);
 	            // let data = HBY.getData('test').data;
 	            // data[0].mm = 'only you';
 	            // console.warn(data);
@@ -106,14 +109,13 @@
 	        key: 'list',
 	        value: function list() {
 	            _listData2.default.api(['test', 'ok'], function (resp) {
-	                var data = HBY.getData('test').data;
+	                var data = HBY.getData('test');
 	                HBY.create({
 	                    alias: 'list_1',
 	                    view: _listView2.default,
 	                    id: 20,
 	                    data: data
 	                });
-	                // console.warn('dddddddddddddd', resp, HBY.getData('ok'));
 	            });
 	        }
 	    }, {
@@ -156,14 +158,14 @@
 	    _inherits(HomeView, _BaseView);
 
 	    function HomeView() {
-	        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	        var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
 	        _classCallCheck(this, HomeView);
 
-	        options.events = {
+	        opts.events = {
 	            'click #400': 'theClick'
 	        };
-	        return _possibleConstructorReturn(this, (HomeView.__proto__ || Object.getPrototypeOf(HomeView)).call(this, options));
+	        return _possibleConstructorReturn(this, (HomeView.__proto__ || Object.getPrototypeOf(HomeView)).call(this, opts));
 	    }
 
 	    _createClass(HomeView, [{
@@ -190,7 +192,9 @@
 	                }, [model.last]));
 	            });
 	            var rootNode = HBY.h('div#uuu88', subDom);
-	            return HBY.createElement(rootNode);
+	            this.$el.html(HBY.createElement(rootNode));
+	            console.warn(this.$el);
+	            // return this;
 	        }
 	    }, {
 	        key: 'theClick',
@@ -228,10 +232,14 @@
 	var object_observe = __webpack_require__(4);
 
 	var View = function (Events$$1) {
-	    function View(options) {
-	        if (options === void 0) options = {};
-	        var defaults = {
+	    function View(opts) {
+	        var this$1 = this;
+	        if (opts === void 0) opts = {};
+	        Events$$1.call(this);
+	        var that = this;
+	        var options = {
 	            el: "",
+	            context: Lego,
 	            tagName: "div",
 	            events: {},
 	            listen: null,
@@ -241,11 +249,8 @@
 	            scrollbar: false,
 	            items: []
 	        };
-	        this.options = Lego.$.extend(true, defaults, options);
-	        this.options.data = options.data || null;
-	        var el = defaults.el;
-	        this.$el = el instanceof Lego.$ ? el : Lego.$(el);
-	        Events$$1.call(this);
+	        this.options = Lego.$.extend(true, options, opts);
+	        this._setElement(options.el);
 	        if (this.options.data) {
 	            Object.observe(this.options.data, function (changes) {
 	                changes.forEach(function (change, i) {
@@ -253,19 +258,54 @@
 	                });
 	            });
 	        }
+	        console.warn(this.options.context, this.$el);
+	        this.$el.undelegate().off();
+	        if (options.events) {
+	            var eventSplitter = /\s+/;
+	            for (var key in options.events) {
+	                var callback = typeof options.events[key] == "string" ? this$1[options.events[key]] : options.events[key];
+	                var _els = void 0;
+	                if (eventSplitter.test(key)) {
+	                    var nameArr = key.split(eventSplitter);
+	                    var selectorStr = nameArr.slice(1).join(" ");
+	                    key = nameArr[0];
+	                    if (typeof callback == "function") {
+	                        this$1.$el.delegate(selectorStr, key, callback);
+	                    }
+	                } else {
+	                    if (typeof callback == "function") {
+	                        this$1.$el.on(key, callback);
+	                    }
+	                }
+	            }
+	        }
+	        if (options.listen) {
+	            for (var key$1 in options.listen) {
+	                Lego.Eventer.removeListener(key$1, options.listen[key$1]);
+	                Lego.Eventer.on(key$1, options.listen[key$1]);
+	            }
+	        }
 	    }
 	    if (Events$$1) View.__proto__ = Events$$1;
 	    View.prototype = Object.create(Events$$1 && Events$$1.prototype);
 	    View.prototype.constructor = View;
+	    View.prototype.$ = function $(selector) {
+	        return this.$el.find(selector);
+	    };
+	    View.prototype._setElement = function _setElement(el) {
+	        this.$el = el instanceof Lego.$ ? el : this.options.context.$(el);
+	        this.el = this.$el[0];
+	    };
 	    View.prototype.render = function render() {
 	        return null;
 	    };
 	    View.prototype.remove = function remove() {
+	        var this$1 = this;
 	        this.removeAllListeners();
 	        if (this.options.listen) {
 	            for (var key in this.options.listen) {
-	                Lego.Eventer.removeListener(key, options.listen[key]);
-	                Lego.Eventer.on(key, options.listen[key]);
+	                Lego.Eventer.removeListener(key, this$1.options.listen[key]);
+	                Lego.Eventer.on(key, this$1.options.listen[key]);
 	            }
 	        }
 	        this.$el.off().remove();
@@ -1358,26 +1398,27 @@
 	    _inherits(ListView, _BaseView);
 
 	    function ListView() {
-	        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	        var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
 	        _classCallCheck(this, ListView);
 
-	        options.events = {
+	        opts.events = {
 	            'click #test': 'theClick'
 	        };
-	        options.listen = {
-	            'data_update': function data_update(opts) {
-	                console.warn('pppppppppp', opts);
+	        opts.listen = {
+	            'data_update': function data_update(data) {
+	                console.warn('pppppppppp', data);
 	            }
 	        };
-	        return _possibleConstructorReturn(this, (ListView.__proto__ || Object.getPrototypeOf(ListView)).call(this, options));
+	        return _possibleConstructorReturn(this, (ListView.__proto__ || Object.getPrototypeOf(ListView)).call(this, opts));
 	    }
 
 	    _createClass(ListView, [{
 	        key: 'render',
 	        value: function render() {
-	            var data = this.options.data || [],
+	            var data = this.options.data.data || [],
 	                subDom = [];
+	            // console.warn('刷新了视图', data);
 
 	            data.forEach(function (model, i) {
 	                subDom.push(HBY.h('a#' + model.first, {
@@ -1388,7 +1429,9 @@
 	                }, [model.last]));
 	            });
 	            var rootNode = HBY.h('div#uuu', subDom);
-	            return HBY.createElement(rootNode);
+	            this.$el.html(HBY.createElement(rootNode));
+	            console.warn('ggggggggggg', this.$el);
+	            // return this;
 	        }
 	    }, {
 	        key: 'theClick',
@@ -1934,15 +1977,15 @@
 	    };
 	}((typeof global === "undefined" ? "undefined" : _typeof(global)) === "object" ? global : (typeof window === "undefined" ? "undefined" : _typeof(window)) === "object" ? window : (typeof self === "undefined" ? "undefined" : _typeof(self)) === "object" ? self : undefined);
 
-	var Data = function Data(options) {
+	var Data = function Data(opts) {
 	    var this$1 = this;
-	    if (options === void 0) options = {};
+	    if (opts === void 0) opts = {};
 	    this.datas = Lego.getData();
-	    for (var key in options) {
+	    for (var key in opts) {
 	        if (this$1.datas.get(key)) {
-	            this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, options[key]));
+	            this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, opts[key]));
 	        } else {
-	            this$1.datas.set(key, options[key]);
+	            this$1.datas.set(key, opts[key]);
 	        }
 	        this$1.datas.get(key).data = this$1.datas.get(key).data || {};
 	    }

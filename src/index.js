@@ -38,6 +38,8 @@ class Lego {
             debug.error('请先设置参数$');
             return;
         }
+        this.$el = this.$;
+        this.prevApp = ''; //上一个应用名称
         this.currentApp = 'index'; //当前应用名称
         this.BaseEvent = Events;
         this.Eventer = new Events(); //全局事件对象
@@ -57,31 +59,27 @@ class Lego {
     create(opts = {}){
         let that = this,
             options = {
+                el: this.config.pageEl,
                 alias: '',  //视图别名, 用来标识区分视图
-                el: this.config.pageEl, //视图容器选择符
-                inset: 'html',
                 config: {}, //视图参数
                 permis: null, //权限
                 view: null, //视图类
-                animate: undefined, //动画效果
-                events: null, //事件列表对象
-                listen: null, //监听全局事件
                 items: [],
+                context: this,
                 onBefore() {}, //视图开始前回调
                 onAfter() {}, //视图执行后回调
                 onAnimateBefore() {}, //动画前回调
-                onAnimateAfter() {}, //动画后回调
+                onAnimateAfter() {} //动画后回调
             };
         Object.assign(options, opts);
-        options.data = opts.data || null;
-        if (!options.el) return;
         let alias = options.alias || Symbol(),
             el = options.el,
+            context = options.context,
             onBefore = options.onBefore.bind(this),
             onAfter = options.onAfter.bind(this),
             onAnimateBefore = options.onAnimateBefore.bind(this),
-            onAnimateAfter = options.onAnimateAfter.bind(this),
-            $el = el instanceof this.$ ? el : that.$(el);
+            onAnimateAfter = options.onAnimateAfter.bind(this);
+            // $el = el instanceof this.$ ? el : that.$(el);
 
         // 操作权限
         if (options.permis) {
@@ -99,56 +97,38 @@ class Lego {
 
         //渲染视图
         let viewObj;
-        if(!this.getView(alias)){
-            viewObj = new options.view(options);
+        if(!this.config.isMultiWindow && this.prevApp !== 'index'){
+            this.views[this.prevApp].forEach(function(value, key, map){
+                value.remove();
+            });
+            this.views[this.prevApp].clear();
+        }
+        if(!this.views[this.currentApp].has(alias)){
+            viewObj = new options.view({
+                el: el,
+                context: context,
+                permis: options.permis,
+                config: options.config,
+                scrollbar: options.scrollbar,
+                items: options.items,
+                data: options.data
+            });
             this.views[this.currentApp].set(alias, viewObj);
         }else{
             viewObj = this.getView(alias);
         }
-        $el[options.inset](viewObj.render());
-        options.events = this.$.extend(viewObj.options.events, options.events);
-        // 绑定事件
-        if (options.events) {
-            const eventSplitter = /\s+/;
-            for(let key in options.events) {
-                const callback = viewObj[options.events[key]];
-                let _els;
-                if (eventSplitter.test(key)) {
-                    const nameArr = key.split(eventSplitter);
-                    const selectorStr = nameArr.slice(1).join(' ');
-                    _els = $el.find(selectorStr);
-                    if (_els.length) {
-                        key = nameArr[0];
-                    }else{
-                        continue;
-                    }
-                }
-                if(_els.length){
-                    _els.each((index, el) => {
-                        $(el).off(key).on(key, (event, a, b, c) => {
-                            if (typeof callback == 'function') callback(event, a, b, c);
-                        });
-                    });
-                }
-            };
-        }
-        options.listen = this.$.extend(viewObj.options.listen, options.listen);
-        if(options.listen){
-            for(let key in options.listen) {
-                this.Eventer.removeListener(key, options.listen[key]);
-                this.Eventer.on(key, options.listen[key]);
-            }
-        }
+        viewObj.render();
 
         // 渲染子视图
         if(options.items.length) {
             options.items.forEach(function(item, i){
+                item.context = viewObj;
                 that.create(item);
             });
         }
 
         typeof onAfter === 'function' && onAfter();
-        return $el;
+        return viewObj;
     }
     /**
      * _debugger 调试器
@@ -187,7 +167,7 @@ class Lego {
         newHash = newHash !== 'index' ? newHash : '';
         appPath = appPath || newHash || this.config.defaultApp;
         appName = appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath;
-        this.currentApp = appName;
+        this.prevApp =this.currentApp;
         this.views[appName] = this.views[appName] || new Map();
         this.datas[appName] = this.datas[appName] || new Map();
         if (typeof options.onBefore == 'function') options.onBefore();
@@ -203,6 +183,7 @@ class Lego {
                     that.Router = Router(that['app']).init();
                     that.Router.setRoute(appPath);
                 }
+                that.currentApp = appName;
                 if (typeof options.onAfter == 'function') options.onAfter(e);
                 that['app'] = null;
             },
@@ -246,7 +227,7 @@ class Lego {
      * @return {[type]} [description]
      */
     getAppName() {
-        const appName = this.Router.getRoute()[0] !== 'index' ? this.Router.getRoute()[0] : '';
+        const appName = this.Router.getRoute()[0] !== 'index' ? this.Router.getRoute()[0] : 'index';
         return appName || this.config.defaultApp;
     }
     /**
@@ -267,14 +248,12 @@ class Lego {
      * @return {[type]}         [description]
      */
     getView(alias, appName = this.getAppName()){
-        if(this.views[appName]){
-            if(alias){
-                return this.views[appName].get(alias) ? this.views[appName].get(alias) : null;
-            }else{
-                return this.views[appName];
-            }
+        this.views[appName] = this.views[appName] || new Map();
+        if(alias){
+            return this.views[appName].get(alias) ? this.views[appName].get(alias) : null;
+        }else{
+            return this.views[appName];
         }
-        return null;
     }
 }
 

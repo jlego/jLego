@@ -460,15 +460,15 @@ function __async(g) {
     };
 }(typeof global === "object" ? global : typeof window === "object" ? window : typeof self === "object" ? self : undefined);
 
-var Data = function Data(options) {
+var Data = function Data(opts) {
     var this$1 = this;
-    if (options === void 0) options = {};
+    if (opts === void 0) opts = {};
     this.datas = Lego.getData();
-    for (var key in options) {
+    for (var key in opts) {
         if (this$1.datas.get(key)) {
-            this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, options[key]));
+            this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, opts[key]));
         } else {
-            this$1.datas.set(key, options[key]);
+            this$1.datas.set(key, opts[key]);
         }
         this$1.datas.get(key).data = this$1.datas.get(key).data || {};
     }

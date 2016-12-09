@@ -2,12 +2,10 @@ import BaseView from '../../../dist/view';
 
 class MainView extends BaseView {
     constructor(opts = {}) {
-        let options = {
-            events: {
-                'click nav a': 'clickNav'
-            }
+        opts.events = {
+            'click nav a': 'clickNav'
         };
-        super(options);
+        super(opts);
     }
     render() {
         // const data = this.options.data || [];
@@ -20,9 +18,11 @@ class MainView extends BaseView {
             </ul>
         </nav>
         <content id="content"></content>`;
-        return tmpl;
+        this.$el.html(tmpl);
+        return this;
     }
     clickNav(event){
+        console.warn('dddddddddd');
         const target = HBY.$(event.currentTarget),
             app = target.data('app');
         HBY.startApp(app);

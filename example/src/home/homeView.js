@@ -1,11 +1,11 @@
 import BaseView from '../../../dist/view';
 
 class HomeView extends BaseView {
-    constructor(options = {}) {
-        options.events = {
+    constructor(opts = {}) {
+        opts.events = {
             'click #400': 'theClick'
         };
-        super(options);
+        super(opts);
     }
     render() {
         let data = this.options.data || [],
@@ -29,7 +29,9 @@ class HomeView extends BaseView {
             }, [model.last]));
         });
         let rootNode = HBY.h('div#uuu88', subDom);
-    	return HBY.createElement(rootNode);
+        this.$el.html(HBY.createElement(rootNode));
+        console.warn(this.$el);
+        // return this;
     }
     theClick(event){
         event.stopPropagation();
