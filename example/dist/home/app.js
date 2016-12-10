@@ -109,7 +109,6 @@
 	                var data = HBY.getData('test');
 	                HBY.create({
 	                    view: _listView2.default,
-	                    id: 20,
 	                    data: data
 	                });
 	            });

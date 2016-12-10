@@ -49,7 +49,6 @@ class HomeRouter {
             let data = HBY.getData('test');
             HBY.create({
                 view: listView,
-                id: 20,
                 data: data
             });
         });
