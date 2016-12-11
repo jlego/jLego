@@ -81,16 +81,22 @@ Lego.prototype.create = function create(opts) {
         insert: "html",
         permis: null,
         view: null,
-        items: [],
+        components: [],
         events: {},
         listen: {},
+        scrollbar: null,
+        data: null,
         onBefore: function onBefore$1() {},
         onAfter: function onAfter$1() {},
-        onAnimateBefore: function onAnimateBefore$1() {},
-        onAnimateAfter: function onAnimateAfter$1() {}
+        onAnimateBefore: function onAnimateBefore() {},
+        onAnimateAfter: function onAnimateAfter() {}
     };
     Object.assign(options, opts);
-    var el = options.el, id = options.id || (this.config.alias + window.location.hash.replace(/\//g, "_") + "_" + el).replace(/#/g, ""), onBefore = options.onBefore.bind(this), onAfter = options.onAfter.bind(this), onAnimateBefore = options.onAnimateBefore.bind(this), onAnimateAfter = options.onAnimateAfter.bind(this);
+    options.id = options.id || (this.config.alias + window.location.hash.replace(/\//g, "_") + "_" + options.el).replace(/#/g, "");
+    options.onBefore = options.onBefore.bind(this);
+    options.onAfter = options.onAfter.bind(this);
+    options.onAnimateBefore = options.onAnimateBefore.bind(this);
+    options.onAnimateAfter = options.onAnimateAfter.bind(this);
     if (options.permis) {
         var module = options.permis.module, operate = options.permis.operate, hide = options.permis.hide, userId = options.permis.userid || 0;
         if (hide) {
@@ -100,22 +106,10 @@ Lego.prototype.create = function create(opts) {
         }
     }
     typeof onBefore === "function" && onBefore();
-    var viewObj, _el = this.$('[id="' + id + '"]')[0];
+    var viewObj, _el = this.$('[id="' + options.id + '"]')[0];
     if (!this.views[this.currentApp].has(_el)) {
-        viewObj = new options.view({
-            id: id,
-            el: el,
-            tagName: options.tagName,
-            insert: options.insert,
-            events: options.events,
-            listen: options.listen,
-            permis: options.permis,
-            config: options.config,
-            scrollbar: options.scrollbar,
-            items: options.items,
-            data: options.data
-        });
-        this.views[this.currentApp].set(viewObj.$('[id="' + id + '"]')[0], viewObj);
+        viewObj = new options.view(options);
+        this.views[this.currentApp].set(viewObj.$('[id="' + options.id + '"]')[0], viewObj);
     } else {
         viewObj = this.views[this.currentApp].get(_el);
     }
@@ -125,8 +119,8 @@ Lego.prototype.create = function create(opts) {
             this$1.Eventer.on(key, options.listen[key]);
         }
     }
-    if (options.items.length) {
-        options.items.forEach(function(item, i) {
+    if (options.components.length) {
+        options.components.forEach(function(item, i) {
             that.create(item);
         });
     }

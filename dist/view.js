@@ -21,11 +21,7 @@ var View = function(Events$$1) {
         var options = {
             events: null,
             listen: null,
-            permis: {},
-            animate: null,
-            config: {},
-            scrollbar: false,
-            items: []
+            config: {}
         };
         this.options = $.extend(true, options, opts);
         this.setElement(this.options.el);

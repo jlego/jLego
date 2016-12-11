@@ -81,7 +81,7 @@
 	            HBY.create({
 	                view: _listView2.default,
 	                data: { data: [{ first: 'home', last: 'Bond' }, { first: 'test', last: 'bbbb' }] },
-	                items: [{
+	                components: [{
 	                    el: '#home',
 	                    view: _homeView2.default,
 	                    data: [{ first: 'home2', last: 'Bond2' }, { first: 'test2', last: 'bbbb2' }]
@@ -10443,11 +10443,7 @@
 	        var options = {
 	            events: null,
 	            listen: null,
-	            permis: {},
-	            animate: null,
-	            config: {},
-	            scrollbar: false,
-	            items: []
+	            config: {}
 	        };
 	        this.options = $.extend(true, options, opts);
 	        this.setElement(this.options.el);

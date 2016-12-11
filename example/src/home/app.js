@@ -17,7 +17,7 @@ class HomeRouter {
                 { first: 'home', last: 'Bond' },
                 { first: 'test', last: 'bbbb' },
             ]},
-            items: [{
+            components: [{
                 el: '#home',
                 view: homeView,
                 data: [

@@ -13,11 +13,11 @@ class View extends Events {
         let options = {
             events: null,
             listen: null,
-            permis: {},
-            animate: null,
-            config: {},
-            scrollbar: false,
-            items: []
+            config: {}
+            // permis: {},
+            // animate: null,
+            // scrollbar: false
+            // components: []
         };
         this.options = $.extend(true, options, opts);
         this.setElement(this.options.el);
