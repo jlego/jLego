@@ -9,7 +9,7 @@ import util from "./util/util";
 
 class Lego {
     constructor(options = {}) {
-        this.h = h;
+        window.h = h;
         this.createElement = createElement;
         this.diff = diff;
         this.patch = patch;
@@ -58,34 +58,34 @@ class Lego {
      * @return {[type]}        [description]
      */
     create(opts = {}){
-        let that = this,
+        const that = this,
             options = {
+                id: '',
                 el: this.config.pageEl,
-                // alias: '',  //视图别名, 用来标识区分视图
+                tagName: 'div',
                 config: {}, //视图参数
+                insert: 'html',
                 permis: null, //权限
                 view: null, //视图类
                 items: [],
-                context: null,
-                events: null,
-                listen: null,
+                events: {},
+                listen: {},
                 onBefore() {}, //视图开始前回调
                 onAfter() {}, //视图执行后回调
                 onAnimateBefore() {}, //动画前回调
                 onAnimateAfter() {} //动画后回调
             };
         Object.assign(options, opts);
-        let key = Symbol(),
-            el = options.el,
-            context = options.context,
+        const el = options.el,
+            id = options.id,
             onBefore = options.onBefore.bind(this),
             onAfter = options.onAfter.bind(this),
             onAnimateBefore = options.onAnimateBefore.bind(this),
             onAnimateAfter = options.onAnimateAfter.bind(this);
-
+        if(!id) return;
         // 操作权限
         if (options.permis) {
-            let module = options.permis.module,
+            const module = options.permis.module,
                 operate = options.permis.operate,
                 hide = options.permis.hide,
                 userId = options.permis.userid || 0;
@@ -97,12 +97,15 @@ class Lego {
         }
         typeof onBefore === 'function' && onBefore();
 
-        //渲染视图
-        let viewObj;
-        if(!this.views[this.currentApp].get(this.$(el)) && !this.config.isMultiWindow){
+        let viewObj,
+            _el = this.$(el).find('#' + id)[0];
+        if(!this.views[this.currentApp].get(_el)){
             viewObj = new options.view({
+                id: id,
                 el: el,
-                context: context,
+                tagName: options.tagName,
+                className: options.className || '',
+                insert: options.insert,
                 events: options.events,
                 listen: options.listen,
                 permis: options.permis,
@@ -111,11 +114,11 @@ class Lego {
                 items: options.items,
                 data: options.data
             });
-            this.views[this.currentApp].set(this.$(el), viewObj);
+            this.views[this.currentApp].set(viewObj.$el.children()[0], viewObj);
         }else{
-            viewObj = this.getView(this.$(el));
+            viewObj = this.views[this.currentApp].get(_el);
         }
-        viewObj.render();
+        
         if(options.listen){
             for(let key in options.listen) {
                 this.Eventer.removeListener(key);
@@ -126,13 +129,27 @@ class Lego {
         // 渲染子视图
         if(options.items.length) {
             options.items.forEach(function(item, i){
-                item.context = viewObj.$el;
                 that.create(item);
             });
         }
 
         typeof onAfter === 'function' && onAfter();
         return viewObj;
+    }
+    /**
+     * [randomKey 随机字符串]
+     * @param  {[type]} len [description]
+     * @return {[type]}     [description]
+     */
+    randomKey(len) {
+        len = len || 32;
+        const $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const maxPos = $chars.length;
+        let pwd = '';
+        for (let i = 0; i < len; i++) {
+            pwd += $chars.charAt(Math.floor(Math.random() * maxPos));
+        }
+        return pwd;
     }
     /**
      * _debugger 调试器

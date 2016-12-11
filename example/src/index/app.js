@@ -8,7 +8,7 @@ class MainRouter {
         // dataList.api(['test', 'ok'], (resp) => {
         //     let data = HBY.getData('test').data;
             HBY.create({
-                alias: 'main',
+                id: 'main',
                 el: 'body',
                 view: mainView,
                 // id: 20,

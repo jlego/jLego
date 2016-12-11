@@ -2,31 +2,32 @@ import BaseView from '../../../dist/view';
 
 class ListView extends BaseView {
     constructor(opts = {}) {
-        opts.events = {
-            'click #test': 'theClick'
-        };
-        opts.listen = {
-            'data_update': (data) => {
-                console.warn('pppppppppp', data);
+        const options = {
+            events: {
+                'click #test': 'theClick'
+            },
+            listen: {
+                'data_update': (data) => {
+                    console.warn('pppppppppp', data);
+                }
             }
         };
-        super(opts);
+        $.extend(true, options, opts);
+        super(options);
     }
     render() {
         let data = this.options.data.data || [],
-            subDom = [];
-        // console.warn('刷新了视图', data);
+            vDom = [];
 
         data.forEach((model, i) => {
-            subDom.push(HBY.h('a#' + model.first, {
+            vDom.push(h('a#' + model.first, {
                 href: '#/home/list',
                 style: {
                     display: 'block'
                 }
             }, [model.last]));
         });
-        let rootNode = HBY.h('div#uuu', subDom);
-        this.$el.html(HBY.createElement(rootNode));
+        return vDom;
     }
     theClick(event){
         console.warn('66666666666');

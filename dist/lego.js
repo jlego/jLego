@@ -27,7 +27,7 @@ var Util = {};
 
 var Lego = function Lego(options) {
     if (options === void 0) options = {};
-    this.h = h;
+    window.h = h;
     this.createElement = createElement;
     this.diff = diff;
     this.patch = patch;
@@ -41,6 +41,7 @@ var Lego = function Lego(options) {
         isAnimate: false,
         isPermit: false,
         isMultiWindow: false,
+        isOpenVirtualDom: true,
         pageEl: "",
         defaultApp: "",
         rootUri: "",
@@ -73,21 +74,26 @@ Lego.prototype.create = function create(opts) {
     var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this, options = {
+        id: "",
         el: this.config.pageEl,
+        tagName: "div",
         config: {},
+        insert: "html",
         permis: null,
         view: null,
         items: [],
-        context: null,
-        events: null,
-        listen: null,
+        events: {},
+        listen: {},
         onBefore: function onBefore$1() {},
         onAfter: function onAfter$1() {},
         onAnimateBefore: function onAnimateBefore$1() {},
         onAnimateAfter: function onAnimateAfter$1() {}
     };
     Object.assign(options, opts);
-    var key = Symbol(), el = options.el, context = options.context, onBefore = options.onBefore.bind(this), onAfter = options.onAfter.bind(this), onAnimateBefore = options.onAnimateBefore.bind(this), onAnimateAfter = options.onAnimateAfter.bind(this);
+    var el = options.el, id = options.id, onBefore = options.onBefore.bind(this), onAfter = options.onAfter.bind(this), onAnimateBefore = options.onAnimateBefore.bind(this), onAnimateAfter = options.onAnimateAfter.bind(this);
+    if (!id) {
+        return;
+    }
     if (options.permis) {
         var module = options.permis.module, operate = options.permis.operate, hide = options.permis.hide, userId = options.permis.userid || 0;
         if (hide) {
@@ -97,11 +103,14 @@ Lego.prototype.create = function create(opts) {
         }
     }
     typeof onBefore === "function" && onBefore();
-    var viewObj;
-    if (!this.views[this.currentApp].get(this.$(el)) && !this.config.isMultiWindow) {
+    var viewObj, _el = this.$(el).find("#" + id)[0];
+    if (!this.views[this.currentApp].get(_el)) {
         viewObj = new options.view({
+            id: id,
             el: el,
-            context: context,
+            tagName: options.tagName,
+            className: options.className || "",
+            insert: options.insert,
             events: options.events,
             listen: options.listen,
             permis: options.permis,
@@ -110,25 +119,34 @@ Lego.prototype.create = function create(opts) {
             items: options.items,
             data: options.data
         });
-        this.views[this.currentApp].set(this.$(el), viewObj);
+        this.views[this.currentApp].set(viewObj.$el.children()[0], viewObj);
     } else {
-        viewObj = this.getView(this.$(el));
+        viewObj = this.views[this.currentApp].get(_el);
     }
-    viewObj.render();
     if (options.listen) {
-        for (var key$1 in options.listen) {
-            this$1.Eventer.removeListener(key$1);
-            this$1.Eventer.on(key$1, options.listen[key$1]);
+        for (var key in options.listen) {
+            this$1.Eventer.removeListener(key);
+            this$1.Eventer.on(key, options.listen[key]);
         }
     }
     if (options.items.length) {
         options.items.forEach(function(item, i) {
-            item.context = viewObj.$el;
             that.create(item);
         });
     }
     typeof onAfter === "function" && onAfter();
     return viewObj;
+};
+
+Lego.prototype.randomKey = function randomKey(len) {
+    len = len || 32;
+    var $chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var maxPos = $chars.length;
+    var pwd = "";
+    for (var i = 0; i < len; i++) {
+        pwd += $chars.charAt(Math.floor(Math.random() * maxPos));
+    }
+    return pwd;
 };
 
 Lego.prototype._debugger = function _debugger() {

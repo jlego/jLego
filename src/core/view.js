@@ -11,9 +11,6 @@ class View extends Events {
         super();
         const that = this;
         let options = {
-            el: '',
-            context: null,
-            tagName: 'div',
             events: null,
             listen: null,
             permis: {},
@@ -22,12 +19,41 @@ class View extends Events {
             scrollbar: false,
             items: []
         };
-        this.options = Lego.$.extend(true, options, opts);
-        this._ensureElement();
+        this.options = $.extend(true, options, opts);
+        this.setElement(this.options.el);
+        const content = this.render();
+        if(Lego.config.isOpenVirtualDom && typeof content !== 'string'){
+            const treeNode = this._getVdom();
+            this.rootNode = Lego.createElement(treeNode);
+            this.$el[this.options.insert](this.rootNode);
+        }
+        if(typeof content === 'string'){
+            this._renderHtml(content);
+        }
         this._observe();
     }
     /**
-     * [_observe 监听数据变化]
+     * [_getVdom description]
+     * @return {[type]} [description]
+     */
+    _getVdom(){
+        const content = this.render();
+        let nodeTag = this.options.tagName + '#' + this.options.id;
+        if(this.options.className) nodeTag += '.' + this.options.className;
+        return h(nodeTag, content);
+    }
+    /**
+     * [_renderHtml 刷新普通渲染视图]
+     * @param  {[type]} content [description]
+     * @return {[type]}         [description]
+     */
+    _renderHtml(content){
+        const $content = $(content);
+        if(this.options.className) $content.addClass(this.options.className);
+        this.$el[this.options.insert]($content);
+    }
+    /**
+     * [_observe 监听数据变化并刷新视图]
      * @return {[type]} [description]
      */
     _observe(){
@@ -35,11 +61,17 @@ class View extends Events {
         if(this.options.data){
             Object.observe(this.options.data, (changes) =>{
                 changes.forEach(function(change, i){
-                    console.log(change);
-                    that.render();
+                    debug.log(change);
+                    if(Lego.config.isOpenVirtualDom){
+                        const treeNode = this._getVdom();
+                        let patches = diff(that.oldTree, treeNode);
+                        that.rootNode = patch(that.rootNode, patches);
+                        that.oldTree = treeNode;
+                    }
+                    if(typeof that.render() === 'string'){
+                        that._renderHtml(that.render());
+                    }
                 });
-                // let patches = diff(leftNode, rightNode);
-                // patch(rootNode, patches);
             });
         }
     }
@@ -53,7 +85,18 @@ class View extends Events {
         this.delegateEvents();
         return this;
     }
-
+    /**
+     * [_setElement description]
+     * @param {[type]} el [description]
+     */
+    _setElement(el){
+        this.$el = el instanceof Lego.$ ? el : Lego.$(el);
+        this.el = this.$el[0];
+    }
+    /**
+     * [delegateEvents description]
+     * @return {[type]} [description]
+     */
     delegateEvents() {
         const events = this.options.events;
         const delegateEventSplitter = /^(\S+)\s*(.*)$/;
@@ -68,19 +111,34 @@ class View extends Events {
         }
         return this;
     }
-
+    /**
+     * [delegate description]
+     * @param  {[type]} eventName [description]
+     * @param  {[type]} selector  [description]
+     * @param  {[type]} listener  [description]
+     * @return {[type]}           [description]
+     */
     delegate(eventName, selector, listener) {
-        this.$el.on(eventName + '.delegateEvents' + this.options.alias, selector, listener);
+        this.$el.on(eventName + '.delegateEvents' + this.options.id, selector, listener);
         return this;
     }
-
+    /**
+     * [undelegateEvents description]
+     * @return {[type]} [description]
+     */
     undelegateEvents() {
-        if (this.$el) this.$el.off('.delegateEvents' + this.options.alias);
+        if (this.$el) this.$el.off('.delegateEvents' + this.options.id);
         return this;
     }
-
+    /**
+     * [undelegate description]
+     * @param  {[type]} eventName [description]
+     * @param  {[type]} selector  [description]
+     * @param  {[type]} listener  [description]
+     * @return {[type]}           [description]
+     */
     undelegate(eventName, selector, listener) {
-        this.$el.off(eventName + '.delegateEvents' + this.options.alias, selector, listener);
+        this.$el.off(eventName + '.delegateEvents' + this.options.id, selector, listener);
         return this;
     }
     /**
@@ -90,25 +148,6 @@ class View extends Events {
      */
     $(selector) {
         return this.$el.find(selector);
-    }
-    /**
-     * [_setElement description]
-     * @param {[type]} el [description]
-     */
-    _setElement(el){
-        this.$el = el instanceof Lego.$ ? el : Lego.$(el);
-        this.el = this.$el[0];
-    }
-    /**
-     * [_ensureElement description]
-     * @return {[type]} [description]
-     */
-    _ensureElement() {
-        if (!this.options.el) {
-            this.setElement(document.createElement(this.options.tagName));
-        } else {
-            this.setElement(this.options.el);
-        }
     }
     /**
      * render 渲染视图
@@ -124,7 +163,8 @@ class View extends Events {
     remove(){
         // 清理全部事件监听
         this.removeAllListeners();
-        this.$el.remove();
+        this.undelegateEvents();
+        this.$el.children().remove();
     }
 }
 export default View;
