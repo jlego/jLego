@@ -10468,13 +10468,13 @@
 	    View.prototype._getVdom = function _getVdom(content) {
 	        var nodeTag = this.options.tagName;
 	        var attrObj = {
-	            id: this.options.cid
+	            id: this.options.id
 	        };
 	        return h(nodeTag, attrObj, [content]);
 	    };
 	    View.prototype._renderHtml = function _renderHtml(content) {
 	        var $content = $(document.createElement(this.options.tagName)).html(content);
-	        $content.attr("id", this.options.cid);
+	        $content.attr("id", this.options.id);
 	        this.$el[this.options.insert]($content);
 	    };
 	    View.prototype._observe = function _observe() {

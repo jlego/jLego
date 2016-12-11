@@ -10877,6 +10877,7 @@
 	    if (opts === void 0) opts = {};
 	    var that = this,
 	        options = {
+	        id: "",
 	        el: this.config.pageEl,
 	        tagName: "div",
 	        config: {},
@@ -10893,7 +10894,7 @@
 	    };
 	    Object.assign(options, opts);
 	    var el = options.el,
-	        cid = (this.config.alias + window.location.hash.replace(/\//g, "_") + "_" + el).replace(/#/g, ""),
+	        id = options.id || (this.config.alias + window.location.hash.replace(/\//g, "_") + "_" + el).replace(/#/g, ""),
 	        onBefore = options.onBefore.bind(this),
 	        onAfter = options.onAfter.bind(this),
 	        onAnimateBefore = options.onAnimateBefore.bind(this),
@@ -10911,11 +10912,11 @@
 	    }
 	    typeof onBefore === "function" && onBefore();
 	    var viewObj,
-	        _el = this.$('[id="' + cid + '"]')[0];
+	        _el = this.$('[id="' + id + '"]')[0];
 	    if (!this.views[this.currentApp].has(_el)) {
 	        viewObj = new options.view({
+	            id: id,
 	            el: el,
-	            cid: cid,
 	            tagName: options.tagName,
 	            insert: options.insert,
 	            events: options.events,
@@ -10926,7 +10927,7 @@
 	            items: options.items,
 	            data: options.data
 	        });
-	        this.views[this.currentApp].set(viewObj.$('[id="' + cid + '"]')[0], viewObj);
+	        this.views[this.currentApp].set(viewObj.$('[id="' + id + '"]')[0], viewObj);
 	    } else {
 	        viewObj = this.views[this.currentApp].get(_el);
 	    }

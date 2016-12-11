@@ -39,7 +39,7 @@ class View extends Events {
     _getVdom(content){
         let nodeTag = this.options.tagName;
         let attrObj = {
-            id: this.options.cid
+            id: this.options.id
         };
         return h(nodeTag, attrObj, [content]);
     }
@@ -50,7 +50,7 @@ class View extends Events {
      */
     _renderHtml(content){
         const $content = $(document.createElement(this.options.tagName)).html(content);
-        $content.attr('id', this.options.cid);
+        $content.attr('id', this.options.id);
         this.$el[this.options.insert]($content);
     }
     /**

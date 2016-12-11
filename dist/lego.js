@@ -74,6 +74,7 @@ Lego.prototype.create = function create(opts) {
     var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this, options = {
+        id: "",
         el: this.config.pageEl,
         tagName: "div",
         config: {},
@@ -89,7 +90,7 @@ Lego.prototype.create = function create(opts) {
         onAnimateAfter: function onAnimateAfter$1() {}
     };
     Object.assign(options, opts);
-    var el = options.el, cid = (this.config.alias + window.location.hash.replace(/\//g, "_") + "_" + el).replace(/#/g, ""), onBefore = options.onBefore.bind(this), onAfter = options.onAfter.bind(this), onAnimateBefore = options.onAnimateBefore.bind(this), onAnimateAfter = options.onAnimateAfter.bind(this);
+    var el = options.el, id = options.id || (this.config.alias + window.location.hash.replace(/\//g, "_") + "_" + el).replace(/#/g, ""), onBefore = options.onBefore.bind(this), onAfter = options.onAfter.bind(this), onAnimateBefore = options.onAnimateBefore.bind(this), onAnimateAfter = options.onAnimateAfter.bind(this);
     if (options.permis) {
         var module = options.permis.module, operate = options.permis.operate, hide = options.permis.hide, userId = options.permis.userid || 0;
         if (hide) {
@@ -99,11 +100,11 @@ Lego.prototype.create = function create(opts) {
         }
     }
     typeof onBefore === "function" && onBefore();
-    var viewObj, _el = this.$('[id="' + cid + '"]')[0];
+    var viewObj, _el = this.$('[id="' + id + '"]')[0];
     if (!this.views[this.currentApp].has(_el)) {
         viewObj = new options.view({
+            id: id,
             el: el,
-            cid: cid,
             tagName: options.tagName,
             insert: options.insert,
             events: options.events,
@@ -114,7 +115,7 @@ Lego.prototype.create = function create(opts) {
             items: options.items,
             data: options.data
         });
-        this.views[this.currentApp].set(viewObj.$('[id="' + cid + '"]')[0], viewObj);
+        this.views[this.currentApp].set(viewObj.$('[id="' + id + '"]')[0], viewObj);
     } else {
         viewObj = this.views[this.currentApp].get(_el);
     }
