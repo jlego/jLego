@@ -8,7 +8,7 @@ class ListView extends BaseView {
             },
             listen: {
                 'data_update': (data) => {
-                    console.warn('pppppppppp', data);
+                    debug.warn('pppppppppp', data);
                 }
             }
         };
@@ -19,6 +19,7 @@ class ListView extends BaseView {
         let data = this.options.data.data || [],
             vDom = [];
 
+        debug.warn('更新了视图', data);
         data.forEach((model, i) => {
             vDom.push(h('a#' + model.first, {
                 href: '#/home/list',
@@ -30,7 +31,7 @@ class ListView extends BaseView {
         return vDom;
     }
     theClick(event){
-        console.warn('66666666666');
+        debug.warn('66666666666');
     }
 }
 export default ListView;
