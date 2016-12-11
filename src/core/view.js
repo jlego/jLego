@@ -24,7 +24,14 @@ class View extends Events {
         };
         this.options = Lego.$.extend(true, options, opts);
         this._ensureElement();
-        // 监听数据变化
+        this._observe();
+    }
+    /**
+     * [_observe 监听数据变化]
+     * @return {[type]} [description]
+     */
+    _observe(){
+        const that = this;
         if(this.options.data){
             Object.observe(this.options.data, (changes) =>{
                 changes.forEach(function(change, i){
@@ -45,7 +52,7 @@ class View extends Events {
         this._setElement(element);
         this.delegateEvents();
         return this;
-    } 
+    }
 
     delegateEvents() {
         const events = this.options.events;

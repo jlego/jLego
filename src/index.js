@@ -23,6 +23,7 @@ class Lego {
             isAnimate: false,  //是否开启动画
             isPermit: false,  //是否开启操作权限
             isMultiWindow: false, //是否多窗口
+            isOpenVirtualDom: true, //是否开启虚拟DOM
             pageEl: '',     //页面渲染容器
             defaultApp: '', //默认应用
             rootUri: '',    //根目录
