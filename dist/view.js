@@ -31,7 +31,7 @@ var View = function(Events$$1) {
         this.setElement(this.options.el);
         var content = this.render();
         if (Lego.config.isOpenVirtualDom && typeof content !== "string") {
-            var treeNode = this._getVdom();
+            var treeNode = this._getVdom(content);
             this.rootNode = Lego.createElement(treeNode);
             this.$el[this.options.insert](this.rootNode);
         }
@@ -43,19 +43,16 @@ var View = function(Events$$1) {
     if (Events$$1) View.__proto__ = Events$$1;
     View.prototype = Object.create(Events$$1 && Events$$1.prototype);
     View.prototype.constructor = View;
-    View.prototype._getVdom = function _getVdom() {
-        var content = this.render();
-        var nodeTag = this.options.tagName + "#" + this.options.id;
-        if (this.options.className) {
-            nodeTag += "." + this.options.className;
-        }
-        return h(nodeTag, content);
+    View.prototype._getVdom = function _getVdom(content) {
+        var nodeTag = this.options.tagName;
+        var attrObj = {
+            id: this.options.cid
+        };
+        return h(nodeTag, attrObj, [ content ]);
     };
     View.prototype._renderHtml = function _renderHtml(content) {
-        var $content = $(content);
-        if (this.options.className) {
-            $content.addClass(this.options.className);
-        }
+        var $content = $(document.createElement(this.options.tagName)).html(content);
+        $content.attr("id", this.options.cid);
         this.$el[this.options.insert]($content);
     };
     View.prototype._observe = function _observe() {

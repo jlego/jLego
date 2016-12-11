@@ -12,23 +12,20 @@ class HomeRouter {
     }
     home() {
         HBY.create({
-            id: 'home',
             view: listView,
             data: {data: [
-                { first: 'home_el', last: 'Bond' },
-                { first: 'test_el', last: 'bbbb' },
+                { first: 'home', last: 'Bond' },
+                { first: 'test', last: 'bbbb' },
             ]},
             items: [{
-                id: 'home_1',
-                el: '#home_el',
+                el: '#home',
                 view: homeView,
                 data: [
                     { first: 'home2', last: 'Bond2' },
                     { first: 'test2', last: 'bbbb2' },
                 ]
             }, {
-                id: 'home_2',
-                el: '#test_el',
+                el: '#test',
                 view: homeView,
                 data: [
                     { first: 'home3', last: 'Bond3' },
@@ -41,7 +38,6 @@ class HomeRouter {
         dataList.api(['test', 'ok'], (resp) => {
             let data = HBY.getData('test');
             HBY.create({
-                id: 'list',
                 view: listView,
                 data: data
             });

@@ -17,7 +17,7 @@ class HomeView extends BaseView {
             vDom = [];
 
         data.forEach((model, i) => {
-            vDom.push(h('a#' + that.options.id + i, {
+            vDom.push(h('a#' + model.first + i, {
                 href: '#/home',
                 style: {
                     display: 'block'

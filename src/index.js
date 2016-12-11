@@ -60,7 +60,6 @@ class Lego {
     create(opts = {}){
         const that = this,
             options = {
-                id: '',
                 el: this.config.pageEl,
                 tagName: 'div',
                 config: {}, //视图参数
@@ -77,12 +76,11 @@ class Lego {
             };
         Object.assign(options, opts);
         const el = options.el,
-            id = options.id,
+            cid = (this.config.alias + window.location.hash.replace(/\//g, '_') + '_' + el).replace(/#/g, ''),
             onBefore = options.onBefore.bind(this),
             onAfter = options.onAfter.bind(this),
             onAnimateBefore = options.onAnimateBefore.bind(this),
             onAnimateAfter = options.onAnimateAfter.bind(this);
-        if(!id) return;
         // 操作权限
         if (options.permis) {
             const module = options.permis.module,
@@ -96,15 +94,13 @@ class Lego {
             }
         }
         typeof onBefore === 'function' && onBefore();
-
         let viewObj,
-            _el = this.$(el).find('#' + id)[0];
-        if(!this.views[this.currentApp].get(_el)){
+            _el = this.$('[id="' + cid + '"]')[0];
+        if(!this.views[this.currentApp].has(_el)){
             viewObj = new options.view({
-                id: id,
                 el: el,
+                cid: cid,
                 tagName: options.tagName,
-                className: options.className || '',
                 insert: options.insert,
                 events: options.events,
                 listen: options.listen,
@@ -114,7 +110,7 @@ class Lego {
                 items: options.items,
                 data: options.data
             });
-            this.views[this.currentApp].set(viewObj.$el.children()[0], viewObj);
+            this.views[this.currentApp].set(viewObj.$('[id="' + cid + '"]')[0], viewObj);
         }else{
             viewObj = this.views[this.currentApp].get(_el);
         }

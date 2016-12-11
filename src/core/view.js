@@ -23,7 +23,7 @@ class View extends Events {
         this.setElement(this.options.el);
         const content = this.render();
         if(Lego.config.isOpenVirtualDom && typeof content !== 'string'){
-            const treeNode = this._getVdom();
+            const treeNode = this._getVdom(content);
             this.rootNode = Lego.createElement(treeNode);
             this.$el[this.options.insert](this.rootNode);
         }
@@ -36,11 +36,12 @@ class View extends Events {
      * [_getVdom description]
      * @return {[type]} [description]
      */
-    _getVdom(){
-        const content = this.render();
-        let nodeTag = this.options.tagName + '#' + this.options.id;
-        if(this.options.className) nodeTag += '.' + this.options.className;
-        return h(nodeTag, content);
+    _getVdom(content){
+        let nodeTag = this.options.tagName;
+        let attrObj = {
+            id: this.options.cid
+        };
+        return h(nodeTag, attrObj, [content]);
     }
     /**
      * [_renderHtml 刷新普通渲染视图]
@@ -48,8 +49,8 @@ class View extends Events {
      * @return {[type]}         [description]
      */
     _renderHtml(content){
-        const $content = $(content);
-        if(this.options.className) $content.addClass(this.options.className);
+        const $content = $(document.createElement(this.options.tagName)).html(content);
+        $content.attr('id', this.options.cid);
         this.$el[this.options.insert]($content);
     }
     /**

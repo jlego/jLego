@@ -79,17 +79,14 @@
 	        key: 'home',
 	        value: function home() {
 	            HBY.create({
-	                id: 'home',
 	                view: _listView2.default,
-	                data: { data: [{ first: 'home_el', last: 'Bond' }, { first: 'test_el', last: 'bbbb' }] },
+	                data: { data: [{ first: 'home', last: 'Bond' }, { first: 'test', last: 'bbbb' }] },
 	                items: [{
-	                    id: 'home_1',
-	                    el: '#home_el',
+	                    el: '#home',
 	                    view: _homeView2.default,
 	                    data: [{ first: 'home2', last: 'Bond2' }, { first: 'test2', last: 'bbbb2' }]
 	                }, {
-	                    id: 'home_2',
-	                    el: '#test_el',
+	                    el: '#test',
 	                    view: _homeView2.default,
 	                    data: [{ first: 'home3', last: 'Bond3' }, { first: 'test3', last: 'bbbb3' }]
 	                }]
@@ -101,7 +98,6 @@
 	            _listData2.default.api(['test', 'ok'], function (resp) {
 	                var data = HBY.getData('test');
 	                HBY.create({
-	                    id: 'list',
 	                    view: _listView2.default,
 	                    data: data
 	                });
@@ -169,7 +165,7 @@
 	                vDom = [];
 
 	            data.forEach(function (model, i) {
-	                vDom.push(h('a#' + that.options.id + i, {
+	                vDom.push(h('a#' + model.first + i, {
 	                    href: '#/home',
 	                    style: {
 	                        display: 'block'
@@ -10457,7 +10453,7 @@
 	        this.setElement(this.options.el);
 	        var content = this.render();
 	        if (Lego.config.isOpenVirtualDom && typeof content !== "string") {
-	            var treeNode = this._getVdom();
+	            var treeNode = this._getVdom(content);
 	            this.rootNode = Lego.createElement(treeNode);
 	            this.$el[this.options.insert](this.rootNode);
 	        }
@@ -10469,19 +10465,16 @@
 	    if (Events$$1) View.__proto__ = Events$$1;
 	    View.prototype = Object.create(Events$$1 && Events$$1.prototype);
 	    View.prototype.constructor = View;
-	    View.prototype._getVdom = function _getVdom() {
-	        var content = this.render();
-	        var nodeTag = this.options.tagName + "#" + this.options.id;
-	        if (this.options.className) {
-	            nodeTag += "." + this.options.className;
-	        }
-	        return h(nodeTag, content);
+	    View.prototype._getVdom = function _getVdom(content) {
+	        var nodeTag = this.options.tagName;
+	        var attrObj = {
+	            id: this.options.cid
+	        };
+	        return h(nodeTag, attrObj, [content]);
 	    };
 	    View.prototype._renderHtml = function _renderHtml(content) {
-	        var $content = $(content);
-	        if (this.options.className) {
-	            $content.addClass(this.options.className);
-	        }
+	        var $content = $(document.createElement(this.options.tagName)).html(content);
+	        $content.attr("id", this.options.cid);
 	        this.$el[this.options.insert]($content);
 	    };
 	    View.prototype._observe = function _observe() {
