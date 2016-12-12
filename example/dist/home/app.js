@@ -40,83 +40,62 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ([
-/* 0 */
+/******/ ({
+
+/***/ 0:
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _homeView = __webpack_require__(1);
+	var _homeView = __webpack_require__(341);
 
 	var _homeView2 = _interopRequireDefault(_homeView);
 
-	var _listView = __webpack_require__(3);
+	var _listView = __webpack_require__(342);
 
 	var _listView2 = _interopRequireDefault(_listView);
 
-	var _listData = __webpack_require__(4);
+	var _listData = __webpack_require__(343);
 
 	var _listData2 = _interopRequireDefault(_listData);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var HomeRouter = function () {
-	    function HomeRouter() {
-	        _classCallCheck(this, HomeRouter);
-
-	        return {
-	            '/home': this.list,
-	            '/home/list': this.home,
-	            '/home/detail/:id': this.detail
-	        };
-	    }
-
-	    _createClass(HomeRouter, [{
-	        key: 'home',
-	        value: function home() {
+	HBY.router = {
+	    '/home': function home() {
+	        _listData2.default.api(['test', 'ok'], function (resp) {
+	            var data = HBY.getData('test');
 	            HBY.create({
 	                view: _listView2.default,
-	                data: { data: [{ first: 'home', last: 'Bond' }, { first: 'test', last: 'bbbb' }] },
-	                components: [{
-	                    el: '#home',
-	                    view: _homeView2.default,
-	                    data: [{ first: 'home2', last: 'Bond2' }, { first: 'test2', last: 'bbbb2' }]
-	                }, {
-	                    el: '#test',
-	                    view: _homeView2.default,
-	                    data: [{ first: 'home3', last: 'Bond3' }, { first: 'test3', last: 'bbbb3' }]
-	                }]
+	                data: data
 	            });
-	        }
-	    }, {
-	        key: 'list',
-	        value: function list() {
-	            _listData2.default.api(['test', 'ok'], function (resp) {
-	                var data = HBY.getData('test');
-	                HBY.create({
-	                    view: _listView2.default,
-	                    data: data
-	                });
-	            });
-	        }
-	    }, {
-	        key: 'detail',
-	        value: function detail(id) {
-	            console.warn('pppppppppp');
-	        }
-	    }]);
-
-	    return HomeRouter;
-	}();
-
-	HBY.router = new HomeRouter();
+	        });
+	    },
+	    '/home/list': function homeList() {
+	        HBY.create({
+	            view: _listView2.default,
+	            data: {
+	                data: [{ first: 'home', last: 'Bond' }, { first: 'test', last: 'bbbb' }]
+	            },
+	            components: [{
+	                el: '#home',
+	                view: _homeView2.default,
+	                data: [{ first: 'home2', last: 'Bond2' }, { first: 'test2', last: 'bbbb2' }]
+	            }, {
+	                el: '#test',
+	                view: _homeView2.default,
+	                data: [{ first: 'home3', last: 'Bond3' }, { first: 'test3', last: 'bbbb3' }]
+	            }]
+	        });
+	    },
+	    '/home/detail/:id': function homeDetailId(id) {
+	        console.warn('pppppppppp');
+	    }
+	};
 
 /***/ },
-/* 1 */
+
+/***/ 341:
 /***/ function(module, exports) {
 
 	'use strict';
@@ -182,8 +161,8 @@
 	exports.default = HomeView;
 
 /***/ },
-/* 2 */,
-/* 3 */
+
+/***/ 342:
 /***/ function(module, exports) {
 
 	'use strict';
@@ -199,9 +178,6 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	// import BaseView from '../../../dist/view';
-	// import BaseView from 'lego-core/dist/view';
 
 	var ListView = function (_HBY$View) {
 	    _inherits(ListView, _HBY$View);
@@ -255,7 +231,8 @@
 	exports.default = ListView;
 
 /***/ },
-/* 4 */
+
+/***/ 343:
 /***/ function(module, exports) {
 
 	'use strict';
@@ -271,8 +248,6 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	// import BaseData from '../../../dist/data';
 
 	var ListData = function (_HBY$Data) {
 	    _inherits(ListData, _HBY$Data);
@@ -313,4 +288,5 @@
 	exports.default = new ListData();
 
 /***/ }
-/******/ ]);
+
+/******/ });

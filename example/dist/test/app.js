@@ -46,36 +46,14 @@
 
 	'use strict';
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var MyRouter = function () {
-	    function MyRouter(option) {
-	        _classCallCheck(this, MyRouter);
-
-	        return {
-	            '/test/:id': this.home,
-	            '/test/read/:id': this.read
-	        };
+	HBY.router = {
+	    '/test/:id': function testId(id) {
+	        HBY.$(HBY.config.pageEl).html('hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id);
+	    },
+	    '/test/read/:id': function testReadId(id) {
+	        HBY.$(HBY.config.pageEl).html('hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id);
 	    }
-
-	    _createClass(MyRouter, [{
-	        key: 'home',
-	        value: function home(id) {
-	            HBY.$(HBY.config.pageEl).html('hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id);
-	        }
-	    }, {
-	        key: 'read',
-	        value: function read(id) {
-	            HBY.$(HBY.config.pageEl).html('hhh<a href="#/home/88">aaaaaaa</a>ggg_' + id);
-	        }
-	    }]);
-
-	    return MyRouter;
-	}();
-
-	HBY.router = new MyRouter();
+	};
 
 /***/ }
 /******/ ]);

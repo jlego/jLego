@@ -14,10 +14,6 @@ class View extends Events {
             events: null,
             listen: null,
             config: {}
-            // permis: {},
-            // animate: null,
-            // scrollbar: false
-            // components: []
         };
         this.options = $.extend(true, options, opts);
         this.setElement(this.options.el);

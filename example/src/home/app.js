@@ -2,21 +2,25 @@ import homeView from './homeView';
 import listView from './listView';
 import dataList from './listData';
 
-class HomeRouter {
-    constructor() {
-        return {
-            '/home': this.list,
-            '/home/list': this.home,
-            '/home/detail/:id': this.detail,
-        };
-    }
-    home() {
+HBY.router = {
+    '/home'() {
+        dataList.api(['test', 'ok'], (resp) => {
+            let data = HBY.getData('test');
+            HBY.create({
+                view: listView,
+                data: data
+            });
+        });
+    },
+    '/home/list'() {
         HBY.create({
             view: listView,
-            data: {data: [
-                { first: 'home', last: 'Bond' },
-                { first: 'test', last: 'bbbb' },
-            ]},
+            data: {
+                data: [
+                    { first: 'home', last: 'Bond' },
+                    { first: 'test', last: 'bbbb' },
+                ]
+            },
             components: [{
                 el: '#home',
                 view: homeView,
@@ -33,18 +37,8 @@ class HomeRouter {
                 ]
             }]
         });
-    }
-    list() {
-        dataList.api(['test', 'ok'], (resp) => {
-            let data = HBY.getData('test');
-            HBY.create({
-                view: listView,
-                data: data
-            });
-        });
-    }
-    detail(id) {
+    },
+    '/home/detail/:id'(id) {
         console.warn('pppppppppp');
     }
-}
-HBY.router = new HomeRouter();
+};

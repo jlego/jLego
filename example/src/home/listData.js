@@ -1,5 +1,3 @@
-// import BaseData from '../../../dist/data';
-
 class ListData extends HBY.Data {
     constructor(options = {}) {
         const api = {
@@ -20,7 +18,7 @@ class ListData extends HBY.Data {
         HBY.$.extend(true, api, options);
         super(api);
     }
-    parse(data){
+    parse(data) {
         return data;
     }
 }

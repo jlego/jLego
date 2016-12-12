@@ -1,6 +1,5 @@
 import 'whatwg-fetch'
 import Events from "events";
-// import Model from './model';
 
 class Data extends Events {
     /**
