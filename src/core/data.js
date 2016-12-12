@@ -1,4 +1,4 @@
-import 'whatwg-fetch'
+// import 'whatwg-fetch'
 import Events from "events";
 
 class Data extends Events {

@@ -40,22 +40,21 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ({
-
-/***/ 0:
+/******/ ([
+/* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var _homeView = __webpack_require__(341);
+	var _homeView = __webpack_require__(1);
 
 	var _homeView2 = _interopRequireDefault(_homeView);
 
-	var _listView = __webpack_require__(342);
+	var _listView = __webpack_require__(2);
 
 	var _listView2 = _interopRequireDefault(_listView);
 
-	var _listData = __webpack_require__(343);
+	var _listData = __webpack_require__(3);
 
 	var _listData2 = _interopRequireDefault(_listData);
 
@@ -94,8 +93,7 @@
 	};
 
 /***/ },
-
-/***/ 341:
+/* 1 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -161,8 +159,7 @@
 	exports.default = HomeView;
 
 /***/ },
-
-/***/ 342:
+/* 2 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -231,8 +228,7 @@
 	exports.default = ListView;
 
 /***/ },
-
-/***/ 343:
+/* 3 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -288,5 +284,4 @@
 	exports.default = new ListData();
 
 /***/ }
-
-/******/ });
+/******/ ]);

@@ -1,4 +1,4 @@
-import 'babel-polyfill';
+// import 'babel-polyfill';
 import Events from "events";
 import { Router } from 'director';
 import h from 'virtual-dom/h';

@@ -1,5 +1,5 @@
 /**
- * lego.js v0.0.7
+ * lego.js v0.0.8
  * (c) 2016 Evan You
  * @license MIT
  */
@@ -8,8 +8,6 @@
 function _interopDefault(ex) {
     return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
 }
-
-var babelPolyfill = require("babel-polyfill");
 
 var Events = _interopDefault(require("events"));
 
@@ -24,8 +22,6 @@ var createElement = _interopDefault(require("virtual-dom/create-element"));
 var patch$1 = _interopDefault(require("virtual-dom/patch"));
 
 var object_observe = require("object.observe");
-
-var whatwgFetch = require("whatwg-fetch");
 
 var Util = {};
 

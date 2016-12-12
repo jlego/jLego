@@ -7,7 +7,7 @@ const babelrc = require('babelrc-rollup');
 const buble = require('rollup-plugin-buble');
 const replace = require('rollup-plugin-replace');
 const uglify = require('rollup-plugin-uglify');
-const minify = require('uglify-js');
+const uglifyjs = require('uglify-js');
 const async = require('rollup-plugin-async');
 const regenerator = require('rollup-plugin-regenerator');
 const istanbul = require('rollup-plugin-istanbul');
@@ -26,20 +26,13 @@ build([{
     dest: resolve('dist/lego.js'),
     format: 'cjs',
     env: 'development'
+}, {
+    alias: 'lego.min',
+    entry: resolve('src/index.js'),
+    dest: resolve('dist/lego.min.js'),
+    format: 'cjs',
+    env: 'development'
 }
-// , {
-//     alias: 'view',
-//     entry: resolve('src/core/view.js'),
-//     dest: resolve('dist/view.js'),
-//     format: 'cjs',
-//     env: 'development'
-// }, {
-//     alias: 'data',
-//     entry: resolve('src/core/data.js'),
-//     dest: resolve('dist/data.js'),
-//     format: 'cjs',
-//     env: 'development'
-// }
 ].map(genConfig));
 
 function build(builds) {
@@ -73,7 +66,11 @@ function genConfig(opts) {
         format: opts.format,
         banner,
         moduleName: 'LegoJS',
-        plugins: []
+        plugins: [
+            replace({
+                'process.env.NODE_ENV': JSON.stringify(opts.env)
+            })
+        ]
     };
 
     if (opts.alias == 'observe') {
@@ -83,17 +80,18 @@ function genConfig(opts) {
         config.plugins = [async(), regenerator()];
     }
     if (opts.env) {
-        config.plugins.unshift(replace({
-            'process.env.NODE_ENV': JSON.stringify(opts.env)
-        }));
         config.plugins.push(
-            async(), regenerator(),
+            // flow(), 
+            // node(), 
+            // cjs(),
+            async(), 
+            regenerator(),
             buble(),
             uglify({
                 mangle: false,
-                compress: false,
+                compress: opts.alias == 'lego.min' ? true : false,
                 output: {
-                    beautify: true,
+                    beautify: opts.alias == 'lego.min' ? false : true,
                     comments: function(node, comment) {
                         var text = comment.value;
                         var type = comment.type;
@@ -110,7 +108,7 @@ function buildEntry(config) {
     return rollup.rollup(config).then(bundle => {
         const code = bundle.generate(config).code
         if (isProd) {
-            var minified = (config.banner ? config.banner + '\n' : '') + uglify.minify(code, {
+            var minified = (config.banner ? config.banner + '\n' : '') + uglifyjs.minify(code, {
                 fromString: true,
                 output: {
                     screw_ie8: true,

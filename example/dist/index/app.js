@@ -46,7 +46,7 @@
 
 	'use strict';
 
-	var _mainView = __webpack_require__(1);
+	var _mainView = __webpack_require__(4);
 
 	var _mainView2 = _interopRequireDefault(_mainView);
 
@@ -60,7 +60,10 @@
 	HBY.startApp();
 
 /***/ },
-/* 1 */
+/* 1 */,
+/* 2 */,
+/* 3 */,
+/* 4 */
 /***/ function(module, exports) {
 
 	'use strict';

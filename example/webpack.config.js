@@ -12,6 +12,7 @@ module.exports = {
         path: path.join(__dirname, 'dist'), //打包输出的路径
         publicPath: "./dist/", //html引用路径，在这里是本地地址。
         filename: '[name].js', //打包多个
+        compact: true
         // chunkFilename: "[name].js"
     },
     // 新添加的module属性
