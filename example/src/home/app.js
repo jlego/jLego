@@ -3,7 +3,7 @@ import listView from './listView';
 import dataList from './listData';
 
 HBY.router = {
-    '/home'() {
+    '/home' () {
         dataList.api(['test', 'ok'], (resp) => {
             let data = HBY.getData('test');
             HBY.create({
@@ -12,7 +12,7 @@ HBY.router = {
             });
         });
     },
-    '/home/list'() {
+    '/home/list' () {
         HBY.create({
             view: listView,
             data: {
@@ -38,7 +38,7 @@ HBY.router = {
             }]
         });
     },
-    '/home/detail/:id'(id) {
+    '/home/detail/:id' (id) {
         console.warn('pppppppppp');
     }
 };
