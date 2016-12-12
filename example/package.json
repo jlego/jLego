@@ -36,7 +36,7 @@
     "dom-delegator": "^13.1.0",
     "events": "^1.1.1",
     "jquery": "^3.1.1",
-    "lego-core": "0.0.6",
+    "lego-core": "0.0.7",
     "object.observe": "^0.2.6",
     "virtual-dom": "^2.1.1",
     "xhr": "^2.3.1"

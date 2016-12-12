@@ -1,13 +1,14 @@
-import BaseView from '../../../dist/view';
+// import BaseView from '../../../dist/view';
+// import BaseView from 'lego-core/dist/view';
 
-class MainView extends BaseView {
+class MainView extends HBY.View {
     constructor(opts = {}) {
         const options = {
             events: {
                 'click nav a': 'clickNav'
             }
         };
-        $.extend(true, options, opts);
+        HBY.$.extend(true, options, opts);
         super(options);
     }
     render() {

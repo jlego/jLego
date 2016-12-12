@@ -6,13 +6,13 @@ module.exports = {
         'index/app': './src/index/app',
         'home/app': './src/home/app',
         'test/app': './src/test/app',
-        'main': './src/main'
+        'main': './src/main',
     }, //演示单入口文件
     output: {
         path: path.join(__dirname, 'dist'), //打包输出的路径
         publicPath: "./dist/", //html引用路径，在这里是本地地址。
-        // filename: 'app.js', //打包后的名字
-        filename: '[name].js' //打包多个
+        filename: '[name].js', //打包多个
+        // chunkFilename: "[name].js"
     },
     // 新添加的module属性
     module: {
@@ -68,9 +68,15 @@ module.exports = {
     plugins: [
         new webpack.ProvidePlugin({
             $: "jquery",
-            jQuery: "jquery",
-            "window.jQuery": "jquery"
-        })
+            jQuery: "jquery"
+        }),
+        // new webpack.optimize.CommonsChunkPlugin({
+        //     name:'common', // 注意不要.js后缀
+        //     chunks:['main', 'index/app', 'home/app']
+        // }),
+        // css抽取
+        // new extractTextPlugin("[name].css"),
+        // new webpack.IgnorePlugin(/jquery|events|object\.observe/)
     ],
     // devtool: "#source-map",
     // devServer: {

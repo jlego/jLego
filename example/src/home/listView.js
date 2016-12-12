@@ -1,6 +1,7 @@
-import BaseView from '../../../dist/view';
+// import BaseView from '../../../dist/view';
+// import BaseView from 'lego-core/dist/view';
 
-class ListView extends BaseView {
+class ListView extends HBY.View {
     constructor(opts = {}) {
         const options = {
             events: {
@@ -12,7 +13,7 @@ class ListView extends BaseView {
                 }
             }
         };
-        $.extend(true, options, opts);
+        HBY.$.extend(true, options, opts);
         super(options);
     }
     render() {

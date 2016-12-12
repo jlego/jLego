@@ -6,6 +6,8 @@ import diff from 'virtual-dom/diff';
 import createElement from 'virtual-dom/create-element';
 import patch from 'virtual-dom/patch';
 import util from "./util/util";
+import BaseView from "./core/view";
+import BaseData from "./core/data";
 
 class Lego {
     constructor(options = {}) {
@@ -42,11 +44,13 @@ class Lego {
         this.$el = this.$;
         this.prevApp = ''; //上一个应用名称
         this.currentApp = 'index'; //当前应用名称
-        this.BaseEvent = Events;
-        this.Eventer = new Events(); //全局事件对象
+        this.Event = Events;
+        this.View = BaseView;
+        this.Data = BaseData;
         this.views = {}; //视图实例容器
-        this.permis = {};   //权限对象
         this.datas = {};    //数据持久化容器
+        this.permis = {};   //权限对象
+        this.Eventer = new Events(); //全局事件对象
         this.Router = Router({}).init();
         window[this.config.alias] = window.Lego = this;
         this.startApp(this.currentApp);
@@ -104,7 +108,7 @@ class Lego {
         }else{
             viewObj = this.views[this.currentApp].get(_el);
         }
-        
+
         if(options.listen){
             for(let key in options.listen) {
                 this.Eventer.removeListener(key);

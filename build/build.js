@@ -26,19 +26,21 @@ build([{
     dest: resolve('dist/lego.js'),
     format: 'cjs',
     env: 'development'
-}, {
-    alias: 'view',
-    entry: resolve('src/core/view.js'),
-    dest: resolve('dist/view.js'),
-    format: 'cjs',
-    env: 'development'
-}, {
-    alias: 'data',
-    entry: resolve('src/core/data.js'),
-    dest: resolve('dist/data.js'),
-    format: 'cjs',
-    env: 'development'
-}].map(genConfig));
+}
+// , {
+//     alias: 'view',
+//     entry: resolve('src/core/view.js'),
+//     dest: resolve('dist/view.js'),
+//     format: 'cjs',
+//     env: 'development'
+// }, {
+//     alias: 'data',
+//     entry: resolve('src/core/data.js'),
+//     dest: resolve('dist/data.js'),
+//     format: 'cjs',
+//     env: 'development'
+// }
+].map(genConfig));
 
 function build(builds) {
     let built = 0
@@ -85,6 +87,7 @@ function genConfig(opts) {
             'process.env.NODE_ENV': JSON.stringify(opts.env)
         }));
         config.plugins.push(
+            async(), regenerator(),
             buble(),
             uglify({
                 mangle: false,

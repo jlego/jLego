@@ -1,6 +1,7 @@
-import BaseView from '../../../dist/view';
+// import BaseView from '../../../dist/view';
+// import BaseView from 'lego-core/dist/view';
 
-class HomeView extends BaseView {
+class HomeView extends HBY.View {
     constructor(opts = {}) {
         const options = {
             // el: 'div#uuu88',
@@ -8,7 +9,7 @@ class HomeView extends BaseView {
                 'click #400': 'theClick'
             }
         };
-        $.extend(true, options, opts);
+        HBY.$.extend(true, options, opts);
         super(options);
     }
     render() {

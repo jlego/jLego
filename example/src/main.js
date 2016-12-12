@@ -1,4 +1,5 @@
 import jQuery from 'jquery';
+// import Lego from 'lego-core';
 import Lego from '../../dist/lego';
 
 new Lego({

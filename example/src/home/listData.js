@@ -1,6 +1,6 @@
-import BaseData from '../../../dist/data';
+// import BaseData from '../../../dist/data';
 
-class ListData extends BaseData {
+class ListData extends HBY.Data {
     constructor(options = {}) {
         const api = {
             'test': {
