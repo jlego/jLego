@@ -1,6 +1,3 @@
-// import BaseView from '../../../dist/view';
-// import BaseView from 'lego-core/dist/view';
-
 class HomeView extends HBY.View {
     constructor(opts = {}) {
         const options = {
