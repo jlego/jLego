@@ -100,7 +100,7 @@ class Lego {
                 }
             }
         }
-        typeof onBefore === 'function' && onBefore();
+        typeof options.onBefore === 'function' && options.onBefore();
         let viewObj,
             _el = this.$('[id="' + options.id + '"]')[0];
         if(!this.views[this.currentApp].has(_el)){
@@ -124,7 +124,7 @@ class Lego {
             });
         }
 
-        typeof onAfter === 'function' && onAfter();
+        typeof options.onAfter === 'function' && options.onAfter(viewObj);
         return viewObj;
     }
     /**
@@ -242,17 +242,6 @@ class Lego {
         const appName = this.Router.getRoute()[0] !== 'index' ? this.Router.getRoute()[0] : 'index';
         return appName || this.config.defaultApp;
     }
-    /**
-     * [getData 取应用数据]
-     * @return {[type]} [description]
-     */
-    // getData(apiName, appName = this.getAppName()) {
-    //     if(apiName){
-    //         return this.datas[appName].get(apiName) ? this.datas[appName].get(apiName).data : {};
-    //     }else{
-    //         return this.datas[appName];
-    //     }
-    // }
     /**
      * [getView 取应用视图]
      * @param  {[type]} alias   [description]

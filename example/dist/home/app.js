@@ -67,8 +67,21 @@
 	            dataSource: {
 	                api: ['test', 'ok'],
 	                server: _list4.default
+	            },
+	            onAfter: function onAfter(self) {
+	                var i = 0;
+	                setInterval(function () {
+	                    self.data.list[0].last = i;
+	                    self.refresh();
+	                    i++;
+	                }, 3000);
 	            }
 	        });
+	        // setTimeout(function(){
+	        //     theView.data.list[0].last = '4444444';
+	        //     theView.data._version = HBY.randomKey();
+	        //     console.warn(theView.data.list[0].last);
+	        // }, 3000);
 	    },
 	    '/home/list': function homeList() {
 	        HBY.create({
@@ -274,7 +287,7 @@
 	    _createClass(ListData, [{
 	        key: 'parse',
 	        value: function parse(data) {
-	            return data[0].data;
+	            return data[1].data;
 	        }
 	    }]);
 

@@ -51,13 +51,11 @@ var View = function View(opts) {
             }
             this.server.load(dataSource.api, function(resp) {
                 if (Lego.$.isArray(resp)) {
-                    if (this$1.data.list) {
-                        this$1.data.__version = Lego.randomKey();
-                    }
                     this$1.data.list = resp;
                 } else {
                     this$1.data = resp;
                 }
+                this$1.refresh();
             });
         }
     }
@@ -95,7 +93,6 @@ View.prototype._observe = function _observe() {
     if (this.data && typeof this.data === "object") {
         Object.observe(this.data, function(changes) {
             changes.forEach(function(change, i) {
-                debug.log(change);
                 var content = that.render();
                 if (Lego.config.isOpenVirtualDom) {
                     var treeNode = that._getVdom(content);
@@ -168,6 +165,14 @@ View.prototype.$ = function $(selector) {
 
 View.prototype.render = function render() {
     return this;
+};
+
+View.prototype.refresh = function refresh() {
+    if (Lego.config.isOpenVirtualDom) {
+        this.data._version = Lego.randomKey();
+    } else {
+        this._renderHtml(this.render());
+    }
 };
 
 View.prototype.remove = function remove() {
@@ -332,8 +337,16 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
     }).call(this));
 };
 
-Data.prototype.parse = function parse(respArr) {
-    return respArr;
+Data.prototype.parse = function parse(datas) {
+    return datas;
+};
+
+Data.prototype.getData = function getData(apiName) {
+    if (apiName) {
+        return this.datas.get(apiName) ? this.datas.get(apiName) : {};
+    } else {
+        return this.datas;
+    }
 };
 
 !function(global) {
@@ -835,8 +848,8 @@ Lego$1.prototype.create = function create(opts) {
         scrollbar: null,
         data: null,
         dataSource: null,
-        onBefore: function onBefore$1() {},
-        onAfter: function onAfter$1() {},
+        onBefore: function onBefore() {},
+        onAfter: function onAfter() {},
         onAnimateBefore: function onAnimateBefore() {},
         onAnimateAfter: function onAnimateAfter() {}
     };
@@ -854,7 +867,7 @@ Lego$1.prototype.create = function create(opts) {
             }
         }
     }
-    typeof onBefore === "function" && onBefore();
+    typeof options.onBefore === "function" && options.onBefore();
     var viewObj, _el = this.$('[id="' + options.id + '"]')[0];
     if (!this.views[this.currentApp].has(_el)) {
         viewObj = new options.view(options);
@@ -873,7 +886,7 @@ Lego$1.prototype.create = function create(opts) {
             that.create(item);
         });
     }
-    typeof onAfter === "function" && onAfter();
+    typeof options.onAfter === "function" && options.onAfter(viewObj);
     return viewObj;
 };
 

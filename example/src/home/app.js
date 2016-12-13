@@ -9,8 +9,21 @@ HBY.router = {
             dataSource: {
                 api: ['test', 'ok'],
                 server: listData
+            },
+            onAfter(self){
+                let i = 0;
+                setInterval(function(){
+                    self.data.list[0].last = i;
+                    self.refresh();
+                    i++;
+                }, 3000);
             }
         });
+        // setTimeout(function(){
+        //     theView.data.list[0].last = '4444444';
+        //     theView.data._version = HBY.randomKey();
+        //     console.warn(theView.data.list[0].last);
+        // }, 3000);
     },
     '/home/list' () {
         HBY.create({

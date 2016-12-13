@@ -104,8 +104,19 @@ class Data {
      * @param  {[type]} data [description]
      * @return {[type]}      [description]
      */
-    parse(respArr){
-        return respArr;
+    parse(datas){
+        return datas;
+    }
+    /**
+     * [getData 取应用数据]
+     * @return {[type]} [description]
+     */
+    getData(apiName) {
+        if(apiName){
+            return this.datas.get(apiName) ? this.datas.get(apiName) : {};
+        }else{
+            return this.datas;
+        }
     }
 }
 export default Data;

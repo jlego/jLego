@@ -19,7 +19,7 @@ class ListData extends HBY.Data {
         super(options);
     }
     parse(data) {
-        return data[0].data;
+        return data[1].data;
     }
 }
 export default new ListData();

@@ -30,11 +30,11 @@ class View {
                 }
                 this.server.load(dataSource.api, (resp) => {
                     if(Lego.$.isArray(resp)){
-                        if(this.data.list) this.data.__version = Lego.randomKey();
                         this.data.list = resp;
                     }else{
                         this.data = resp;
                     }
+                    this.refresh();
                 });
             }
         }
@@ -86,7 +86,7 @@ class View {
         if(this.data && typeof this.data === 'object'){
             Object.observe(this.data, (changes) =>{
                 changes.forEach(function(change, i){
-                    debug.log(change);
+                    // debug.log(change);
                     const content = that.render();
                     if(Lego.config.isOpenVirtualDom){
                         const treeNode = that._getVdom(content);
@@ -181,6 +181,17 @@ class View {
      */
     render() {
         return this;
+    }
+    /**
+     * [refresh 刷新视图]
+     * @return {[type]} [description]
+     */
+    refresh() {
+        if(Lego.config.isOpenVirtualDom){
+            this.data._version = Lego.randomKey();
+        }else{
+            this._renderHtml(this.render());
+        }
     }
     /**
      * [remove 销毁视图]
