@@ -62,13 +62,25 @@
 
 	HBY.router = {
 	    '/home': function home() {
-	        _listData2.default.api(['test', 'ok'], function (resp) {
-	            var data = HBY.getData('test');
-	            HBY.create({
-	                view: _listView2.default,
-	                data: data
-	            });
+	        // listData.api(['test', 'ok'], (resp) => {
+	        //     let data = HBY.getData('test');
+	        //     HBY.create({
+	        //         view: listView,
+	        //         data: data
+	        //     });
+	        // });
+	        HBY.create({
+	            view: _listView2.default,
+	            dataOption: {
+	                api: 'test',
+	                auto: true,
+	                depend: ['ok'],
+	                source: _listData2.default
+	            }
+	            // data: 'test'
 	        });
+	        // listData.load();
+	        // console.warn(listData.api(['test', 'ok']).get('test').data);
 	    },
 	    '/home/list': function homeList() {
 	        HBY.create({
@@ -201,6 +213,7 @@
 	    _createClass(ListView, [{
 	        key: 'render',
 	        value: function render() {
+	            if (!this.options.data) return '';
 	            var data = this.options.data.data || [],
 	                vDom = [];
 
@@ -249,11 +262,11 @@
 	    _inherits(ListData, _HBY$Data);
 
 	    function ListData() {
-	        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	        var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
 	        _classCallCheck(this, ListData);
 
-	        var api = {
+	        var options = {
 	            'test': {
 	                url: './content.json',
 	                listTarget: 'data',
@@ -267,8 +280,8 @@
 	                url: './content.json'
 	            }
 	        };
-	        HBY.$.extend(true, api, options);
-	        return _possibleConstructorReturn(this, (ListData.__proto__ || Object.getPrototypeOf(ListData)).call(this, api));
+	        HBY.$.extend(true, options, opts);
+	        return _possibleConstructorReturn(this, (ListData.__proto__ || Object.getPrototypeOf(ListData)).call(this, options));
 	    }
 
 	    _createClass(ListData, [{

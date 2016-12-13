@@ -10301,7 +10301,7 @@
 
 	/* WEBPACK VAR INJECTION */(function($, global, module, process) {/**
 	 * lego.js v0.0.8
-	 * (c) 2016 Evan You
+	 * (c) 2016 Ronghui Yu
 	 * @license MIT
 	 */
 	"use strict";
@@ -10314,135 +10314,156 @@
 
 	var Events = _interopDefault(__webpack_require__(10));
 
-	var director = __webpack_require__(18);
+	var director = __webpack_require__(11);
 
-	var h$1 = _interopDefault(__webpack_require__(19));
+	var h$1 = _interopDefault(__webpack_require__(12));
 
-	var diff$1 = _interopDefault(__webpack_require__(37));
+	var diff$1 = _interopDefault(__webpack_require__(30));
 
-	var createElement = _interopDefault(__webpack_require__(43));
+	var createElement = _interopDefault(__webpack_require__(36));
 
-	var patch$1 = _interopDefault(__webpack_require__(48));
+	var patch$1 = _interopDefault(__webpack_require__(41));
 
-	var object_observe = __webpack_require__(53);
+	var object_observe = __webpack_require__(46);
 
 	var Util = {};
 
-	var View = function (Events$$1) {
-	    function View(opts) {
-	        if (opts === void 0) opts = {};
-	        Events$$1.call(this);
-	        var that = this;
-	        var options = {
-	            events: null,
-	            listen: null,
-	            config: {}
+	var View = function View(opts) {
+	    if (opts === void 0) opts = {};
+	    var that = this;
+	    this.options = {
+	        events: null,
+	        listen: null,
+	        config: {}
+	    };
+	    $.extend(true, this.options, opts);
+	    this.Eventer = Lego.Eventer;
+	    this.setElement(this.options.el);
+	    this._renderView();
+	    if (typeof this.options.data === "string") {
+	        var apiName = this.options.data;
+	        that.options.data = Lego.getData(apiName);
+	        var callback = function callback(data) {
+	            that.options.data = data;
+	            console.warn("ooooooooooooooooooo", apiName);
 	        };
-	        this.options = $.extend(true, options, opts);
-	        this.setElement(this.options.el);
-	        var content = this.render();
-	        if (Lego.config.isOpenVirtualDom && typeof content !== "string") {
-	            var treeNode = this._getVdom(content);
-	            this.rootNode = Lego.createElement(treeNode);
-	            this.$el[this.options.insert](this.rootNode);
-	        }
-	        if (typeof content === "string") {
-	            this._renderHtml(content);
-	        }
-	        this._observe();
+	        this.Eventer.removeListener(apiName + "_data", callback);
+	        this.Eventer.on(apiName + "_data", callback);
 	    }
-	    if (Events$$1) View.__proto__ = Events$$1;
-	    View.prototype = Object.create(Events$$1 && Events$$1.prototype);
-	    View.prototype.constructor = View;
-	    View.prototype._getVdom = function _getVdom(content) {
-	        var nodeTag = this.options.tagName;
-	        var attrObj = {
-	            id: this.options.id
-	        };
-	        return h(nodeTag, attrObj, [content]);
+	    that.options.data = that.options.data || {};
+	    this._observe();
+	};
+
+	View.prototype._renderView = function _renderView() {
+	    var content = this.render();
+	    if (Lego.config.isOpenVirtualDom && typeof content !== "string") {
+	        var treeNode = this._getVdom(content);
+	        this.rootNode = Lego.createElement(treeNode);
+	        this.$el[this.options.insert](this.rootNode);
+	    }
+	    if (typeof content === "string") {
+	        this._renderHtml(content);
+	    }
+	};
+
+	View.prototype._getVdom = function _getVdom(content) {
+	    var nodeTag = this.options.tagName;
+	    var attrObj = {
+	        id: this.options.id
 	    };
-	    View.prototype._renderHtml = function _renderHtml(content) {
-	        var $content = $(document.createElement(this.options.tagName)).html(content);
-	        $content.attr("id", this.options.id);
-	        this.$el[this.options.insert]($content);
-	    };
-	    View.prototype._observe = function _observe() {
-	        var that = this;
-	        if (this.options.data) {
-	            Object.observe(this.options.data, function (changes) {
-	                changes.forEach(function (change, i) {
-	                    debug.log(change);
-	                    if (Lego.config.isOpenVirtualDom) {
-	                        var treeNode = this._getVdom();
-	                        var patches = diff(that.oldTree, treeNode);
-	                        that.rootNode = patch(that.rootNode, patches);
-	                        that.oldTree = treeNode;
-	                    }
-	                    if (typeof that.render() === "string") {
-	                        that._renderHtml(that.render());
-	                    }
-	                });
+	    return h(nodeTag, attrObj, [content]);
+	};
+
+	View.prototype._renderHtml = function _renderHtml(content) {
+	    var $content = $(document.createElement(this.options.tagName)).html(content);
+	    $content.attr("id", this.options.id);
+	    this.$el[this.options.insert]($content);
+	};
+
+	View.prototype._observe = function _observe() {
+	    var that = this;
+	    if (this.options.data && _typeof(this.options.data) === "object") {
+	        Object.observe(this.options.data, function (changes) {
+	            changes.forEach(function (change, i) {
+	                debug.log(change);
+	                if (Lego.config.isOpenVirtualDom) {
+	                    var treeNode = this._getVdom();
+	                    var patches = diff(that.oldTree, treeNode);
+	                    that.rootNode = patch(that.rootNode, patches);
+	                    that.oldTree = treeNode;
+	                }
+	                if (typeof that.render() === "string") {
+	                    that._renderHtml(that.render());
+	                }
 	            });
+	        });
+	    }
+	};
+
+	View.prototype.setElement = function setElement(element) {
+	    this.undelegateEvents();
+	    this._setElement(element);
+	    this.delegateEvents();
+	    return this;
+	};
+
+	View.prototype._setElement = function _setElement(el) {
+	    this.$el = el instanceof Lego.$ ? el : Lego.$(el);
+	    this.el = this.$el[0];
+	};
+
+	View.prototype.delegateEvents = function delegateEvents() {
+	    var this$1 = this;
+	    var events = this.options.events;
+	    var delegateEventSplitter = /^(\S+)\s*(.*)$/;
+	    if (!events) {
+	        return this;
+	    }
+	    this.undelegateEvents();
+	    for (var key in events) {
+	        var method = events[key];
+	        if (typeof method !== "function") {
+	            method = this$1[method];
 	        }
-	    };
-	    View.prototype.setElement = function setElement(element) {
-	        this.undelegateEvents();
-	        this._setElement(element);
-	        this.delegateEvents();
-	        return this;
-	    };
-	    View.prototype._setElement = function _setElement(el) {
-	        this.$el = el instanceof Lego.$ ? el : Lego.$(el);
-	        this.el = this.$el[0];
-	    };
-	    View.prototype.delegateEvents = function delegateEvents() {
-	        var this$1 = this;
-	        var events = this.options.events;
-	        var delegateEventSplitter = /^(\S+)\s*(.*)$/;
-	        if (!events) {
-	            return this;
+	        if (!method) {
+	            continue;
 	        }
-	        this.undelegateEvents();
-	        for (var key in events) {
-	            var method = events[key];
-	            if (typeof method !== "function") {
-	                method = this$1[method];
-	            }
-	            if (!method) {
-	                continue;
-	            }
-	            var match = key.match(delegateEventSplitter);
-	            this$1.delegate(match[1], match[2], method.bind(this$1));
-	        }
-	        return this;
-	    };
-	    View.prototype.delegate = function delegate(eventName, selector, listener) {
-	        this.$el.on(eventName + ".delegateEvents" + this.options.id, selector, listener);
-	        return this;
-	    };
-	    View.prototype.undelegateEvents = function undelegateEvents() {
-	        if (this.$el) {
-	            this.$el.off(".delegateEvents" + this.options.id);
-	        }
-	        return this;
-	    };
-	    View.prototype.undelegate = function undelegate(eventName, selector, listener) {
-	        this.$el.off(eventName + ".delegateEvents" + this.options.id, selector, listener);
-	        return this;
-	    };
-	    View.prototype.$ = function $(selector) {
-	        return this.$el.find(selector);
-	    };
-	    View.prototype.render = function render() {
-	        return this;
-	    };
-	    View.prototype.remove = function remove() {
-	        this.removeAllListeners();
-	        this.undelegateEvents();
-	        this.$el.children().remove();
-	    };
-	    return View;
-	}(Events);
+	        var match = key.match(delegateEventSplitter);
+	        this$1.delegate(match[1], match[2], method.bind(this$1));
+	    }
+	    return this;
+	};
+
+	View.prototype.delegate = function delegate(eventName, selector, listener) {
+	    this.$el.on(eventName + ".delegateEvents" + this.options.id, selector, listener);
+	    return this;
+	};
+
+	View.prototype.undelegateEvents = function undelegateEvents() {
+	    if (this.$el) {
+	        this.$el.off(".delegateEvents" + this.options.id);
+	    }
+	    return this;
+	};
+
+	View.prototype.undelegate = function undelegate(eventName, selector, listener) {
+	    this.$el.off(eventName + ".delegateEvents" + this.options.id, selector, listener);
+	    return this;
+	};
+
+	View.prototype.$ = function $(selector) {
+	    return this.$el.find(selector);
+	};
+
+	View.prototype.render = function render() {
+	    return this;
+	};
+
+	View.prototype.remove = function remove() {
+	    this.Eventer.removeListeners(this.options.id + "_data");
+	    this.undelegateEvents();
+	    this.$el.children().remove();
+	};
 
 	function __async(g) {
 	    return new Promise(function (s, j) {
@@ -10462,145 +10483,154 @@
 	    });
 	}
 
-	var Data = function (Events$$1) {
-	    function Data(opts) {
-	        var this$1 = this;
-	        if (opts === void 0) opts = {};
-	        this.datas = Lego.getData();
-	        for (var key in opts) {
-	            if (this$1.datas.get(key)) {
-	                this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, opts[key]));
-	            } else {
-	                this$1.datas.set(key, opts[key]);
-	            }
-	            this$1.datas.get(key).data = this$1.datas.get(key).data || {};
+	var Data = function Data(opts) {
+	    var this$1 = this;
+	    if (opts === void 0) opts = {};
+	    this.datas = Lego.getData();
+	    this.Eventer = Lego.Eventer;
+	    for (var key in opts) {
+	        if (this$1.datas.get(key)) {
+	            this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, opts[key]));
+	        } else {
+	            this$1.datas.set(key, opts[key]);
 	        }
+	        this$1.datas.get(key).data = this$1.datas.get(key).data || {};
 	    }
-	    if (Events$$1) Data.__proto__ = Events$$1;
-	    Data.prototype = Object.create(Events$$1 && Events$$1.prototype);
-	    Data.prototype.constructor = Data;
-	    Data.prototype.api = function api(apiNameArr, callback) {
-	        var that = this;
-	        apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [apiNameArr];
-	        this.__fetch(apiNameArr).then(function (data) {
-	            apiNameArr.forEach(function (apiName, index) {
-	                var apiResp = data[index];
-	                that.datas.get(apiName).data = apiResp;
-	                if (apiResp && !Array.isArray(apiResp)) {
-	                    var listTarget = that.datas.get(apiName).listTarget,
-	                        model = that.datas.get(apiName).model,
-	                        datas = that.datas.get(apiName).data;
-	                    if (listTarget && Array.isArray(apiResp[listTarget]) && model) {
-	                        apiResp[listTarget].forEach(function (item, i) {
-	                            datas[listTarget][i] = Lego.$.extend({}, model, item);
-	                        });
-	                    }
+	};
+
+	Data.prototype.setOptions = function setOptions(apiName, opts) {
+	    if (opts === void 0) opts = {};
+	    if (!this.datas.get(apiName)) {
+	        return this;
+	    }
+	    var newOpts = $.extend(true, this.datas.get(apiName), opts);
+	    this.datas.set(apiName, newOpts);
+	    return this;
+	};
+
+	Data.prototype.load = function load(apiNameArr, callback) {
+	    var that = this;
+	    apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [apiNameArr];
+	    this.__fetch(apiNameArr).then(function (data) {
+	        apiNameArr.forEach(function (apiName, index) {
+	            var apiResp = data[index];
+	            that.datas.get(apiName).data = apiResp;
+	            if (apiResp && !Array.isArray(apiResp)) {
+	                var listTarget = that.datas.get(apiName).listTarget,
+	                    model = that.datas.get(apiName).model,
+	                    datas = that.datas.get(apiName).data;
+	                if (listTarget && Array.isArray(apiResp[listTarget]) && model) {
+	                    apiResp[listTarget].forEach(function (item, i) {
+	                        datas[listTarget][i] = Lego.$.extend({}, model, item);
+	                    });
 	                }
-	            });
-	            if (typeof callback == "function") {
-	                callback(that.parse(data));
 	            }
+	            that.Eventer.emit(apiName + "_data", apiResp);
 	        });
-	    };
-	    Data.prototype.__fetch = function __fetch(apiNameArr) {
-	        return __async(regeneratorRuntime.mark(function callee$1$0() {
-	            var that, results, promisesArr, promise, t$2$0, t$2$1, res;
-	            return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
-	                var this$1 = this;
-	                while (1) {
-	                    switch (context$2$0.prev = context$2$0.next) {
-	                        case 0:
-	                            that = this$1, results = [];
-	                            context$2$0.prev = 1;
-	                            promisesArr = apiNameArr.map(function (apiName) {
-	                                return __async(regeneratorRuntime.mark(function callee$3$0() {
-	                                    var option, req, response;
-	                                    return regeneratorRuntime.wrap(function callee$3$0$(context$4$0) {
-	                                        while (1) {
-	                                            switch (context$4$0.prev = context$4$0.next) {
-	                                                case 0:
-	                                                    option = that.datas.get(apiName) || {};
-	                                                    if (!(!Lego.$.isEmptyObject(option.data) && !option.reset)) {
-	                                                        context$4$0.next = 7;
-	                                                        break;
-	                                                    }
-	                                                    context$4$0.next = 4;
-	                                                    return option.data;
+	        if (typeof callback == "function") {
+	            callback(that.parse(data));
+	        }
+	    });
+	};
 
-	                                                case 4:
-	                                                    return context$4$0.abrupt("return", context$4$0.sent);
+	Data.prototype.__fetch = function __fetch(apiNameArr) {
+	    return __async(regeneratorRuntime.mark(function callee$1$0() {
+	        var that, results, promisesArr, promise, t$2$0, t$2$1, res;
+	        return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
+	            var this$1 = this;
+	            while (1) {
+	                switch (context$2$0.prev = context$2$0.next) {
+	                    case 0:
+	                        that = this$1, results = [];
+	                        context$2$0.prev = 1;
+	                        promisesArr = apiNameArr.map(function (apiName) {
+	                            return __async(regeneratorRuntime.mark(function callee$3$0() {
+	                                var option, req, response;
+	                                return regeneratorRuntime.wrap(function callee$3$0$(context$4$0) {
+	                                    while (1) {
+	                                        switch (context$4$0.prev = context$4$0.next) {
+	                                            case 0:
+	                                                option = that.datas.get(apiName) || {};
+	                                                if (!(!Lego.$.isEmptyObject(option.data) && !option.reset)) {
+	                                                    context$4$0.next = 7;
+	                                                    break;
+	                                                }
+	                                                context$4$0.next = 4;
+	                                                return option.data;
 
-	                                                case 7:
-	                                                    if (!(that.datas.has(apiName) && option.url && (Lego.$.isEmptyObject(option.data) || option.reset))) {
-	                                                        context$4$0.next = 13;
-	                                                        break;
-	                                                    }
-	                                                    req = new Request(option.url, {
-	                                                        method: option.method || "GET",
-	                                                        headers: option.headers || "none",
-	                                                        mode: "same-origin",
-	                                                        credentials: "include",
-	                                                        body: option.body || undefined
-	                                                    });
-	                                                    context$4$0.next = 11;
-	                                                    return fetch(req);
+	                                            case 4:
+	                                                return context$4$0.abrupt("return", context$4$0.sent);
 
-	                                                case 11:
-	                                                    response = context$4$0.sent;
-	                                                    return context$4$0.abrupt("return", response.json());
+	                                            case 7:
+	                                                if (!(that.datas.has(apiName) && option.url && (Lego.$.isEmptyObject(option.data) || option.reset))) {
+	                                                    context$4$0.next = 13;
+	                                                    break;
+	                                                }
+	                                                req = new Request(option.url, {
+	                                                    method: option.method || "GET",
+	                                                    headers: option.headers || "none",
+	                                                    mode: "same-origin",
+	                                                    credentials: "include",
+	                                                    body: option.body || undefined
+	                                                });
+	                                                context$4$0.next = 11;
+	                                                return fetch(req);
 
-	                                                case 13:
-	                                                case "end":
-	                                                    return context$4$0.stop();
-	                                            }
+	                                            case 11:
+	                                                response = context$4$0.sent;
+	                                                return context$4$0.abrupt("return", response.json());
+
+	                                            case 13:
+	                                            case "end":
+	                                                return context$4$0.stop();
 	                                        }
-	                                    }, callee$3$0, this);
-	                                })());
-	                            });
-	                            t$2$0 = regeneratorRuntime.values(promisesArr);
+	                                    }
+	                                }, callee$3$0, this);
+	                            })());
+	                        });
+	                        t$2$0 = regeneratorRuntime.values(promisesArr);
 
-	                        case 4:
-	                            if ((t$2$1 = t$2$0.next()).done) {
-	                                context$2$0.next = 12;
-	                                break;
-	                            }
-	                            promise = t$2$1.value;
-	                            context$2$0.next = 8;
-	                            return promise;
-
-	                        case 8:
-	                            res = context$2$0.sent;
-	                            results.push(res);
-
-	                        case 10:
-	                            context$2$0.next = 4;
+	                    case 4:
+	                        if ((t$2$1 = t$2$0.next()).done) {
+	                            context$2$0.next = 12;
 	                            break;
+	                        }
+	                        promise = t$2$1.value;
+	                        context$2$0.next = 8;
+	                        return promise;
 
-	                        case 12:
-	                            context$2$0.next = 17;
-	                            break;
+	                    case 8:
+	                        res = context$2$0.sent;
+	                        results.push(res);
 
-	                        case 14:
-	                            context$2$0.prev = 14;
-	                            context$2$0.t0 = context$2$0["catch"](1);
-	                            debug.log(context$2$0.t0);
+	                    case 10:
+	                        context$2$0.next = 4;
+	                        break;
 
-	                        case 17:
-	                            return context$2$0.abrupt("return", results);
+	                    case 12:
+	                        context$2$0.next = 17;
+	                        break;
 
-	                        case 18:
-	                        case "end":
-	                            return context$2$0.stop();
-	                    }
+	                    case 14:
+	                        context$2$0.prev = 14;
+	                        context$2$0.t0 = context$2$0["catch"](1);
+	                        debug.log(context$2$0.t0);
+
+	                    case 17:
+	                        return context$2$0.abrupt("return", results);
+
+	                    case 18:
+	                    case "end":
+	                        return context$2$0.stop();
 	                }
-	            }, callee$1$0, this, [[1, 14]]);
-	        }).call(this));
-	    };
-	    Data.prototype.parse = function parse(respArr) {
-	        return respArr;
-	    };
-	    return Data;
-	}(Events);
+	            }
+	        }, callee$1$0, this, [[1, 14]]);
+	    }).call(this));
+	};
+
+	Data.prototype.parse = function parse(respArr) {
+	    return respArr;
+	};
 
 	!function (global) {
 	    "use strict";
@@ -22011,14 +22041,7 @@
 
 
 /***/ },
-/* 11 */,
-/* 12 */,
-/* 13 */,
-/* 14 */,
-/* 15 */,
-/* 16 */,
-/* 17 */,
-/* 18 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -22748,33 +22771,33 @@
 	}( true ? exports : window));
 
 /***/ },
-/* 19 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var h = __webpack_require__(20)
+	var h = __webpack_require__(13)
 
 	module.exports = h
 
 
 /***/ },
-/* 20 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isArray = __webpack_require__(21);
+	var isArray = __webpack_require__(14);
 
-	var VNode = __webpack_require__(22);
-	var VText = __webpack_require__(28);
-	var isVNode = __webpack_require__(24);
-	var isVText = __webpack_require__(29);
-	var isWidget = __webpack_require__(25);
-	var isHook = __webpack_require__(27);
-	var isVThunk = __webpack_require__(26);
+	var VNode = __webpack_require__(15);
+	var VText = __webpack_require__(21);
+	var isVNode = __webpack_require__(17);
+	var isVText = __webpack_require__(22);
+	var isWidget = __webpack_require__(18);
+	var isHook = __webpack_require__(20);
+	var isVThunk = __webpack_require__(19);
 
-	var parseTag = __webpack_require__(30);
-	var softSetHook = __webpack_require__(32);
-	var evHook = __webpack_require__(33);
+	var parseTag = __webpack_require__(23);
+	var softSetHook = __webpack_require__(25);
+	var evHook = __webpack_require__(26);
 
 	module.exports = h;
 
@@ -22900,7 +22923,7 @@
 
 
 /***/ },
-/* 21 */
+/* 14 */
 /***/ function(module, exports) {
 
 	var nativeIsArray = Array.isArray
@@ -22914,14 +22937,14 @@
 
 
 /***/ },
-/* 22 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var version = __webpack_require__(23)
-	var isVNode = __webpack_require__(24)
-	var isWidget = __webpack_require__(25)
-	var isThunk = __webpack_require__(26)
-	var isVHook = __webpack_require__(27)
+	var version = __webpack_require__(16)
+	var isVNode = __webpack_require__(17)
+	var isWidget = __webpack_require__(18)
+	var isThunk = __webpack_require__(19)
+	var isVHook = __webpack_require__(20)
 
 	module.exports = VirtualNode
 
@@ -22992,17 +23015,17 @@
 
 
 /***/ },
-/* 23 */
+/* 16 */
 /***/ function(module, exports) {
 
 	module.exports = "2"
 
 
 /***/ },
-/* 24 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var version = __webpack_require__(23)
+	var version = __webpack_require__(16)
 
 	module.exports = isVirtualNode
 
@@ -23012,7 +23035,7 @@
 
 
 /***/ },
-/* 25 */
+/* 18 */
 /***/ function(module, exports) {
 
 	module.exports = isWidget
@@ -23023,7 +23046,7 @@
 
 
 /***/ },
-/* 26 */
+/* 19 */
 /***/ function(module, exports) {
 
 	module.exports = isThunk
@@ -23034,7 +23057,7 @@
 
 
 /***/ },
-/* 27 */
+/* 20 */
 /***/ function(module, exports) {
 
 	module.exports = isHook
@@ -23047,10 +23070,10 @@
 
 
 /***/ },
-/* 28 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var version = __webpack_require__(23)
+	var version = __webpack_require__(16)
 
 	module.exports = VirtualText
 
@@ -23063,10 +23086,10 @@
 
 
 /***/ },
-/* 29 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var version = __webpack_require__(23)
+	var version = __webpack_require__(16)
 
 	module.exports = isVirtualText
 
@@ -23076,12 +23099,12 @@
 
 
 /***/ },
-/* 30 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var split = __webpack_require__(31);
+	var split = __webpack_require__(24);
 
 	var classIdSplit = /([\.#]?[a-zA-Z0-9\u007F-\uFFFF_:-]+)/;
 	var notClassId = /^\.|#/;
@@ -23136,7 +23159,7 @@
 
 
 /***/ },
-/* 31 */
+/* 24 */
 /***/ function(module, exports) {
 
 	/*!
@@ -23248,7 +23271,7 @@
 
 
 /***/ },
-/* 32 */
+/* 25 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23271,12 +23294,12 @@
 
 
 /***/ },
-/* 33 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var EvStore = __webpack_require__(34);
+	var EvStore = __webpack_require__(27);
 
 	module.exports = EvHook;
 
@@ -23304,12 +23327,12 @@
 
 
 /***/ },
-/* 34 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var OneVersionConstraint = __webpack_require__(35);
+	var OneVersionConstraint = __webpack_require__(28);
 
 	var MY_VERSION = '7';
 	OneVersionConstraint('ev-store', MY_VERSION);
@@ -23330,12 +23353,12 @@
 
 
 /***/ },
-/* 35 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var Individual = __webpack_require__(36);
+	var Individual = __webpack_require__(29);
 
 	module.exports = OneVersion;
 
@@ -23358,7 +23381,7 @@
 
 
 /***/ },
-/* 36 */
+/* 29 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {'use strict';
@@ -23384,28 +23407,28 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 37 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var diff = __webpack_require__(38)
+	var diff = __webpack_require__(31)
 
 	module.exports = diff
 
 
 /***/ },
-/* 38 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArray = __webpack_require__(21)
+	var isArray = __webpack_require__(14)
 
-	var VPatch = __webpack_require__(39)
-	var isVNode = __webpack_require__(24)
-	var isVText = __webpack_require__(29)
-	var isWidget = __webpack_require__(25)
-	var isThunk = __webpack_require__(26)
-	var handleThunk = __webpack_require__(40)
+	var VPatch = __webpack_require__(32)
+	var isVNode = __webpack_require__(17)
+	var isVText = __webpack_require__(22)
+	var isWidget = __webpack_require__(18)
+	var isThunk = __webpack_require__(19)
+	var handleThunk = __webpack_require__(33)
 
-	var diffProps = __webpack_require__(41)
+	var diffProps = __webpack_require__(34)
 
 	module.exports = diff
 
@@ -23826,10 +23849,10 @@
 
 
 /***/ },
-/* 39 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var version = __webpack_require__(23)
+	var version = __webpack_require__(16)
 
 	VirtualPatch.NONE = 0
 	VirtualPatch.VTEXT = 1
@@ -23854,13 +23877,13 @@
 
 
 /***/ },
-/* 40 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isVNode = __webpack_require__(24)
-	var isVText = __webpack_require__(29)
-	var isWidget = __webpack_require__(25)
-	var isThunk = __webpack_require__(26)
+	var isVNode = __webpack_require__(17)
+	var isVText = __webpack_require__(22)
+	var isWidget = __webpack_require__(18)
+	var isThunk = __webpack_require__(19)
 
 	module.exports = handleThunk
 
@@ -23900,11 +23923,11 @@
 
 
 /***/ },
-/* 41 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isObject = __webpack_require__(42)
-	var isHook = __webpack_require__(27)
+	var isObject = __webpack_require__(35)
+	var isHook = __webpack_require__(20)
 
 	module.exports = diffProps
 
@@ -23964,7 +23987,7 @@
 
 
 /***/ },
-/* 42 */
+/* 35 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -23975,26 +23998,26 @@
 
 
 /***/ },
-/* 43 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var createElement = __webpack_require__(44)
+	var createElement = __webpack_require__(37)
 
 	module.exports = createElement
 
 
 /***/ },
-/* 44 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var document = __webpack_require__(45)
+	var document = __webpack_require__(38)
 
-	var applyProperties = __webpack_require__(47)
+	var applyProperties = __webpack_require__(40)
 
-	var isVNode = __webpack_require__(24)
-	var isVText = __webpack_require__(29)
-	var isWidget = __webpack_require__(25)
-	var handleThunk = __webpack_require__(40)
+	var isVNode = __webpack_require__(17)
+	var isVText = __webpack_require__(22)
+	var isWidget = __webpack_require__(18)
+	var handleThunk = __webpack_require__(33)
 
 	module.exports = createElement
 
@@ -24036,12 +24059,12 @@
 
 
 /***/ },
-/* 45 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {var topLevel = typeof global !== 'undefined' ? global :
 	    typeof window !== 'undefined' ? window : {}
-	var minDoc = __webpack_require__(46);
+	var minDoc = __webpack_require__(39);
 
 	if (typeof document !== 'undefined') {
 	    module.exports = document;
@@ -24058,17 +24081,17 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 46 */
+/* 39 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 47 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isObject = __webpack_require__(42)
-	var isHook = __webpack_require__(27)
+	var isObject = __webpack_require__(35)
+	var isHook = __webpack_require__(20)
 
 	module.exports = applyProperties
 
@@ -24167,24 +24190,24 @@
 
 
 /***/ },
-/* 48 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var patch = __webpack_require__(49)
+	var patch = __webpack_require__(42)
 
 	module.exports = patch
 
 
 /***/ },
-/* 49 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var document = __webpack_require__(45)
-	var isArray = __webpack_require__(21)
+	var document = __webpack_require__(38)
+	var isArray = __webpack_require__(14)
 
-	var render = __webpack_require__(44)
-	var domIndex = __webpack_require__(50)
-	var patchOp = __webpack_require__(51)
+	var render = __webpack_require__(37)
+	var domIndex = __webpack_require__(43)
+	var patchOp = __webpack_require__(44)
 	module.exports = patch
 
 	function patch(rootNode, patches, renderOptions) {
@@ -24262,7 +24285,7 @@
 
 
 /***/ },
-/* 50 */
+/* 43 */
 /***/ function(module, exports) {
 
 	// Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
@@ -24353,15 +24376,15 @@
 
 
 /***/ },
-/* 51 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var applyProperties = __webpack_require__(47)
+	var applyProperties = __webpack_require__(40)
 
-	var isWidget = __webpack_require__(25)
-	var VPatch = __webpack_require__(39)
+	var isWidget = __webpack_require__(18)
+	var VPatch = __webpack_require__(32)
 
-	var updateWidget = __webpack_require__(52)
+	var updateWidget = __webpack_require__(45)
 
 	module.exports = applyPatch
 
@@ -24510,10 +24533,10 @@
 
 
 /***/ },
-/* 52 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isWidget = __webpack_require__(25)
+	var isWidget = __webpack_require__(18)
 
 	module.exports = updateWidget
 
@@ -24531,7 +24554,7 @@
 
 
 /***/ },
-/* 53 */
+/* 46 */
 /***/ function(module, exports) {
 
 	/*!

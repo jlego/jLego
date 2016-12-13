@@ -1,22 +1,42 @@
-import Events from "events";
 import "object.observe";
 
-class View extends Events {
+class View {
 	/**
 	 * [constructor description]
 	 * @param  {Object} option [description]
 	 * @return {[type]}        [description]
 	 */
     constructor(opts = {}) {
-        super();
         const that = this;
-        let options = {
+        this.options = {
             events: null,
             listen: null,
             config: {}
         };
-        this.options = $.extend(true, options, opts);
+        $.extend(true, this.options, opts);
+        this.Eventer = Lego.Eventer;
         this.setElement(this.options.el);
+        this._renderView();
+        if(typeof this.options.data === 'string'){
+            that.options.data = Lego.getData(apiName);
+            const apiName = this.options.data;
+            const eventName = this.options.id + '_' + apiName + '_data';
+            const callback = (data) => {
+                that.options.data = data;
+                console.warn('ooooooooooooooooooo', eventName);
+                // that.render();
+            };
+            this.Eventer.removeListener(eventName, callback);
+            this.Eventer.on(eventName, callback);
+        }
+        that.options.data = that.options.data || {};
+        this._observe();
+    }
+    /**
+     * [_renderView description]
+     * @return {[type]} [description]
+     */
+    _renderView(){
         const content = this.render();
         if(Lego.config.isOpenVirtualDom && typeof content !== 'string'){
             const treeNode = this._getVdom(content);
@@ -26,7 +46,6 @@ class View extends Events {
         if(typeof content === 'string'){
             this._renderHtml(content);
         }
-        this._observe();
     }
     /**
      * [_getVdom description]
@@ -55,7 +74,7 @@ class View extends Events {
      */
     _observe(){
         const that = this;
-        if(this.options.data){
+        if(this.options.data && typeof this.options.data === 'object'){
             Object.observe(this.options.data, (changes) =>{
                 changes.forEach(function(change, i){
                     debug.log(change);
@@ -159,7 +178,7 @@ class View extends Events {
      */
     remove(){
         // 清理全部事件监听
-        this.removeAllListeners();
+        this.Eventer.removeListeners(this.options.id + '_data');
         this.undelegateEvents();
         this.$el.children().remove();
     }

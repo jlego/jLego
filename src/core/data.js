@@ -1,7 +1,5 @@
 // import 'whatwg-fetch'
-import Events from "events";
-
-class Data extends Events {
+class Data {
     /**
      * [constructor description]
      * @param  {Object} options [description]
@@ -15,6 +13,7 @@ class Data extends Events {
      */
     constructor(opts = {}) {
         this.datas = Lego.getData();
+        this.Eventer = Lego.Eventer;
         for(let key in opts){
             if(this.datas.get(key)){
                 this.datas.set(key, Lego.$.extend(true, this.datas.get(key) || {}, opts[key]));
@@ -23,14 +22,28 @@ class Data extends Events {
             }
             this.datas.get(key).data = this.datas.get(key).data || {};
         }
+        // this.options = opts;
     }
     /**
-     * [fetchApi description]
+     * [setOptions description]
+     * @param  {[type]} apiName [description]
+     * @param  {Object} opts    [description]
+     * @return {[type]}         [description]
+     */
+    setOptions(apiName, opts = {}) {
+        // console.log('setter: ' + value);
+        if(!this.datas.get(apiName)) return this;
+        const newOpts = $.extend(true, this.datas.get(apiName), opts);
+        this.datas.set(apiName, newOpts);
+        return this;
+    }
+    /**
+     * [load 加载数据]
      * @param  {[type]}   apiNameArr [description]
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    api(apiNameArr, callback){
+    load(apiNameArr, callback){
         let that = this;
         apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [apiNameArr];
         this.__fetch(apiNameArr).then((data) => {
@@ -48,10 +61,12 @@ class Data extends Events {
                         });
                     }
                 }
+                that.Eventer.emit(apiName + '_data', apiResp);
             });
 
             if(typeof callback == 'function') callback(that.parse(data));
         });
+        // return this.datas;
     }
     /**
      * [fetchData 异步请求数据]

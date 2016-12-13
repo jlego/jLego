@@ -14,6 +14,7 @@ class ListView extends HBY.View {
         super(options);
     }
     render() {
+        if(!this.options.data) return '';
         let data = this.options.data.data || [],
             vDom = [];
 

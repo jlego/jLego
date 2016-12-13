@@ -1,6 +1,6 @@
 class ListData extends HBY.Data {
-    constructor(options = {}) {
-        const api = {
+    constructor(opts = {}) {
+        const options = {
             'test': {
                 url: './content.json',
                 listTarget: 'data',
@@ -15,8 +15,8 @@ class ListData extends HBY.Data {
                 url: './content.json'
             }
         };
-        HBY.$.extend(true, api, options);
-        super(api);
+        HBY.$.extend(true, options, opts);
+        super(options);
     }
     parse(data) {
         return data;

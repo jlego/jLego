@@ -32,8 +32,7 @@ build([{
     dest: resolve('dist/lego.min.js'),
     format: 'cjs',
     env: 'development'
-}
-].map(genConfig));
+}].map(genConfig));
 
 function build(builds) {
     let built = 0
@@ -52,7 +51,7 @@ function build(builds) {
 function makBanner(opts) {
     const bannerTpl = `/**
  * ${opts.alias}.js v${version}
- * (c) ${new Date().getFullYear()} Evan You
+ * (c) ${new Date().getFullYear()} Ronghui Yu
  * @license MIT
  */`
     return bannerTpl;
@@ -81,10 +80,10 @@ function genConfig(opts) {
     }
     if (opts.env) {
         config.plugins.push(
-            // flow(), 
-            // node(), 
+            // flow(),
+            // node(),
             // cjs(),
-            async(), 
+            async(),
             regenerator(),
             buble(),
             uglify({
