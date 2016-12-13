@@ -16,21 +16,28 @@ class View {
         $.extend(true, this.options, opts);
         this.Eventer = Lego.Eventer;
         this.setElement(this.options.el);
+        this.data = this.options.data || this.data || {};
         this._renderView();
-        if(typeof this.options.data === 'string'){
-            that.options.data = Lego.getData(apiName);
-            const apiName = this.options.data;
-            const eventName = this.options.id + '_' + apiName + '_data';
-            const callback = (data) => {
-                that.options.data = data;
-                console.warn('ooooooooooooooooooo', eventName);
-                // that.render();
-            };
-            this.Eventer.removeListener(eventName, callback);
-            this.Eventer.on(eventName, callback);
-        }
-        that.options.data = that.options.data || {};
+        this.server = null;
         this._observe();
+        if(this.options.dataSource){
+            const dataSource = this.options.dataSource;
+            if(dataSource.server){
+                if(typeof dataSource.server == 'function'){
+                    this.server = new dataSource.server();
+                }else{
+                    this.server = dataSource.server;
+                }
+                this.server.load(dataSource.api, (resp) => {
+                    if(Lego.$.isArray(resp)){
+                        if(this.data.list) this.data.__version = Lego.randomKey();
+                        this.data.list = resp;
+                    }else{
+                        this.data = resp;
+                    }
+                });
+            }
+        }
     }
     /**
      * [_renderView description]
@@ -38,8 +45,10 @@ class View {
      */
     _renderView(){
         const content = this.render();
+        // this.oldTree = content;
         if(Lego.config.isOpenVirtualDom && typeof content !== 'string'){
             const treeNode = this._getVdom(content);
+            this.oldTree = treeNode;
             this.rootNode = Lego.createElement(treeNode);
             this.$el[this.options.insert](this.rootNode);
         }
@@ -74,18 +83,19 @@ class View {
      */
     _observe(){
         const that = this;
-        if(this.options.data && typeof this.options.data === 'object'){
-            Object.observe(this.options.data, (changes) =>{
+        if(this.data && typeof this.data === 'object'){
+            Object.observe(this.data, (changes) =>{
                 changes.forEach(function(change, i){
                     debug.log(change);
+                    const content = that.render();
                     if(Lego.config.isOpenVirtualDom){
-                        const treeNode = this._getVdom();
-                        let patches = diff(that.oldTree, treeNode);
-                        that.rootNode = patch(that.rootNode, patches);
+                        const treeNode = that._getVdom(content);
+                        let patches = Lego.diff(that.oldTree, treeNode);
+                        that.rootNode = Lego.patch(that.rootNode, patches);
                         that.oldTree = treeNode;
                     }
-                    if(typeof that.render() === 'string'){
-                        that._renderHtml(that.render());
+                    if(typeof content === 'string'){
+                        that._renderHtml(content);
                     }
                 });
             });

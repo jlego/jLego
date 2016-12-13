@@ -75,7 +75,8 @@ class Lego {
                 events: {},
                 listen: {},
                 scrollbar: null,
-                data: null,
+                data: null, //静态数据
+                dataSource: null, //动态数据
                 onBefore() {}, //视图开始前回调
                 onAfter() {}, //视图执行后回调
                 onAnimateBefore() {}, //动画前回调
@@ -180,7 +181,7 @@ class Lego {
         appName = appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath;
         this.prevApp =this.currentApp;
         this.views[appName] = this.views[appName] || new WeakMap();
-        this.datas[appName] = this.datas[appName] || new Map();
+        // this.datas[appName] = this.datas[appName] || new Map();
         if (typeof options.onBefore == 'function') options.onBefore();
         this.$(this.config.pageEl).scrollTop(0);
         this.$.ajax({
@@ -245,13 +246,13 @@ class Lego {
      * [getData 取应用数据]
      * @return {[type]} [description]
      */
-    getData(apiName, appName = this.getAppName()) {
-        if(apiName){
-            return this.datas[appName].get(apiName) ? this.datas[appName].get(apiName).data : {};
-        }else{
-            return this.datas[appName];
-        }
-    }
+    // getData(apiName, appName = this.getAppName()) {
+    //     if(apiName){
+    //         return this.datas[appName].get(apiName) ? this.datas[appName].get(apiName).data : {};
+    //     }else{
+    //         return this.datas[appName];
+    //     }
+    // }
     /**
      * [getView 取应用视图]
      * @param  {[type]} alias   [description]

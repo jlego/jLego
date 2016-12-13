@@ -12,17 +12,12 @@ class Data {
      * @return {[type]}         [description]
      */
     constructor(opts = {}) {
-        this.datas = Lego.getData();
+        this.datas = new Map();
         this.Eventer = Lego.Eventer;
         for(let key in opts){
-            if(this.datas.get(key)){
-                this.datas.set(key, Lego.$.extend(true, this.datas.get(key) || {}, opts[key]));
-            }else{
-                this.datas.set(key, opts[key]);
-            }
-            this.datas.get(key).data = this.datas.get(key).data || {};
+            this.datas.set(key, opts[key]);
+            this.datas.get(key).data = {};
         }
-        // this.options = opts;
     }
     /**
      * [setOptions description]
@@ -61,7 +56,7 @@ class Data {
                         });
                     }
                 }
-                that.Eventer.emit(apiName + '_data', apiResp);
+                // that.Eventer.emit(apiName + '_data', apiResp);
             });
 
             if(typeof callback == 'function') callback(that.parse(data));

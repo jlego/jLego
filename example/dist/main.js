@@ -10318,17 +10318,18 @@
 
 	var h$1 = _interopDefault(__webpack_require__(12));
 
-	var diff$1 = _interopDefault(__webpack_require__(30));
+	var diff = _interopDefault(__webpack_require__(30));
 
 	var createElement = _interopDefault(__webpack_require__(36));
 
-	var patch$1 = _interopDefault(__webpack_require__(41));
+	var patch = _interopDefault(__webpack_require__(41));
 
 	var object_observe = __webpack_require__(46);
 
 	var Util = {};
 
 	var View = function View(opts) {
+	    var this$1 = this;
 	    if (opts === void 0) opts = {};
 	    var that = this;
 	    this.options = {
@@ -10339,25 +10340,37 @@
 	    $.extend(true, this.options, opts);
 	    this.Eventer = Lego.Eventer;
 	    this.setElement(this.options.el);
+	    this.data = this.options.data || this.data || {};
 	    this._renderView();
-	    if (typeof this.options.data === "string") {
-	        var apiName = this.options.data;
-	        that.options.data = Lego.getData(apiName);
-	        var callback = function callback(data) {
-	            that.options.data = data;
-	            console.warn("ooooooooooooooooooo", apiName);
-	        };
-	        this.Eventer.removeListener(apiName + "_data", callback);
-	        this.Eventer.on(apiName + "_data", callback);
-	    }
-	    that.options.data = that.options.data || {};
+	    this.server = null;
 	    this._observe();
+	    if (this.options.dataSource) {
+	        var dataSource = this.options.dataSource;
+	        if (dataSource.server) {
+	            if (typeof dataSource.server == "function") {
+	                this.server = new dataSource.server();
+	            } else {
+	                this.server = dataSource.server;
+	            }
+	            this.server.load(dataSource.api, function (resp) {
+	                if (Lego.$.isArray(resp)) {
+	                    if (this$1.data.list) {
+	                        this$1.data.__version = Lego.randomKey();
+	                    }
+	                    this$1.data.list = resp;
+	                } else {
+	                    this$1.data = resp;
+	                }
+	            });
+	        }
+	    }
 	};
 
 	View.prototype._renderView = function _renderView() {
 	    var content = this.render();
 	    if (Lego.config.isOpenVirtualDom && typeof content !== "string") {
 	        var treeNode = this._getVdom(content);
+	        this.oldTree = treeNode;
 	        this.rootNode = Lego.createElement(treeNode);
 	        this.$el[this.options.insert](this.rootNode);
 	    }
@@ -10382,18 +10395,19 @@
 
 	View.prototype._observe = function _observe() {
 	    var that = this;
-	    if (this.options.data && _typeof(this.options.data) === "object") {
-	        Object.observe(this.options.data, function (changes) {
+	    if (this.data && _typeof(this.data) === "object") {
+	        Object.observe(this.data, function (changes) {
 	            changes.forEach(function (change, i) {
 	                debug.log(change);
+	                var content = that.render();
 	                if (Lego.config.isOpenVirtualDom) {
-	                    var treeNode = this._getVdom();
-	                    var patches = diff(that.oldTree, treeNode);
-	                    that.rootNode = patch(that.rootNode, patches);
+	                    var treeNode = that._getVdom(content);
+	                    var patches = Lego.diff(that.oldTree, treeNode);
+	                    that.rootNode = Lego.patch(that.rootNode, patches);
 	                    that.oldTree = treeNode;
 	                }
-	                if (typeof that.render() === "string") {
-	                    that._renderHtml(that.render());
+	                if (typeof content === "string") {
+	                    that._renderHtml(content);
 	                }
 	            });
 	        });
@@ -10486,15 +10500,11 @@
 	var Data = function Data(opts) {
 	    var this$1 = this;
 	    if (opts === void 0) opts = {};
-	    this.datas = Lego.getData();
+	    this.datas = new Map();
 	    this.Eventer = Lego.Eventer;
 	    for (var key in opts) {
-	        if (this$1.datas.get(key)) {
-	            this$1.datas.set(key, Lego.$.extend(true, this$1.datas.get(key) || {}, opts[key]));
-	        } else {
-	            this$1.datas.set(key, opts[key]);
-	        }
-	        this$1.datas.get(key).data = this$1.datas.get(key).data || {};
+	        this$1.datas.set(key, opts[key]);
+	        this$1.datas.get(key).data = {};
 	    }
 	};
 
@@ -10525,7 +10535,6 @@
 	                    });
 	                }
 	            }
-	            that.Eventer.emit(apiName + "_data", apiResp);
 	        });
 	        if (typeof callback == "function") {
 	            callback(that.parse(data));
@@ -11073,8 +11082,8 @@
 	    if (options === void 0) options = {};
 	    window.h = h$1;
 	    this.createElement = createElement;
-	    this.diff = diff$1;
-	    this.patch = patch$1;
+	    this.diff = diff;
+	    this.patch = patch;
 	    this.util = Util;
 	    var that = this;
 	    this.config = {
@@ -11133,6 +11142,7 @@
 	        listen: {},
 	        scrollbar: null,
 	        data: null,
+	        dataSource: null,
 	        onBefore: function onBefore$1() {},
 	        onAfter: function onAfter$1() {},
 	        onAnimateBefore: function onAnimateBefore() {},
@@ -11227,7 +11237,6 @@
 	    appName = appPath.indexOf("/") > 0 ? appPath.split("/")[0] : appPath;
 	    this.prevApp = this.currentApp;
 	    this.views[appName] = this.views[appName] || new WeakMap();
-	    this.datas[appName] = this.datas[appName] || new Map();
 	    if (typeof options.onBefore == "function") {
 	        options.onBefore();
 	    }
@@ -11281,15 +11290,6 @@
 	Lego$1.prototype.getAppName = function getAppName() {
 	    var appName = this.Router.getRoute()[0] !== "index" ? this.Router.getRoute()[0] : "index";
 	    return appName || this.config.defaultApp;
-	};
-
-	Lego$1.prototype.getData = function getData(apiName, appName) {
-	    if (appName === void 0) appName = this.getAppName();
-	    if (apiName) {
-	        return this.datas[appName].get(apiName) ? this.datas[appName].get(apiName).data : {};
-	    } else {
-	        return this.datas[appName];
-	    }
 	};
 
 	Lego$1.prototype.getView = function getView(el, appName) {

@@ -1,34 +1,22 @@
-import homeView from './homeView';
-import listView from './listView';
-import listData from './listData';
+import homeView from './view/home';
+import listView from './view/list';
+import listData from './data/list';
 
 HBY.router = {
     '/home' () {
-        // listData.api(['test', 'ok'], (resp) => {
-        //     let data = HBY.getData('test');
-        //     HBY.create({
-        //         view: listView,
-        //         data: data
-        //     });
-        // });
         HBY.create({
             view: listView,
-            dataOption: {
-                api: 'test',
-                auto: true,
-                depend: ['ok'],
-                source: listData
+            dataSource: {
+                api: ['test', 'ok'],
+                server: listData
             }
-            // data: 'test'
         });
-        // listData.load();
-        // console.warn(listData.api(['test', 'ok']).get('test').data);
     },
     '/home/list' () {
         HBY.create({
             view: listView,
             data: {
-                data: [
+                list: [
                     { first: 'home', last: 'Bond' },
                     { first: 'test', last: 'bbbb' },
                 ]

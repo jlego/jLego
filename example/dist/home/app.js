@@ -46,55 +46,43 @@
 
 	'use strict';
 
-	var _homeView = __webpack_require__(1);
+	var _home = __webpack_require__(1);
 
-	var _homeView2 = _interopRequireDefault(_homeView);
+	var _home2 = _interopRequireDefault(_home);
 
-	var _listView = __webpack_require__(2);
+	var _list = __webpack_require__(2);
 
-	var _listView2 = _interopRequireDefault(_listView);
+	var _list2 = _interopRequireDefault(_list);
 
-	var _listData = __webpack_require__(3);
+	var _list3 = __webpack_require__(3);
 
-	var _listData2 = _interopRequireDefault(_listData);
+	var _list4 = _interopRequireDefault(_list3);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	HBY.router = {
 	    '/home': function home() {
-	        // listData.api(['test', 'ok'], (resp) => {
-	        //     let data = HBY.getData('test');
-	        //     HBY.create({
-	        //         view: listView,
-	        //         data: data
-	        //     });
-	        // });
 	        HBY.create({
-	            view: _listView2.default,
-	            dataOption: {
-	                api: 'test',
-	                auto: true,
-	                depend: ['ok'],
-	                source: _listData2.default
+	            view: _list2.default,
+	            dataSource: {
+	                api: ['test', 'ok'],
+	                server: _list4.default
 	            }
-	            // data: 'test'
 	        });
-	        // listData.load();
-	        // console.warn(listData.api(['test', 'ok']).get('test').data);
 	    },
 	    '/home/list': function homeList() {
 	        HBY.create({
-	            view: _listView2.default,
+	            view: _list2.default,
 	            data: {
-	                data: [{ first: 'home', last: 'Bond' }, { first: 'test', last: 'bbbb' }]
+	                list: [{ first: 'home', last: 'Bond' }, { first: 'test', last: 'bbbb' }]
 	            },
 	            components: [{
 	                el: '#home',
-	                view: _homeView2.default,
+	                view: _home2.default,
 	                data: [{ first: 'home2', last: 'Bond2' }, { first: 'test2', last: 'bbbb2' }]
 	            }, {
 	                el: '#test',
-	                view: _homeView2.default,
+	                view: _home2.default,
 	                data: [{ first: 'home3', last: 'Bond3' }, { first: 'test3', last: 'bbbb3' }]
 	            }]
 	        });
@@ -213,8 +201,7 @@
 	    _createClass(ListView, [{
 	        key: 'render',
 	        value: function render() {
-	            if (!this.options.data) return '';
-	            var data = this.options.data.data || [],
+	            var data = this.data.list || [],
 	                vDom = [];
 
 	            debug.warn('更新了视图', data);
@@ -287,7 +274,7 @@
 	    _createClass(ListData, [{
 	        key: 'parse',
 	        value: function parse(data) {
-	            return data;
+	            return data[0].data;
 	        }
 	    }]);
 
