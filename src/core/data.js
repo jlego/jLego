@@ -28,7 +28,7 @@ class Data {
     setOptions(apiName, opts = {}) {
         // console.log('setter: ' + value);
         if(!this.datas.get(apiName)) return this;
-        const newOpts = $.extend(true, this.datas.get(apiName), opts);
+        const newOpts = Lego.$.extend(true, this.datas.get(apiName), opts);
         this.datas.set(apiName, newOpts);
         return this;
     }

@@ -13,7 +13,7 @@ class View {
             listen: null,
             config: {}
         };
-        $.extend(true, this.options, opts);
+        Lego.$.extend(true, this.options, opts);
         this.Eventer = Lego.Eventer;
         this.setElement(this.options.el);
         this.data = this.options.data || this.data || {};
@@ -29,7 +29,7 @@ class View {
                     this.server = dataSource.server;
                 }
                 this.server.load(dataSource.api, (resp) => {
-                    if(Lego.$.isArray(resp)){
+                    if(Array.isArray(resp)){
                         this.data.list = resp;
                     }else{
                         this.data = resp;

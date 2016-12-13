@@ -34,7 +34,7 @@ var View = function View(opts) {
         listen: null,
         config: {}
     };
-    $.extend(true, this.options, opts);
+    Lego.$.extend(true, this.options, opts);
     this.Eventer = Lego.Eventer;
     this.setElement(this.options.el);
     this.data = this.options.data || this.data || {};
@@ -50,7 +50,7 @@ var View = function View(opts) {
                 this.server = dataSource.server;
             }
             this.server.load(dataSource.api, function(resp) {
-                if (Lego.$.isArray(resp)) {
+                if (Array.isArray(resp)) {
                     this$1.data.list = resp;
                 } else {
                     this$1.data = resp;
@@ -215,7 +215,7 @@ Data.prototype.setOptions = function setOptions(apiName, opts) {
     if (!this.datas.get(apiName)) {
         return this;
     }
-    var newOpts = $.extend(true, this.datas.get(apiName), opts);
+    var newOpts = Lego.$.extend(true, this.datas.get(apiName), opts);
     this.datas.set(apiName, newOpts);
     return this;
 };
