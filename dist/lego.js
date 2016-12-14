@@ -832,7 +832,8 @@ var Lego$1 = function Lego$1(options) {
     this.permis = {};
     this.timer = {};
     this.Eventer = new Events();
-    this.Router = director.Router({}).init();
+    this.router = null;
+    this.routers = {};
     window[this.config.alias] = window.Lego = this;
     this.startApp(this.currentApp);
     return this;
@@ -968,15 +969,15 @@ Lego$1.prototype.startApp = function startApp(appPath, opts) {
         cache: true,
         success: function(e) {
             if (appPath && appPath !== "index") {
-                that.Router = director.Router(that["router"]).init();
-                that.Router.setRoute(appPath);
+                Object.assign(that.routers, that["router"]);
+                that.router = director.Router(that.routers).init();
+                that.router.setRoute(appPath);
             }
             that._clearObj(that.prevApp);
             that.currentApp = appName;
             if (typeof options.onAfter == "function") {
                 options.onAfter(e);
             }
-            that["app"] = null;
         },
         error: function(e) {
             debug.error("Failed to load application module!");
@@ -1007,7 +1008,10 @@ Lego$1.prototype.trigger = function trigger(event, data) {
 };
 
 Lego$1.prototype.getAppName = function getAppName() {
-    var appName = this.Router.getRoute()[0] !== "index" ? this.Router.getRoute()[0] : "index";
+    var appName = "";
+    if (this.Router) {
+        appName = this.Router.getRoute(0) !== "index" ? this.Router.getRoute(0) : "index";
+    }
     return appName || this.config.defaultApp;
 };
 

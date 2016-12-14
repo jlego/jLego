@@ -52,7 +52,8 @@ class Lego {
         this.permis = {};   //权限对象
         this.timer = {};   //计时器对象
         this.Eventer = new Events(); //全局事件对象
-        this.Router = Router({}).init();
+        this.router = null;
+        this.routers = {};
         window[this.config.alias] = window.Lego = this;
         this.startApp(this.currentApp);
         return this;
@@ -183,7 +184,6 @@ class Lego {
         this.timer[appName].forEach(function(value, key){
             clearTimeout(value);
             clearInterval(value);
-            // console.warn(value);
             that.timer[appName].delete(key);
         });
     }
@@ -215,13 +215,13 @@ class Lego {
             cache: true,
             success: function(e) {
                 if(appPath && appPath !== 'index'){
-                    that.Router = Router(that['router']).init();
-                    that.Router.setRoute(appPath);
+                    Object.assign(that.routers, that['router']);
+                    that.router = Router(that.routers).init();
+                    that.router.setRoute(appPath);
                 }
                 that._clearObj(that.prevApp);
                 that.currentApp = appName;
                 if (typeof options.onAfter == 'function') options.onAfter(e);
-                that['app'] = null;
             },
             error: function(e) {
                 debug.error('Failed to load application module!');
@@ -263,7 +263,10 @@ class Lego {
      * @return {[type]} [description]
      */
     getAppName() {
-        const appName = this.Router.getRoute()[0] !== 'index' ? this.Router.getRoute()[0] : 'index';
+        let appName = '';
+        if(this.Router){
+            appName = this.Router.getRoute(0) !== 'index' ? this.Router.getRoute(0) : 'index';
+        }
         return appName || this.config.defaultApp;
     }
     /**

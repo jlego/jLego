@@ -62,6 +62,7 @@
 
 	HBY.router = {
 	    '/home': function home() {
+	        console.warn('ppppppppppppppppp');
 	        HBY.create({
 	            view: _list2.default,
 	            dataSource: {
@@ -69,7 +70,6 @@
 	                server: _list4.default
 	            },
 	            onAfter: function onAfter(self) {
-	                console.warn('ppppppppppppppppp');
 	                var i = 0;
 	                HBY.setTimer('theTime', setInterval(function () {
 	                    self.data.list[0].last = i;
@@ -78,11 +78,6 @@
 	                }, 3000));
 	            }
 	        });
-	        // setTimeout(function(){
-	        //     theView.data.list[0].last = '4444444';
-	        //     theView.data._version = HBY.randomKey();
-	        //     console.warn(theView.data.list[0].last);
-	        // }, 3000);
 	    },
 	    '/home/list': function homeList() {
 	        HBY.create({
@@ -288,7 +283,7 @@
 	    _createClass(ListData, [{
 	        key: 'parse',
 	        value: function parse(datas) {
-	            console.warn(datas);
+	            // console.warn(datas);
 	            return datas[0].data;
 	        }
 	    }]);

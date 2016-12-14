@@ -14,8 +14,7 @@ class MainView extends HBY.View {
         <nav>
             <ul>
                 <li><a href="javascript:;" data-app="home">菜单一</a></li>
-                <li><a href="javascript:;" data-app="test/30">菜单二</a></li>
-                <li><a href="javascript:;" data-app="home/list">菜单三</a></li>
+                <li><a href="javascript:;" data-app="test">菜单二</a></li>
             </ul>
         </nav>
         <content id="content"></content>`;

@@ -101,7 +101,7 @@
 	        key: 'render',
 	        value: function render() {
 	            // const data = this.options.data || [];
-	            var tmpl = '\n        <nav>\n            <ul>\n                <li><a href="javascript:;" data-app="home">\u83DC\u5355\u4E00</a></li>\n                <li><a href="javascript:;" data-app="test/30">\u83DC\u5355\u4E8C</a></li>\n                <li><a href="javascript:;" data-app="home/list">\u83DC\u5355\u4E09</a></li>\n            </ul>\n        </nav>\n        <content id="content"></content>';
+	            var tmpl = '\n        <nav>\n            <ul>\n                <li><a href="javascript:;" data-app="home">\u83DC\u5355\u4E00</a></li>\n                <li><a href="javascript:;" data-app="test">\u83DC\u5355\u4E8C</a></li>\n            </ul>\n        </nav>\n        <content id="content"></content>';
 	            return tmpl;
 	        }
 	    }, {

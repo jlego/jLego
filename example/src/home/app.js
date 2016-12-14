@@ -4,6 +4,7 @@ import listData from './data/list';
 
 HBY.router = {
     '/home' () {
+        console.warn('ppppppppppppppppp');
         HBY.create({
             view: listView,
             dataSource: {
@@ -11,7 +12,6 @@ HBY.router = {
                 server: listData
             },
             onAfter(self) {
-                console.warn('ppppppppppppppppp');
                 let i = 0;
                 HBY.setTimer('theTime', setInterval(function(){
                     self.data.list[0].last = i;
@@ -20,11 +20,6 @@ HBY.router = {
                 }, 3000));
             }
         });
-        // setTimeout(function(){
-        //     theView.data.list[0].last = '4444444';
-        //     theView.data._version = HBY.randomKey();
-        //     console.warn(theView.data.list[0].last);
-        // }, 3000);
     },
     '/home/list' () {
         HBY.create({

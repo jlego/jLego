@@ -1,8 +1,8 @@
 class ListData extends HBY.Data {
     constructor(opts = {}) {
         const options = {
-            'test': {
-                url: './content.json',
+            'gg': {
+                url: './content2.json',
                 listTarget: 'data',
                 model: {
                     first: '',
@@ -11,8 +11,8 @@ class ListData extends HBY.Data {
                 },
                 // reset: true
             },
-            'ok': {
-                url: './content.json'
+            'ff': {
+                url: './content2.json'
             }
         };
         HBY.$.extend(true, options, opts);
