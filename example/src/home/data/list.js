@@ -18,8 +18,9 @@ class ListData extends HBY.Data {
         HBY.$.extend(true, options, opts);
         super(options);
     }
-    parse(data) {
-        return data[1].data;
+    parse(datas) {
+        console.warn(datas);
+        return datas[0].data;
     }
 }
 export default new ListData();

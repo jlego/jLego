@@ -10352,7 +10352,7 @@
 	            } else {
 	                this.server = dataSource.server;
 	            }
-	            this.server.load(dataSource.api, function (resp) {
+	            this.server.fetch(dataSource.api, function (resp) {
 	                if (Array.isArray(resp)) {
 	                    this$1.data.list = resp;
 	                } else {
@@ -10472,7 +10472,7 @@
 
 	View.prototype.refresh = function refresh() {
 	    if (Lego.config.isOpenVirtualDom) {
-	        this.data._version = Lego.randomKey();
+	        this.data.__v = Lego.randomKey();
 	    } else {
 	        this._renderHtml(this.render());
 	    }
@@ -10481,7 +10481,7 @@
 	View.prototype.remove = function remove() {
 	    this.Eventer.removeListeners(this.options.id + "_data");
 	    this.undelegateEvents();
-	    this.$el.children().remove();
+	    this.$el.remove();
 	};
 
 	function __async(g) {
@@ -10523,26 +10523,30 @@
 	    return this;
 	};
 
-	Data.prototype.load = function load(apiNameArr, callback) {
+	Data.prototype.fetch = function fetch(apiNameArr, callback) {
 	    var that = this;
 	    apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [apiNameArr];
-	    this.__fetch(apiNameArr).then(function (data) {
+	    this.__fetch(apiNameArr).then(function (datas) {
 	        apiNameArr.forEach(function (apiName, index) {
-	            var apiResp = data[index];
-	            that.datas.get(apiName).data = apiResp;
-	            if (apiResp && !Array.isArray(apiResp)) {
-	                var listTarget = that.datas.get(apiName).listTarget,
-	                    model = that.datas.get(apiName).model,
-	                    datas = that.datas.get(apiName).data;
-	                if (listTarget && Array.isArray(apiResp[listTarget]) && model) {
-	                    apiResp[listTarget].forEach(function (item, i) {
-	                        datas[listTarget][i] = Lego.$.extend({}, model, item);
+	            var data = datas[index];
+	            var listTarget = that.datas.get(apiName).listTarget;
+	            var model = that.datas.get(apiName).model;
+	            if (data) {
+	                if (listTarget && Array.isArray(data[listTarget]) && model) {
+	                    data[listTarget].forEach(function (item, i) {
+	                        data[listTarget][i] = Lego.$.extend({}, model, item);
+	                    });
+	                }
+	                if (!listTarget && Array.isArray(data) && !model) {
+	                    data.forEach(function (item, i) {
+	                        data[i] = Lego.$.extend({}, model, item);
 	                    });
 	                }
 	            }
+	            that.datas.get(apiName).data = data;
 	        });
 	        if (typeof callback == "function") {
-	            callback(that.parse(data));
+	            callback(that.parse(datas));
 	        }
 	    });
 	};

@@ -33,35 +33,36 @@ class Data {
         return this;
     }
     /**
-     * [load 加载数据]
+     * [fetch 加载数据]
      * @param  {[type]}   apiNameArr [description]
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    load(apiNameArr, callback){
+    fetch(apiNameArr, callback){
         let that = this;
         apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [apiNameArr];
-        this.__fetch(apiNameArr).then((data) => {
+        this.__fetch(apiNameArr).then((datas) => {
             apiNameArr.forEach((apiName, index)=> {
-                let apiResp = data[index];
-                that.datas.get(apiName).data = apiResp;
+                const data = datas[index];
+                const listTarget = that.datas.get(apiName).listTarget;
+                const model = that.datas.get(apiName).model;
                 // 添加模型数据
-                if(apiResp && !Array.isArray(apiResp)){
-                    let listTarget = that.datas.get(apiName).listTarget,
-                        model = that.datas.get(apiName).model,
-                        datas = that.datas.get(apiName).data;
-                    if(listTarget && Array.isArray(apiResp[listTarget]) && model){
-                        apiResp[listTarget].forEach(function(item, i){
-                            datas[listTarget][i] = Lego.$.extend({}, model, item);
+                if(data){
+                    if(listTarget && Array.isArray(data[listTarget]) && model){
+                        data[listTarget].forEach(function(item, i){
+                            data[listTarget][i] = Lego.$.extend({}, model, item);
+                        });
+                    }
+                    if(!listTarget && Array.isArray(data) && !model){
+                        data.forEach(function(item, i){
+                            data[i] = Lego.$.extend({}, model, item);
                         });
                     }
                 }
-                // that.Eventer.emit(apiName + '_data', apiResp);
+                that.datas.get(apiName).data = data;
             });
-
-            if(typeof callback == 'function') callback(that.parse(data));
+            if(typeof callback == 'function') callback(that.parse(datas));
         });
-        // return this.datas;
     }
     /**
      * [fetchData 异步请求数据]
@@ -76,8 +77,10 @@ class Data {
             let promisesArr = apiNameArr.map(async apiName => {
                 let option = that.datas.get(apiName) || {};
                 if(!Lego.$.isEmptyObject(option.data) && !option.reset){
+                    // 取缓存数据
                     return await option.data;
                 }else if(that.datas.has(apiName) && option.url && (Lego.$.isEmptyObject(option.data) || option.reset)){
+                    // 取新数据
                     let req = new Request( option.url, {
                         method: option.method || "GET",
                         headers: option.headers || 'none',

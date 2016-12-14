@@ -28,7 +28,7 @@ class View {
                 }else{
                     this.server = dataSource.server;
                 }
-                this.server.load(dataSource.api, (resp) => {
+                this.server.fetch(dataSource.api, (resp) => {
                     if(Array.isArray(resp)){
                         this.data.list = resp;
                     }else{
@@ -45,7 +45,6 @@ class View {
      */
     _renderView(){
         const content = this.render();
-        // this.oldTree = content;
         if(Lego.config.isOpenVirtualDom && typeof content !== 'string'){
             const treeNode = this._getVdom(content);
             this.oldTree = treeNode;
@@ -188,7 +187,7 @@ class View {
      */
     refresh() {
         if(Lego.config.isOpenVirtualDom){
-            this.data._version = Lego.randomKey();
+            this.data.__v = Lego.randomKey();
         }else{
             this._renderHtml(this.render());
         }
@@ -201,7 +200,7 @@ class View {
         // 清理全部事件监听
         this.Eventer.removeListeners(this.options.id + '_data');
         this.undelegateEvents();
-        this.$el.children().remove();
+        this.$el.remove();
     }
 }
 export default View;

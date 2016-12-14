@@ -286,8 +286,9 @@
 
 	    _createClass(ListData, [{
 	        key: 'parse',
-	        value: function parse(data) {
-	            return data[1].data;
+	        value: function parse(datas) {
+	            console.warn(datas);
+	            return datas[0].data;
 	        }
 	    }]);
 
