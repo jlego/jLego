@@ -69,12 +69,13 @@
 	                server: _list4.default
 	            },
 	            onAfter: function onAfter(self) {
+	                console.warn('ppppppppppppppppp');
 	                var i = 0;
-	                setInterval(function () {
+	                HBY.setTimer('theTime', setInterval(function () {
 	                    self.data.list[0].last = i;
 	                    self.refresh();
 	                    i++;
-	                }, 3000);
+	                }, 3000));
 	            }
 	        });
 	        // setTimeout(function(){

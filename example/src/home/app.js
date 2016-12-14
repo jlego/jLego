@@ -10,13 +10,14 @@ HBY.router = {
                 api: ['test', 'ok'],
                 server: listData
             },
-            onAfter(self){
+            onAfter(self) {
+                console.warn('ppppppppppppppppp');
                 let i = 0;
-                setInterval(function(){
+                HBY.setTimer('theTime', setInterval(function(){
                     self.data.list[0].last = i;
                     self.refresh();
                     i++;
-                }, 3000);
+                }, 3000));
             }
         });
         // setTimeout(function(){
@@ -31,7 +32,7 @@ HBY.router = {
             data: {
                 list: [
                     { first: 'home', last: 'Bond' },
-                    { first: 'test', last: 'bbbb' },
+                    { first: 'test', last: 'bbbb' }
                 ]
             },
             components: [{
@@ -39,14 +40,14 @@ HBY.router = {
                 view: homeView,
                 data: [
                     { first: 'home2', last: 'Bond2' },
-                    { first: 'test2', last: 'bbbb2' },
+                    { first: 'test2', last: 'bbbb2' }
                 ]
             }, {
                 el: '#test',
                 view: homeView,
                 data: [
                     { first: 'home3', last: 'Bond3' },
-                    { first: 'test3', last: 'bbbb3' },
+                    { first: 'test3', last: 'bbbb3' }
                 ]
             }]
         });

@@ -50,6 +50,7 @@ class Lego {
         this.views = {}; //视图实例容器
         this.datas = {};    //数据持久化容器
         this.permis = {};   //权限对象
+        this.timer = {};   //计时器对象
         this.Eventer = new Events(); //全局事件对象
         this.Router = Router({}).init();
         window[this.config.alias] = window.Lego = this;
@@ -164,6 +165,29 @@ class Lego {
         }
     }
     /**
+     * [_initObj 初始化应用对象]
+     * @param  {[type]} appName [description]
+     * @return {[type]}         [description]
+     */
+    _initObj(appName){
+        this.views[appName] = this.views[appName] || new WeakMap();
+        this.timer[appName] = this.timer[appName] || new Map();
+    }
+    /**
+     * [_clearObj 清理旧应用对象]
+     * @param  {[type]} appName [description]
+     * @return {[type]}         [description]
+     */
+    _clearObj(appName){
+        const that = this;
+        this.timer[appName].forEach(function(value, key){
+            clearTimeout(value);
+            clearInterval(value);
+            // console.warn(value);
+            that.timer[appName].delete(key);
+        });
+    }
+    /**
      * startApp 应用加载器
      * @param  {object} opts 参数
      * @return {[type]}        [description]
@@ -179,9 +203,8 @@ class Lego {
         newHash = newHash !== 'index' ? newHash : '';
         appPath = appPath || newHash || this.config.defaultApp;
         appName = appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath;
-        this.prevApp =this.currentApp;
-        this.views[appName] = this.views[appName] || new WeakMap();
-        // this.datas[appName] = this.datas[appName] || new Map();
+        this.prevApp = this.currentApp;
+        this._initObj(appName);
         if (typeof options.onBefore == 'function') options.onBefore();
         this.$(this.config.pageEl).scrollTop(0);
         this.$.ajax({
@@ -195,6 +218,7 @@ class Lego {
                     that.Router = Router(that['router']).init();
                     that.Router.setRoute(appPath);
                 }
+                that._clearObj(that.prevApp);
                 that.currentApp = appName;
                 if (typeof options.onAfter == 'function') options.onAfter(e);
                 that['app'] = null;
@@ -254,6 +278,23 @@ class Lego {
             return this.views[appName].get(el);
         }
         return null;
+    }
+    /**
+     * [setTimer 设置计时器]
+     * @param {[type]} name  [description]
+     * @param {[type]} timer [description]
+     */
+    setTimer(name, timer){
+        if(name && timer){
+            let oldTimerMap = this.timer[this.getAppName()],
+                oldTimer = oldTimerMap.get(name);
+            if(oldTimer){
+                clearTimeout(oldTimer);
+                clearInterval(oldTimer);
+                oldTimerMap.clear();
+            }
+            oldTimerMap.set(name, timer);
+        }
     }
 }
 

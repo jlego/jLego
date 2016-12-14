@@ -11135,6 +11135,7 @@
 	    this.views = {};
 	    this.datas = {};
 	    this.permis = {};
+	    this.timer = {};
 	    this.Eventer = new Events();
 	    this.Router = director.Router({}).init();
 	    window[this.config.alias] = window.Lego = this;
@@ -11237,6 +11238,20 @@
 	    }
 	};
 
+	Lego$1.prototype._initObj = function _initObj(appName) {
+	    this.views[appName] = this.views[appName] || new WeakMap();
+	    this.timer[appName] = this.timer[appName] || new Map();
+	};
+
+	Lego$1.prototype._clearObj = function _clearObj(appName) {
+	    var that = this;
+	    this.timer[appName].forEach(function (value, key) {
+	        clearTimeout(value);
+	        clearInterval(value);
+	        that.timer[appName].delete(key);
+	    });
+	};
+
 	Lego$1.prototype.startApp = function startApp(appPath, opts) {
 	    if (opts === void 0) opts = {};
 	    var options = {
@@ -11253,7 +11268,7 @@
 	    appPath = appPath || newHash || this.config.defaultApp;
 	    appName = appPath.indexOf("/") > 0 ? appPath.split("/")[0] : appPath;
 	    this.prevApp = this.currentApp;
-	    this.views[appName] = this.views[appName] || new WeakMap();
+	    this._initObj(appName);
 	    if (typeof options.onBefore == "function") {
 	        options.onBefore();
 	    }
@@ -11269,6 +11284,7 @@
 	                that.Router = director.Router(that["router"]).init();
 	                that.Router.setRoute(appPath);
 	            }
+	            that._clearObj(that.prevApp);
 	            that.currentApp = appName;
 	            if (typeof options.onAfter == "function") {
 	                options.onAfter(e);
@@ -11316,6 +11332,19 @@
 	        return this.views[appName].get(el);
 	    }
 	    return null;
+	};
+
+	Lego$1.prototype.setTimer = function setTimer(name, timer) {
+	    if (name && timer) {
+	        var oldTimerMap = this.timer[this.getAppName()],
+	            oldTimer = oldTimerMap.get(name);
+	        if (oldTimer) {
+	            clearTimeout(oldTimer);
+	            clearInterval(oldTimer);
+	            oldTimerMap.clear();
+	        }
+	        oldTimerMap.set(name, timer);
+	    }
 	};
 
 	module.exports = Lego$1;
