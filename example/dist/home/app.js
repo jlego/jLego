@@ -60,7 +60,7 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	HBY.router = {
+	HBY.router({
 	    '/home': function home() {
 	        console.warn('ppppppppppppppppp');
 	        HBY.create({
@@ -99,7 +99,7 @@
 	    '/home/detail/:id': function homeDetailId(id) {
 	        console.warn('pppppppppp');
 	    }
-	};
+	});
 
 /***/ },
 /* 1 */

@@ -2,7 +2,7 @@ import homeView from './view/home';
 import listView from './view/list';
 import listData from './data/list';
 
-HBY.router = {
+HBY.router({
     '/test' () {
         console.warn('7777777777777');
         HBY.create({
@@ -50,4 +50,4 @@ HBY.router = {
     '/test/detail/:id' (id) {
         console.warn('pppppppppp');
     }
-};
+});

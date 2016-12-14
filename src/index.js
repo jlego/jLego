@@ -44,16 +44,18 @@ class Lego {
         this.$el = this.$;
         this.prevApp = ''; //上一个应用名称
         this.currentApp = 'index'; //当前应用名称
+        // 基类
         this.Event = Events;
+        this.Router = Router;
         this.View = BaseView;
         this.Data = BaseData;
-        this.views = {}; //视图实例容器
-        this.datas = {};    //数据持久化容器
+        // 实例容器
+        this.views = {}; //视图容器
+        this.datas = {};    //数据容器
         this.permis = {};   //权限对象
         this.timer = {};   //计时器对象
+        this.routers = new Map();
         this.Eventer = new Events(); //全局事件对象
-        this.router = null;
-        this.routers = {};
         window[this.config.alias] = window.Lego = this;
         this.startApp(this.currentApp);
         return this;
@@ -198,7 +200,7 @@ class Lego {
             onAfter() {}
         }, that = this, appName, index;
         Object.assign(options, opts);
-        const hash = window.location.hash.replace(/#/, '') || this.Router.getRoute()[0];
+          const hash = window.location.hash.replace(/#/, '');
         let newHash = hash.indexOf('/') == 0 ? hash.replace(/\//, '') : '';
         newHash = newHash !== 'index' ? newHash : '';
         appPath = appPath || newHash || this.config.defaultApp;
@@ -215,9 +217,9 @@ class Lego {
             cache: true,
             success: function(e) {
                 if(appPath && appPath !== 'index'){
-                    Object.assign(that.routers, that['router']);
-                    that.router = Router(that.routers).init();
-                    that.router.setRoute(appPath);
+                    // Object.assign(that.routers, that['router']);
+                    // that.routerObj = Router(that.routers).init();
+                    that.routers.get(that.currentApp).setRoute(appPath);
                 }
                 that._clearObj(that.prevApp);
                 that.currentApp = appName;
@@ -263,11 +265,9 @@ class Lego {
      * @return {[type]} [description]
      */
     getAppName() {
-        let appName = '';
-        if(this.Router){
-            appName = this.Router.getRoute(0) !== 'index' ? this.Router.getRoute(0) : 'index';
-        }
-        return appName || this.config.defaultApp;
+        let hash = window.location.hash.replace(/#/, '');
+        hash = hash.indexOf('/') == 0 ? hash.replace(/\//, '') : '';
+        return hash.split('/')[0] || this.config.defaultApp;
     }
     /**
      * [getView 取应用视图]
@@ -298,6 +298,19 @@ class Lego {
             }
             oldTimerMap.set(name, timer);
         }
+    }
+    /**
+     * [router 实例化路由]
+     * @param  {[type]} routerOption [description]
+     * @return {[type]}           [description]
+     */
+    router(routerOption){
+        const appName = this.currentApp;
+        if(!this.routers.has(appName)){
+            const routerObj = this.Router(routerOption).init();
+            this.routers.set(appName, routerObj);
+        }
+        return this.routers.get(appName);
     }
 }
 

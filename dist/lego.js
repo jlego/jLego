@@ -825,15 +825,15 @@ var Lego$1 = function Lego$1(options) {
     this.prevApp = "";
     this.currentApp = "index";
     this.Event = Events;
+    this.Router = director.Router;
     this.View = View;
     this.Data = Data;
     this.views = {};
     this.datas = {};
     this.permis = {};
     this.timer = {};
+    this.routers = new Map();
     this.Eventer = new Events();
-    this.router = null;
-    this.routers = {};
     window[this.config.alias] = window.Lego = this;
     this.startApp(this.currentApp);
     return this;
@@ -950,7 +950,7 @@ Lego$1.prototype.startApp = function startApp(appPath, opts) {
         onAfter: function onAfter() {}
     }, that = this, appName, index;
     Object.assign(options, opts);
-    var hash = window.location.hash.replace(/#/, "") || this.Router.getRoute()[0];
+    var hash = window.location.hash.replace(/#/, "");
     var newHash = hash.indexOf("/") == 0 ? hash.replace(/\//, "") : "";
     newHash = newHash !== "index" ? newHash : "";
     appPath = appPath || newHash || this.config.defaultApp;
@@ -969,9 +969,7 @@ Lego$1.prototype.startApp = function startApp(appPath, opts) {
         cache: true,
         success: function(e) {
             if (appPath && appPath !== "index") {
-                Object.assign(that.routers, that["router"]);
-                that.router = director.Router(that.routers).init();
-                that.router.setRoute(appPath);
+                that.routers.get(that.currentApp).setRoute(appPath);
             }
             that._clearObj(that.prevApp);
             that.currentApp = appName;
@@ -1008,11 +1006,9 @@ Lego$1.prototype.trigger = function trigger(event, data) {
 };
 
 Lego$1.prototype.getAppName = function getAppName() {
-    var appName = "";
-    if (this.Router) {
-        appName = this.Router.getRoute(0) !== "index" ? this.Router.getRoute(0) : "index";
-    }
-    return appName || this.config.defaultApp;
+    var hash = window.location.hash.replace(/#/, "");
+    hash = hash.indexOf("/") == 0 ? hash.replace(/\//, "") : "";
+    return hash.split("/")[0] || this.config.defaultApp;
 };
 
 Lego$1.prototype.getView = function getView(el, appName) {
@@ -1034,6 +1030,15 @@ Lego$1.prototype.setTimer = function setTimer(name, timer) {
         }
         oldTimerMap.set(name, timer);
     }
+};
+
+Lego$1.prototype.router = function router(routerOption) {
+    var appName = this.currentApp;
+    if (!this.routers.has(appName)) {
+        var routerObj = this.Router(routerOption).init();
+        this.routers.set(appName, routerObj);
+    }
+    return this.routers.get(appName);
 };
 
 module.exports = Lego$1;
