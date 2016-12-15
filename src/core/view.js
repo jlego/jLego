@@ -109,7 +109,7 @@ class View {
      * @param {[type]} element [description]
      */
     setElement(element) {
-        this.undelegateEvents();
+        this.unEvents();
         this._setElement(element);
         this.delegateEvents();
         return this;
@@ -130,7 +130,7 @@ class View {
         const events = this.options.events;
         const delegateEventSplitter = /^(\S+)\s*(.*)$/;
         if (!events) return this;
-        this.undelegateEvents();
+        this.unEvents();
         for (let key in events) {
             let method = events[key];
             if (typeof method !== 'function') method = this[method];
@@ -152,10 +152,10 @@ class View {
         return this;
     }
     /**
-     * [undelegateEvents description]
+     * [unEvents description]
      * @return {[type]} [description]
      */
-    undelegateEvents() {
+    unEvents() {
         if (this.$el) this.$el.off('.delegateEvents' + this.options.id);
         return this;
     }
@@ -203,7 +203,7 @@ class View {
     remove(){
         // 清理全部事件监听
         // this.Eventer.removeListeners(this.options.id + '_data');
-        this.undelegateEvents();
+        this.unEvents();
         this.$el.children().remove();
     }
 }
