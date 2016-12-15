@@ -6,7 +6,7 @@ class ListView extends HBY.View {
             },
             listen: {
                 'data_update': (data) => {
-                    debug.warn('pppppppppp', data);
+                    debug.warn('ttttttttttt', data);
                 }
             }
         };
@@ -29,6 +29,7 @@ class ListView extends HBY.View {
         return vDom;
     }
     theClick(event){
+        event.stopPropagation();
         debug.warn('66666666666');
     }
 }

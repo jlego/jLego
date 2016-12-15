@@ -10,7 +10,7 @@ import BaseView from "./core/view";
 import BaseData from "./core/data";
 
 class Lego {
-    constructor(options = {}) {
+    constructor(opts = {}) {
         window.h = h;
         this.createElement = createElement;
         this.diff = diff;
@@ -25,14 +25,14 @@ class Lego {
             isAnimate: false,  //是否开启动画
             isPermit: false,  //是否开启操作权限
             isMultiWindow: false, //是否多窗口
-            isOpenVirtualDom: true, //是否开启虚拟DOM
+            isVDom: true, //是否开启虚拟DOM
             pageEl: '',     //页面渲染容器
             defaultApp: '', //默认应用
             rootUri: '',    //根目录
             routerConfig: {},   //路由配置
             screenWidth: window.innerWidth  //应用窗口宽度
         };
-        Object.assign(this.config, options);
+        Object.assign(this.config, opts);
 
         this._debugger();
         if(this.config.$){
@@ -105,14 +105,24 @@ class Lego {
             }
         }
         typeof options.onBefore === 'function' && options.onBefore();
-        let viewObj,
-            _el = this.$('[id="' + options.id + '"]')[0];
-        if(!this.views[this.currentApp].has(_el)){
-            viewObj = new options.view(options);
-            this.views[this.currentApp].set(viewObj.$('[id="' + options.id + '"]')[0], viewObj);
-        }else{
-            viewObj = this.views[this.currentApp].get(_el);
+        if(this.views[this.prevApp].has(options.el) && !this.config.isMultiWindow){
+            this.views[this.prevApp].get(options.el).remove();
+            this.views[this.prevApp].delete(options.el);
         }
+        if(this.views[this.currentApp].has(options.el) && !this.config.isMultiWindow){
+            this.views[this.currentApp].get(options.el).remove();
+            this.views[this.currentApp].delete(options.el);
+        }
+        const viewObj = new options.view(options);
+        this.views[this.currentApp].set(options.el, viewObj);
+        // let viewObj,
+        //     _el = this.$('[id="' + options.id + '"]')[0];
+        // if(!this.views[this.currentApp].has(_el)){
+        //     viewObj = new options.view(options);
+        //     this.views[this.currentApp].set(viewObj.el, viewObj);
+        // }else{
+        //     viewObj = this.views[this.currentApp].get(_el);
+        // }
 
         if(options.listen){
             for(let key in options.listen) {
@@ -121,15 +131,16 @@ class Lego {
             }
         }
 
-        // 渲染子视图
-        if(options.components.length) {
-            options.components.forEach(function(item, i){
-                that.create(item);
-            });
-        }
-
         typeof options.onAfter === 'function' && options.onAfter(viewObj);
         return viewObj;
+    }
+    /**
+     * [init 实例化系统]
+     * @param  {Object} opts [description]
+     * @return {[type]}      [description]
+     */
+    static init(opts = {}){
+        new this(opts);
     }
     /**
      * [randomKey 随机字符串]
@@ -173,7 +184,7 @@ class Lego {
      * @return {[type]}         [description]
      */
     _initObj(appName){
-        this.views[appName] = this.views[appName] || new WeakMap();
+        this.views[appName] = this.views[appName] || new Map();
         this.timer[appName] = this.timer[appName] || new Map();
     }
     /**
@@ -183,11 +194,13 @@ class Lego {
      */
     _clearObj(appName){
         const that = this;
-        this.timer[appName].forEach(function(value, key){
-            clearTimeout(value);
-            clearInterval(value);
-            that.timer[appName].delete(key);
-        });
+        if(this.prevApp !== this.currentApp){
+            this.timer[appName].forEach(function(value, key){
+                clearTimeout(value);
+                clearInterval(value);
+                that.timer[appName].delete(key);
+            });
+        }
     }
     /**
      * startApp 应用加载器
@@ -206,6 +219,7 @@ class Lego {
         appPath = appPath || newHash || this.config.defaultApp;
         appName = appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath;
         this.prevApp = this.currentApp;
+        this.currentApp = appName;
         this._initObj(appName);
         if (typeof options.onBefore == 'function') options.onBefore();
         this.$(this.config.pageEl).scrollTop(0);
@@ -216,13 +230,10 @@ class Lego {
             crossDomain: true,
             cache: true,
             success: function(e) {
-                if(appPath && appPath !== 'index'){
-                    // Object.assign(that.routers, that['router']);
-                    // that.routerObj = Router(that.routers).init();
-                    that.routers.get(that.currentApp).setRoute(appPath);
+                if(appPath && appName !== 'index'){
+                    that.routers.get(appName).setRoute(appPath);
                 }
                 that._clearObj(that.prevApp);
-                that.currentApp = appName;
                 if (typeof options.onAfter == 'function') options.onAfter(e);
             },
             error: function(e) {
@@ -306,6 +317,7 @@ class Lego {
      */
     router(routerOption){
         const appName = this.currentApp;
+        if(appName == 'index') return;
         if(!this.routers.has(appName)){
             const routerObj = this.Router(routerOption).init();
             this.routers.set(appName, routerObj);

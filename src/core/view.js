@@ -17,8 +17,8 @@ class View {
         this.Eventer = Lego.Eventer;
         this.setElement(this.options.el);
         this.data = this.options.data || this.data || {};
-        this._renderView();
         this.server = null;
+        this._renderView();
         this._observe();
         if(this.options.dataSource){
             const dataSource = this.options.dataSource;
@@ -45,7 +45,7 @@ class View {
      */
     _renderView(){
         const content = this.render();
-        if(Lego.config.isOpenVirtualDom && typeof content !== 'string'){
+        if(Lego.config.isVDom && typeof content !== 'string'){
             const treeNode = this._getVdom(content);
             this.oldTree = treeNode;
             this.rootNode = Lego.createElement(treeNode);
@@ -53,6 +53,12 @@ class View {
         }
         if(typeof content === 'string'){
             this._renderHtml(content);
+        }
+        // 渲染子视图
+        if(this.options.components.length) {
+            this.options.components.forEach(function(item, i){
+                Lego.create(item);
+            });
         }
     }
     /**
@@ -84,19 +90,17 @@ class View {
         const that = this;
         if(this.data && typeof this.data === 'object'){
             Object.observe(this.data, (changes) =>{
-                changes.forEach(function(change, i){
-                    // debug.log(change);
-                    const content = that.render();
-                    if(Lego.config.isOpenVirtualDom){
-                        const treeNode = that._getVdom(content);
-                        let patches = Lego.diff(that.oldTree, treeNode);
-                        that.rootNode = Lego.patch(that.rootNode, patches);
-                        that.oldTree = treeNode;
-                    }
-                    if(typeof content === 'string'){
-                        that._renderHtml(content);
-                    }
-                });
+                // debug.log(change);
+                const content = that.render();
+                if(Lego.config.isVDom){
+                    const treeNode = that._getVdom(content);
+                    let patches = Lego.diff(that.oldTree, treeNode);
+                    that.rootNode = Lego.patch(that.rootNode, patches);
+                    that.oldTree = treeNode;
+                }
+                if(typeof content === 'string'){
+                    that._renderHtml(content);
+                }
             });
         }
     }
@@ -186,10 +190,10 @@ class View {
      * @return {[type]} [description]
      */
     refresh() {
-        if(Lego.config.isOpenVirtualDom){
+        if(Lego.config.isVDom){
             this.data.__v = Lego.randomKey();
         }else{
-            this._renderHtml(this.render());
+            this._renderView();
         }
     }
     /**
@@ -198,9 +202,9 @@ class View {
      */
     remove(){
         // 清理全部事件监听
-        this.Eventer.removeListeners(this.options.id + '_data');
+        // this.Eventer.removeListeners(this.options.id + '_data');
         this.undelegateEvents();
-        this.$el.remove();
+        this.$el.children().remove();
     }
 }
 export default View;

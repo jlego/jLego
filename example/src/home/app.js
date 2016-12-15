@@ -13,7 +13,7 @@ HBY.router({
             },
             onAfter(self) {
                 let i = 0;
-                HBY.setTimer('theTime', setInterval(function(){
+                HBY.setTimer('theTime', setInterval(() => {
                     self.data.list[0].last = i;
                     self.refresh();
                     i++;

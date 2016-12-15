@@ -56,7 +56,7 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	new _lego2.default({
+	_lego2.default.init({
 	    alias: 'HBY', //框架实例别名
 	    version: '20161202', //版本号
 	    $: _jquery2.default, //dom操作对象, 必须
@@ -10341,8 +10341,8 @@
 	    this.Eventer = Lego.Eventer;
 	    this.setElement(this.options.el);
 	    this.data = this.options.data || this.data || {};
-	    this._renderView();
 	    this.server = null;
+	    this._renderView();
 	    this._observe();
 	    if (this.options.dataSource) {
 	        var dataSource = this.options.dataSource;
@@ -10366,7 +10366,7 @@
 
 	View.prototype._renderView = function _renderView() {
 	    var content = this.render();
-	    if (Lego.config.isOpenVirtualDom && typeof content !== "string") {
+	    if (Lego.config.isVDom && typeof content !== "string") {
 	        var treeNode = this._getVdom(content);
 	        this.oldTree = treeNode;
 	        this.rootNode = Lego.createElement(treeNode);
@@ -10374,6 +10374,11 @@
 	    }
 	    if (typeof content === "string") {
 	        this._renderHtml(content);
+	    }
+	    if (this.options.components.length) {
+	        this.options.components.forEach(function (item, i) {
+	            Lego.create(item);
+	        });
 	    }
 	};
 
@@ -10395,18 +10400,16 @@
 	    var that = this;
 	    if (this.data && _typeof(this.data) === "object") {
 	        Object.observe(this.data, function (changes) {
-	            changes.forEach(function (change, i) {
-	                var content = that.render();
-	                if (Lego.config.isOpenVirtualDom) {
-	                    var treeNode = that._getVdom(content);
-	                    var patches = Lego.diff(that.oldTree, treeNode);
-	                    that.rootNode = Lego.patch(that.rootNode, patches);
-	                    that.oldTree = treeNode;
-	                }
-	                if (typeof content === "string") {
-	                    that._renderHtml(content);
-	                }
-	            });
+	            var content = that.render();
+	            if (Lego.config.isVDom) {
+	                var treeNode = that._getVdom(content);
+	                var patches = Lego.diff(that.oldTree, treeNode);
+	                that.rootNode = Lego.patch(that.rootNode, patches);
+	                that.oldTree = treeNode;
+	            }
+	            if (typeof content === "string") {
+	                that._renderHtml(content);
+	            }
 	        });
 	    }
 	};
@@ -10471,17 +10474,16 @@
 	};
 
 	View.prototype.refresh = function refresh() {
-	    if (Lego.config.isOpenVirtualDom) {
+	    if (Lego.config.isVDom) {
 	        this.data.__v = Lego.randomKey();
 	    } else {
-	        this._renderHtml(this.render());
+	        this._renderView();
 	    }
 	};
 
 	View.prototype.remove = function remove() {
-	    this.Eventer.removeListeners(this.options.id + "_data");
 	    this.undelegateEvents();
-	    this.$el.remove();
+	    this.$el.children().remove();
 	};
 
 	function __async(g) {
@@ -11095,8 +11097,8 @@
 	    };
 	}((typeof global === "undefined" ? "undefined" : _typeof(global)) === "object" ? global : (typeof window === "undefined" ? "undefined" : _typeof(window)) === "object" ? window : (typeof self === "undefined" ? "undefined" : _typeof(self)) === "object" ? self : undefined);
 
-	var Lego$1 = function Lego$1(options) {
-	    if (options === void 0) options = {};
+	var Lego$1 = function Lego$1(opts) {
+	    if (opts === void 0) opts = {};
 	    window.h = h$1;
 	    this.createElement = createElement;
 	    this.diff = diff;
@@ -11111,14 +11113,14 @@
 	        isAnimate: false,
 	        isPermit: false,
 	        isMultiWindow: false,
-	        isOpenVirtualDom: true,
+	        isVDom: true,
 	        pageEl: "",
 	        defaultApp: "",
 	        rootUri: "",
 	        routerConfig: {},
 	        screenWidth: window.innerWidth
 	    };
-	    Object.assign(this.config, options);
+	    Object.assign(this.config, opts);
 	    this._debugger();
 	    if (this.config.$) {
 	        window.$ = this.$ = this.config.$;
@@ -11185,27 +11187,29 @@
 	        }
 	    }
 	    typeof options.onBefore === "function" && options.onBefore();
-	    var viewObj,
-	        _el = this.$('[id="' + options.id + '"]')[0];
-	    if (!this.views[this.currentApp].has(_el)) {
-	        viewObj = new options.view(options);
-	        this.views[this.currentApp].set(viewObj.$('[id="' + options.id + '"]')[0], viewObj);
-	    } else {
-	        viewObj = this.views[this.currentApp].get(_el);
+	    if (this.views[this.prevApp].has(options.el) && !this.config.isMultiWindow) {
+	        this.views[this.prevApp].get(options.el).remove();
+	        this.views[this.prevApp].delete(options.el);
 	    }
+	    if (this.views[this.currentApp].has(options.el) && !this.config.isMultiWindow) {
+	        this.views[this.currentApp].get(options.el).remove();
+	        this.views[this.currentApp].delete(options.el);
+	    }
+	    var viewObj = new options.view(options);
+	    this.views[this.currentApp].set(options.el, viewObj);
 	    if (options.listen) {
 	        for (var key in options.listen) {
 	            this$1.Eventer.removeListener(key);
 	            this$1.Eventer.on(key, options.listen[key]);
 	        }
 	    }
-	    if (options.components.length) {
-	        options.components.forEach(function (item, i) {
-	            that.create(item);
-	        });
-	    }
 	    typeof options.onAfter === "function" && options.onAfter(viewObj);
 	    return viewObj;
+	};
+
+	Lego$1.init = function init(opts) {
+	    if (opts === void 0) opts = {};
+	    new this(opts);
 	};
 
 	Lego$1.prototype.randomKey = function randomKey(len) {
@@ -11240,17 +11244,19 @@
 	};
 
 	Lego$1.prototype._initObj = function _initObj(appName) {
-	    this.views[appName] = this.views[appName] || new WeakMap();
+	    this.views[appName] = this.views[appName] || new Map();
 	    this.timer[appName] = this.timer[appName] || new Map();
 	};
 
 	Lego$1.prototype._clearObj = function _clearObj(appName) {
 	    var that = this;
-	    this.timer[appName].forEach(function (value, key) {
-	        clearTimeout(value);
-	        clearInterval(value);
-	        that.timer[appName].delete(key);
-	    });
+	    if (this.prevApp !== this.currentApp) {
+	        this.timer[appName].forEach(function (value, key) {
+	            clearTimeout(value);
+	            clearInterval(value);
+	            that.timer[appName].delete(key);
+	        });
+	    }
 	};
 
 	Lego$1.prototype.startApp = function startApp(appPath, opts) {
@@ -11269,6 +11275,7 @@
 	    appPath = appPath || newHash || this.config.defaultApp;
 	    appName = appPath.indexOf("/") > 0 ? appPath.split("/")[0] : appPath;
 	    this.prevApp = this.currentApp;
+	    this.currentApp = appName;
 	    this._initObj(appName);
 	    if (typeof options.onBefore == "function") {
 	        options.onBefore();
@@ -11281,11 +11288,10 @@
 	        crossDomain: true,
 	        cache: true,
 	        success: function success(e) {
-	            if (appPath && appPath !== "index") {
-	                that.routers.get(that.currentApp).setRoute(appPath);
+	            if (appPath && appName !== "index") {
+	                that.routers.get(appName).setRoute(appPath);
 	            }
 	            that._clearObj(that.prevApp);
-	            that.currentApp = appName;
 	            if (typeof options.onAfter == "function") {
 	                options.onAfter(e);
 	            }
@@ -11349,6 +11355,9 @@
 
 	Lego$1.prototype.router = function router(routerOption) {
 	    var appName = this.currentApp;
+	    if (appName == "index") {
+	        return;
+	    }
 	    if (!this.routers.has(appName)) {
 	        var routerObj = this.Router(routerOption).init();
 	        this.routers.set(appName, routerObj);

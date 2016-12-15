@@ -199,7 +199,7 @@
 	            },
 	            listen: {
 	                'data_update': function data_update(data) {
-	                    debug.warn('pppppppppp', data);
+	                    debug.warn('ttttttttttt', data);
 	                }
 	            }
 	        };
@@ -227,6 +227,7 @@
 	    }, {
 	        key: 'theClick',
 	        value: function theClick(event) {
+	            event.stopPropagation();
 	            debug.warn('66666666666');
 	        }
 	    }]);

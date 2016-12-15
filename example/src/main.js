@@ -2,7 +2,7 @@ import jQuery from 'jquery';
 // import Lego from 'lego-core';
 import Lego from '../../dist/lego';
 
-new Lego({
+Lego.init({
     alias: 'HBY', //框架实例别名
     version: '20161202', //版本号
     $: jQuery, //dom操作对象, 必须
