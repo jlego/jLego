@@ -10342,7 +10342,7 @@
 	    this.setElement(this.options.el);
 	    this.data = this.options.data || this.data || {};
 	    this.server = null;
-	    this._renderView();
+	    this._renderRootNode();
 	    this._observe();
 	    if (this.options.dataSource) {
 	        var dataSource = this.options.dataSource;
@@ -10364,11 +10364,14 @@
 	    }
 	};
 
-	View.prototype._renderView = function _renderView() {
+	View.prototype._renderRootNode = function _renderRootNode() {
 	    var content = this.render();
 	    this.oldNode = content;
 	    this.rootNode = vdom.create(content);
 	    this.$el[this.options.insert](this.rootNode);
+	};
+
+	View.prototype._renderSubView = function _renderSubView() {
 	    if (this.options.components.length) {
 	        this.options.components.forEach(function (item, i) {
 	            Lego.create(item);
@@ -10384,6 +10387,7 @@
 	            var patches = diff(that.oldNode, newNode);
 	            that.rootNode = patch(that.rootNode, patches);
 	            that.oldNode = newNode;
+	            that._renderSubView();
 	        });
 	    }
 	};

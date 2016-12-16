@@ -76,7 +76,19 @@
 	                    self.refresh();
 	                    i++;
 	                }, 3000));
-	            }
+	            },
+
+	            components: [{
+	                el: '#test',
+	                view: _home2.default,
+	                // dataSource: {
+	                //     api: ['ok'],
+	                //     server: listData
+	                // },
+	                data: {
+	                    list: [{ first: 'home3', last: 'Bond3' }, { first: 'test3', last: 'bbbb3' }]
+	                }
+	            }]
 	        });
 	    },
 	    '/home/list': function homeList() {
@@ -145,9 +157,9 @@
 	    _createClass(HomeView, [{
 	        key: 'render',
 	        value: function render() {
-	            var data = this.data || [];
+	            var data = this.data.list || [];
 	            var vDom = hx(_templateObject, data.map(function (model, i) {
-	                return hx(_templateObject2, model.first, model.last);
+	                return hx(_templateObject2, model.first, model.first);
 	            }));
 	            return vDom;
 	        }

@@ -23,7 +23,7 @@ class View {
         this.setElement(this.options.el);
         this.data = this.options.data || this.data || {};
         this.server = null;
-        this._renderView();
+        this._renderRootNode();
         this._observe();
         if(this.options.dataSource){
             const dataSource = this.options.dataSource;
@@ -45,15 +45,20 @@ class View {
         }
     }
     /**
-     * [_renderView description]
+     * [_renderRootNode description]
      * @return {[type]} [description]
      */
-    _renderView(){
+    _renderRootNode(){
         const content = this.render();
         this.oldNode = content;
         this.rootNode = vdom.create(content);
         this.$el[this.options.insert](this.rootNode);
-        // 渲染子视图
+    }
+    /**
+     * [_renderSubView 渲染子视图]
+     * @return {[type]} [description]
+     */
+    _renderSubView(){
         if(this.options.components.length) {
             this.options.components.forEach(function(item, i){
                 Lego.create(item);
@@ -73,6 +78,7 @@ class View {
                 let patches = diff(that.oldNode, newNode);
                 that.rootNode = patch(that.rootNode, patches);
                 that.oldNode = newNode;
+                that._renderSubView();
             });
         }
     }

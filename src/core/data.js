@@ -1,7 +1,7 @@
 // import 'whatwg-fetch'
 class Data {
     /**
-     * [constructor description]
+     * [constructor 构造函数]
      * @param  {Object} options [description]
      *  'apiName': {
      *      model: null,    //数据模型
@@ -20,7 +20,7 @@ class Data {
         }
     }
     /**
-     * [setOptions description]
+     * [setOptions 设置参数]
      * @param  {[type]} apiName [description]
      * @param  {Object} opts    [description]
      * @return {[type]}         [description]
@@ -33,7 +33,7 @@ class Data {
         return this;
     }
     /**
-     * [fetch 加载数据]
+     * [fetch 加载数据接口]
      * @param  {[type]}   apiNameArr [description]
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
@@ -103,7 +103,7 @@ class Data {
         return results;
     }
     /**
-     * [parse 格式数据]
+     * [parse 组装数据]
      * @param  {[type]} data [description]
      * @return {[type]}      [description]
      */
@@ -111,7 +111,7 @@ class Data {
         return datas;
     }
     /**
-     * [getData 取应用数据]
+     * [getData 取数据]
      * @return {[type]} [description]
      */
     getData(apiName) {
