@@ -1,5 +1,5 @@
 /**
- * lego.js v0.0.8
+ * lego.js v0.0.9
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -843,18 +843,16 @@ Lego$1.prototype.create = function create(opts) {
         }
     }
     typeof options.onBefore === "function" && options.onBefore();
-    var prevAppView = this.views[this.prevApp];
-    var currentAppView = this.views[this.currentApp];
-    if (prevAppView.has(options.el) && !this.config.isMultiWindow) {
-        prevAppView.get(options.el).unEvents();
-        prevAppView.delete(options.el);
+    if (this.views[this.prevApp].has(options.el) && !this.config.isMultiWindow) {
+        this.views[this.prevApp].get(options.el).unEvents();
+        this.views[this.prevApp].delete(options.el);
     }
-    if (currentAppView.has(options.el) && !this.config.isMultiWindow) {
-        currentAppView.get(options.el).unEvents();
-        currentAppView.delete(options.el);
+    if (this.views[this.currentApp].has(options.el) && !this.config.isMultiWindow) {
+        this.views[this.currentApp].get(options.el).unEvents();
+        this.views[this.currentApp].delete(options.el);
     }
     var viewObj = new options.view(options);
-    currentAppView.set(options.el, viewObj);
+    this.views[this.currentApp].set(options.el, viewObj);
     if (options.listen) {
         for (var key in options.listen) {
             this$1.Eventer.removeListener(key);

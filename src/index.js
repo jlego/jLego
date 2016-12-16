@@ -97,11 +97,11 @@ class Lego {
         }
         typeof options.onBefore === 'function' && options.onBefore();
         if(this.views[this.prevApp].has(options.el) && !this.config.isMultiWindow){
-            this.views[this.prevApp].get(options.el).remove();
+            this.views[this.prevApp].get(options.el).unEvents();
             this.views[this.prevApp].delete(options.el);
         }
         if(this.views[this.currentApp].has(options.el) && !this.config.isMultiWindow){
-            this.views[this.currentApp].get(options.el).remove();
+            this.views[this.currentApp].get(options.el).unEvents();
             this.views[this.currentApp].delete(options.el);
         }
         const viewObj = new options.view(options);
