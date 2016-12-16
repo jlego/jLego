@@ -86,7 +86,7 @@ View.prototype._observe = function _observe() {
 };
 
 View.prototype.setElement = function setElement(element) {
-    this.undelegateEvents();
+    this.unEvents();
     this._setElement(element);
     this.delegateEvents();
     return this;
@@ -104,7 +104,7 @@ View.prototype.delegateEvents = function delegateEvents() {
     if (!events) {
         return this;
     }
-    this.undelegateEvents();
+    this.unEvents();
     for (var key in events) {
         var method = events[key];
         if (typeof method !== "function") {
@@ -124,7 +124,7 @@ View.prototype.delegate = function delegate(eventName, selector, listener) {
     return this;
 };
 
-View.prototype.undelegateEvents = function undelegateEvents() {
+View.prototype.unEvents = function unEvents() {
     if (this.$el) {
         this.$el.off(".delegateEvents" + this.options.id);
     }
@@ -149,7 +149,7 @@ View.prototype.refresh = function refresh() {
 };
 
 View.prototype.remove = function remove() {
-    this.undelegateEvents();
+    this.unEvents();
     this.$el.children().remove();
 };
 
@@ -843,16 +843,18 @@ Lego$1.prototype.create = function create(opts) {
         }
     }
     typeof options.onBefore === "function" && options.onBefore();
-    if (this.views[this.prevApp].has(options.el) && !this.config.isMultiWindow) {
-        this.views[this.prevApp].get(options.el).remove();
-        this.views[this.prevApp].delete(options.el);
+    var prevAppView = this.views[this.prevApp];
+    var currentAppView = this.views[this.currentApp];
+    if (prevAppView.has(options.el) && !this.config.isMultiWindow) {
+        prevAppView.get(options.el).unEvents();
+        prevAppView.delete(options.el);
     }
-    if (this.views[this.currentApp].has(options.el) && !this.config.isMultiWindow) {
-        this.views[this.currentApp].get(options.el).remove();
-        this.views[this.currentApp].delete(options.el);
+    if (currentAppView.has(options.el) && !this.config.isMultiWindow) {
+        currentAppView.get(options.el).unEvents();
+        currentAppView.delete(options.el);
     }
     var viewObj = new options.view(options);
-    this.views[this.currentApp].set(options.el, viewObj);
+    currentAppView.set(options.el, viewObj);
     if (options.listen) {
         for (var key in options.listen) {
             this$1.Eventer.removeListener(key);
