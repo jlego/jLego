@@ -13,17 +13,17 @@ var Events = _interopDefault(require("events"));
 
 var director = require("director");
 
-var h$1 = _interopDefault(require("virtual-dom/h"));
+var object_observe = require("object.observe");
+
+var hyperx = _interopDefault(require("hyperx"));
+
+var vdom = _interopDefault(require("virtual-dom"));
 
 var diff = _interopDefault(require("virtual-dom/diff"));
 
-var createElement = _interopDefault(require("virtual-dom/create-element"));
-
 var patch = _interopDefault(require("virtual-dom/patch"));
 
-var object_observe = require("object.observe");
-
-var Util = {};
+window.hx = hyperx(vdom.h);
 
 var View = function View(opts) {
     var this$1 = this;
@@ -63,15 +63,9 @@ var View = function View(opts) {
 
 View.prototype._renderView = function _renderView() {
     var content = this.render();
-    if (Lego.config.isVDom && typeof content !== "string") {
-        var treeNode = this._getVdom(content);
-        this.oldTree = treeNode;
-        this.rootNode = Lego.createElement(treeNode);
-        this.$el[this.options.insert](this.rootNode);
-    }
-    if (typeof content === "string") {
-        this._renderHtml(content);
-    }
+    this.oldNode = content;
+    this.rootNode = vdom.create(content);
+    this.$el[this.options.insert](this.rootNode);
     if (this.options.components.length) {
         this.options.components.forEach(function(item, i) {
             Lego.create(item);
@@ -79,34 +73,14 @@ View.prototype._renderView = function _renderView() {
     }
 };
 
-View.prototype._getVdom = function _getVdom(content) {
-    var nodeTag = this.options.tagName;
-    var attrObj = {
-        id: this.options.id
-    };
-    return h(nodeTag, attrObj, [ content ]);
-};
-
-View.prototype._renderHtml = function _renderHtml(content) {
-    var $content = $(document.createElement(this.options.tagName)).html(content);
-    $content.attr("id", this.options.id);
-    this.$el[this.options.insert]($content);
-};
-
 View.prototype._observe = function _observe() {
     var that = this;
     if (this.data && typeof this.data === "object") {
         Object.observe(this.data, function(changes) {
-            var content = that.render();
-            if (Lego.config.isVDom) {
-                var treeNode = that._getVdom(content);
-                var patches = Lego.diff(that.oldTree, treeNode);
-                that.rootNode = Lego.patch(that.rootNode, patches);
-                that.oldTree = treeNode;
-            }
-            if (typeof content === "string") {
-                that._renderHtml(content);
-            }
+            var newNode = that.render();
+            var patches = diff(that.oldNode, newNode);
+            that.rootNode = patch(that.rootNode, patches);
+            that.oldNode = newNode;
         });
     }
 };
@@ -171,11 +145,7 @@ View.prototype.render = function render() {
 };
 
 View.prototype.refresh = function refresh() {
-    if (Lego.config.isVDom) {
-        this.data.__v = Lego.randomKey();
-    } else {
-        this._renderView();
-    }
+    this.data.__v = Lego.randomKey();
 };
 
 View.prototype.remove = function remove() {
@@ -794,11 +764,6 @@ Data.prototype.getData = function getData(apiName) {
 
 var Lego$1 = function Lego$1(opts) {
     if (opts === void 0) opts = {};
-    window.h = h$1;
-    this.createElement = createElement;
-    this.diff = diff;
-    this.patch = patch;
-    this.util = Util;
     var that = this;
     this.config = {
         alias: "Lego",

@@ -74,6 +74,10 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+	var _templateObject = _taggedTemplateLiteral(['<div>\n        <nav>\n            <ul>\n                <li><a href="javascript:HBY.startApp(\'home\');">\u83DC\u5355\u4E00</a></li>\n                <li><a href="javascript:HBY.startApp(\'test\');">\u83DC\u5355\u4E8C</a></li>\n            </ul>\n        </nav>\n        <content id="content"></content>\n        </div>'], ['<div>\n        <nav>\n            <ul>\n                <li><a href="javascript:HBY.startApp(\'home\');">\u83DC\u5355\u4E00</a></li>\n                <li><a href="javascript:HBY.startApp(\'test\');">\u83DC\u5355\u4E8C</a></li>\n            </ul>\n        </nav>\n        <content id="content"></content>\n        </div>']);
+
+	function _taggedTemplateLiteral(strings, raw) { return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
+
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -90,7 +94,7 @@
 
 	        var options = {
 	            events: {
-	                'click nav a': 'clickNav'
+	                // 'click nav a': 'clickNav'
 	            }
 	        };
 	        HBY.$.extend(true, options, opts);
@@ -100,8 +104,7 @@
 	    _createClass(MainView, [{
 	        key: 'render',
 	        value: function render() {
-	            // const data = this.options.data || [];
-	            var tmpl = '\n        <nav>\n            <ul>\n                <li><a href="javascript:;" data-app="home">\u83DC\u5355\u4E00</a></li>\n                <li><a href="javascript:;" data-app="test">\u83DC\u5355\u4E8C</a></li>\n            </ul>\n        </nav>\n        <content id="content"></content>';
+	            var tmpl = hx(_templateObject);
 	            return tmpl;
 	        }
 	    }, {

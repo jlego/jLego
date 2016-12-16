@@ -47,15 +47,15 @@
 
 	'use strict';
 
-	var _home = __webpack_require__(47);
+	var _home = __webpack_require__(50);
 
 	var _home2 = _interopRequireDefault(_home);
 
-	var _list = __webpack_require__(48);
+	var _list = __webpack_require__(51);
 
 	var _list2 = _interopRequireDefault(_list);
 
-	var _list3 = __webpack_require__(49);
+	var _list3 = __webpack_require__(52);
 
 	var _list4 = _interopRequireDefault(_list3);
 
@@ -104,7 +104,7 @@
 
 /***/ },
 
-/***/ 47:
+/***/ 50:
 /***/ function(module, exports) {
 
 	'use strict';
@@ -114,6 +114,11 @@
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _templateObject = _taggedTemplateLiteral(['<div>\n          ', '\n        </div>'], ['<div>\n          ', '\n        </div>']),
+	    _templateObject2 = _taggedTemplateLiteral(['<a id="', '" href="#/home" style="display:block;">', '</a>\n'], ['<a id="', '" href="#/home" style="display:block;">', '</a>\\n']);
+
+	function _taggedTemplateLiteral(strings, raw) { return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -142,18 +147,10 @@
 	    _createClass(HomeView, [{
 	        key: 'render',
 	        value: function render() {
-	            var data = this.options.data || [],
-	                that = this,
-	                vDom = [];
-
-	            data.forEach(function (model, i) {
-	                vDom.push(h('a#' + model.first + i, {
-	                    href: '#/home',
-	                    style: {
-	                        display: 'block'
-	                    }
-	                }, [model.last]));
-	            });
+	            var data = this.data || [];
+	            var vDom = hx(_templateObject, data.map(function (model, i) {
+	                return hx(_templateObject2, model.first, model.last);
+	            }));
 	            return vDom;
 	        }
 	    }, {
@@ -171,7 +168,7 @@
 
 /***/ },
 
-/***/ 48:
+/***/ 51:
 /***/ function(module, exports) {
 
 	'use strict';
@@ -181,6 +178,11 @@
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _templateObject = _taggedTemplateLiteral(['<div>\n          ', '\n        </div>'], ['<div>\n          ', '\n        </div>']),
+	    _templateObject2 = _taggedTemplateLiteral(['<a id="', '" href="#/home/list" style="display:block;">', '</a>\n'], ['<a id="', '" href="#/home/list" style="display:block;">', '</a>\\n']);
+
+	function _taggedTemplateLiteral(strings, raw) { return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -213,18 +215,10 @@
 	    _createClass(ListView, [{
 	        key: 'render',
 	        value: function render() {
-	            var data = this.data.list || [],
-	                vDom = [];
-
-	            debug.warn('更新了视图', data);
-	            data.forEach(function (model, i) {
-	                vDom.push(h('a#' + model.first, {
-	                    href: '#/home/list',
-	                    style: {
-	                        display: 'block'
-	                    }
-	                }, [model.last]));
-	            });
+	            var data = this.data.list || [];
+	            var vDom = hx(_templateObject, data.map(function (model, i) {
+	                return hx(_templateObject2, model.first, model.last);
+	            }));
 	            return vDom;
 	        }
 	    }, {
@@ -241,7 +235,7 @@
 
 /***/ },
 
-/***/ 49:
+/***/ 52:
 /***/ function(module, exports) {
 
 	'use strict';

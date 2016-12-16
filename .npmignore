@@ -3,4 +3,6 @@
 .eslintrc
 webpack.config.js
 rollup.config.js
-test/
+example/
+modules/
+src/

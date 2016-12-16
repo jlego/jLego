@@ -1,4 +1,9 @@
 import "object.observe";
+import hyperx from 'hyperx';
+import vdom from 'virtual-dom';
+import diff from 'virtual-dom/diff';
+import patch from 'virtual-dom/patch';
+window.hx = hyperx(vdom.h);
 
 class View {
 	/**
@@ -45,42 +50,15 @@ class View {
      */
     _renderView(){
         const content = this.render();
-        if(Lego.config.isVDom && typeof content !== 'string'){
-            const treeNode = this._getVdom(content);
-            this.oldTree = treeNode;
-            this.rootNode = Lego.createElement(treeNode);
-            this.$el[this.options.insert](this.rootNode);
-        }
-        if(typeof content === 'string'){
-            this._renderHtml(content);
-        }
+        this.oldNode = content;
+        this.rootNode = vdom.create(content);
+        this.$el[this.options.insert](this.rootNode);
         // 渲染子视图
         if(this.options.components.length) {
             this.options.components.forEach(function(item, i){
                 Lego.create(item);
             });
         }
-    }
-    /**
-     * [_getVdom description]
-     * @return {[type]} [description]
-     */
-    _getVdom(content){
-        let nodeTag = this.options.tagName;
-        let attrObj = {
-            id: this.options.id
-        };
-        return h(nodeTag, attrObj, [content]);
-    }
-    /**
-     * [_renderHtml 刷新普通渲染视图]
-     * @param  {[type]} content [description]
-     * @return {[type]}         [description]
-     */
-    _renderHtml(content){
-        const $content = $(document.createElement(this.options.tagName)).html(content);
-        $content.attr('id', this.options.id);
-        this.$el[this.options.insert]($content);
     }
     /**
      * [_observe 监听数据变化并刷新视图]
@@ -90,17 +68,11 @@ class View {
         const that = this;
         if(this.data && typeof this.data === 'object'){
             Object.observe(this.data, (changes) =>{
-                // debug.log(change);
-                const content = that.render();
-                if(Lego.config.isVDom){
-                    const treeNode = that._getVdom(content);
-                    let patches = Lego.diff(that.oldTree, treeNode);
-                    that.rootNode = Lego.patch(that.rootNode, patches);
-                    that.oldTree = treeNode;
-                }
-                if(typeof content === 'string'){
-                    that._renderHtml(content);
-                }
+                // debug.log(changes);
+                const newNode = that.render();
+                let patches = diff(that.oldNode, newNode);
+                that.rootNode = patch(that.rootNode, patches);
+                that.oldNode = newNode;
             });
         }
     }
@@ -190,19 +162,13 @@ class View {
      * @return {[type]} [description]
      */
     refresh() {
-        if(Lego.config.isVDom){
-            this.data.__v = Lego.randomKey();
-        }else{
-            this._renderView();
-        }
+        this.data.__v = Lego.randomKey();
     }
     /**
      * [remove 销毁视图]
      * @return {[type]} [description]
      */
     remove(){
-        // 清理全部事件监听
-        // this.Eventer.removeListeners(this.options.id + '_data');
         this.undelegateEvents();
         this.$el.children().remove();
     }

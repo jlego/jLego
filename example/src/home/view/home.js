@@ -10,18 +10,12 @@ class HomeView extends HBY.View {
         super(options);
     }
     render() {
-        let data = this.options.data || [],
-            that = this,
-            vDom = [];
-
-        data.forEach((model, i) => {
-            vDom.push(h('a#' + model.first + i, {
-                href: '#/home',
-                style: {
-                    display: 'block'
-                }
-            }, [model.last]));
-        });
+        let data = this.data || [];
+        let vDom = hx`<div>
+          ${data.map((model, i) => {
+            return hx`<a id="${model.first}" href="#/home" style="display:block;">${model.last}</a>\n`
+          })}
+        </div>`;
         return vDom;
     }
     theClick(event){

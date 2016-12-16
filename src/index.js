@@ -1,22 +1,13 @@
 // import 'babel-polyfill';
 import Events from "events";
 import { Router } from 'director';
-import h from 'virtual-dom/h';
-import diff from 'virtual-dom/diff';
-import createElement from 'virtual-dom/create-element';
-import patch from 'virtual-dom/patch';
-import util from "./util/util";
+import "./util/util";
 import BaseView from "./core/view";
 import BaseData from "./core/data";
 
 class Lego {
     constructor(opts = {}) {
-        window.h = h;
-        this.createElement = createElement;
-        this.diff = diff;
-        this.patch = patch;
-        this.util = util;
-        let that = this;
+        const that = this;
         this.config = {
             alias: 'Lego',
             version: '1.0.0',
@@ -115,14 +106,6 @@ class Lego {
         }
         const viewObj = new options.view(options);
         this.views[this.currentApp].set(options.el, viewObj);
-        // let viewObj,
-        //     _el = this.$('[id="' + options.id + '"]')[0];
-        // if(!this.views[this.currentApp].has(_el)){
-        //     viewObj = new options.view(options);
-        //     this.views[this.currentApp].set(viewObj.el, viewObj);
-        // }else{
-        //     viewObj = this.views[this.currentApp].get(_el);
-        // }
 
         if(options.listen){
             for(let key in options.listen) {

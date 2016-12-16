@@ -14,18 +14,14 @@ class ListView extends HBY.View {
         super(options);
     }
     render() {
-        let data = this.data.list || [],
-            vDom = [];
-
+        let data = this.data.list || [];
         debug.warn('更新了视图', data);
-        data.forEach((model, i) => {
-            vDom.push(h('a#' + model.first, {
-                href: '#/home/list',
-                style: {
-                    display: 'block'
-                }
-            }, [model.last]));
-        });
+        let vDom = hx`<div>
+          <h1>hello world!</h1>
+          ${data.map((model, i) => {
+            return hx`<a id="${model.first}" href="#/home/list" style="display:block;">${model.last}</a>\n`
+          })}
+        </div>`;
         return vDom;
     }
     theClick(event){

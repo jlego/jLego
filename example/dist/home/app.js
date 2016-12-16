@@ -113,6 +113,11 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+	var _templateObject = _taggedTemplateLiteral(['<div>\n          ', '\n        </div>'], ['<div>\n          ', '\n        </div>']),
+	    _templateObject2 = _taggedTemplateLiteral(['<a id="', '" href="#/home" style="display:block;">', '</a>\n'], ['<a id="', '" href="#/home" style="display:block;">', '</a>\\n']);
+
+	function _taggedTemplateLiteral(strings, raw) { return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
+
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -140,18 +145,10 @@
 	    _createClass(HomeView, [{
 	        key: 'render',
 	        value: function render() {
-	            var data = this.options.data || [],
-	                that = this,
-	                vDom = [];
-
-	            data.forEach(function (model, i) {
-	                vDom.push(h('a#' + model.first + i, {
-	                    href: '#/home',
-	                    style: {
-	                        display: 'block'
-	                    }
-	                }, [model.last]));
-	            });
+	            var data = this.data || [];
+	            var vDom = hx(_templateObject, data.map(function (model, i) {
+	                return hx(_templateObject2, model.first, model.last);
+	            }));
 	            return vDom;
 	        }
 	    }, {
@@ -178,6 +175,11 @@
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _templateObject = _taggedTemplateLiteral(['<div>\n          <h1>hello world!</h1>\n          ', '\n        </div>'], ['<div>\n          <h1>hello world!</h1>\n          ', '\n        </div>']),
+	    _templateObject2 = _taggedTemplateLiteral(['<a id="', '" href="#/home/list" style="display:block;">', '</a>\n'], ['<a id="', '" href="#/home/list" style="display:block;">', '</a>\\n']);
+
+	function _taggedTemplateLiteral(strings, raw) { return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -210,18 +212,11 @@
 	    _createClass(ListView, [{
 	        key: 'render',
 	        value: function render() {
-	            var data = this.data.list || [],
-	                vDom = [];
-
+	            var data = this.data.list || [];
 	            debug.warn('更新了视图', data);
-	            data.forEach(function (model, i) {
-	                vDom.push(h('a#' + model.first, {
-	                    href: '#/home/list',
-	                    style: {
-	                        display: 'block'
-	                    }
-	                }, [model.last]));
-	            });
+	            var vDom = hx(_templateObject, data.map(function (model, i) {
+	                return hx(_templateObject2, model.first, model.last);
+	            }));
 	            return vDom;
 	        }
 	    }, {
