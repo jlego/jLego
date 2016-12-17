@@ -39,6 +39,7 @@ var View = function View(opts) {
     this.setElement(this.options.el);
     this.data = this.options.data || this.data || {};
     this.server = null;
+    this.isloaded = false;
     this._renderRootNode();
     this._observe();
     if (this.options.dataSource) {
@@ -58,6 +59,8 @@ var View = function View(opts) {
                 this$1.refresh();
             });
         }
+    } else {
+        this._renderComponents();
     }
 };
 
@@ -68,10 +71,14 @@ View.prototype._renderRootNode = function _renderRootNode() {
     this.$el[this.options.insert](this.rootNode);
 };
 
-View.prototype._renderSubView = function _renderSubView() {
+View.prototype._renderComponents = function _renderComponents() {
+    var that = this;
     if (this.options.components.length) {
         this.options.components.forEach(function(item, i) {
-            Lego.create(item);
+            if (!that.isloaded) {
+                that.isloaded = true;
+                Lego.create(item);
+            }
         });
     }
 };
@@ -84,7 +91,7 @@ View.prototype._observe = function _observe() {
             var patches = diff(that.oldNode, newNode);
             that.rootNode = patch(that.rootNode, patches);
             that.oldNode = newNode;
-            that._renderSubView();
+            that._renderComponents();
         });
     }
 };

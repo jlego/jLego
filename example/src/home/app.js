@@ -22,16 +22,16 @@ HBY.router({
             components: [{
                 el: '#test',
                 view: homeView,
-                // dataSource: {
-                //     api: ['ok'],
-                //     server: listData
-                // },
-                data: {
-                    list: [
-                        { first: 'home3', last: 'Bond3' },
-                        { first: 'test3', last: 'bbbb3' }
-                    ]
-                }
+                dataSource: {
+                    api: ['ok'],
+                    server: listData
+                },
+                // data: {
+                //     list: [
+                //         { first: 'home3', last: 'Bond3' },
+                //         { first: 'test3', last: 'bbbb3' }
+                //     ]
+                // }
             }]
         });
     },

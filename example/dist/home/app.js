@@ -81,12 +81,9 @@
 	            components: [{
 	                el: '#test',
 	                view: _home2.default,
-	                // dataSource: {
-	                //     api: ['ok'],
-	                //     server: listData
-	                // },
-	                data: {
-	                    list: [{ first: 'home3', last: 'Bond3' }, { first: 'test3', last: 'bbbb3' }]
+	                dataSource: {
+	                    api: ['ok'],
+	                    server: _list4.default
 	                }
 	            }]
 	        });

@@ -23,6 +23,7 @@ class View {
         this.setElement(this.options.el);
         this.data = this.options.data || this.data || {};
         this.server = null;
+        this.isloaded = false;  //是否已加载过
         this._renderRootNode();
         this._observe();
         if(this.options.dataSource){
@@ -42,6 +43,8 @@ class View {
                     this.refresh();
                 });
             }
+        }else{
+            this._renderComponents();
         }
     }
     /**
@@ -55,13 +58,17 @@ class View {
         this.$el[this.options.insert](this.rootNode);
     }
     /**
-     * [_renderSubView 渲染子视图]
+     * [_renderComponents 渲染组件]
      * @return {[type]} [description]
      */
-    _renderSubView(){
+    _renderComponents(){
+        const that = this;
         if(this.options.components.length) {
             this.options.components.forEach(function(item, i){
-                Lego.create(item);
+                if(!that.isloaded){
+                    that.isloaded = true;
+                    Lego.create(item);
+                }
             });
         }
     }
@@ -78,7 +85,7 @@ class View {
                 let patches = diff(that.oldNode, newNode);
                 that.rootNode = patch(that.rootNode, patches);
                 that.oldNode = newNode;
-                that._renderSubView();
+                that._renderComponents();
             });
         }
     }
