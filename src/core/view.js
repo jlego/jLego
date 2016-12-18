@@ -63,12 +63,10 @@ class View {
      */
     _renderComponents(){
         const that = this;
-        if(this.options.components.length) {
+        if(this.options.components.length && !this.isloaded) {
+            this.isloaded = true;
             this.options.components.forEach(function(item, i){
-                if(!that.isloaded){
-                    that.isloaded = true;
-                    Lego.create(item);
-                }
+                Lego.create(item);
             });
         }
     }

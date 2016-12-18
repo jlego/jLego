@@ -62,7 +62,6 @@ class Lego {
                 id: '',
                 el: this.config.pageEl,
                 tagName: 'div',
-                config: {}, //视图参数
                 insert: 'html',
                 permis: null, //权限
                 view: null, //视图类
@@ -104,7 +103,13 @@ class Lego {
             this.views[this.currentApp].get(options.el).unEvents();
             this.views[this.currentApp].delete(options.el);
         }
-        const viewObj = new options.view(options);
+        let theView;
+        if(typeof options.view == 'string'){
+            theView = require(options.view);
+        }else{
+            theView = options.view;
+        }
+        const viewObj = new theView(options);
         this.views[this.currentApp].set(options.el, viewObj);
 
         if(options.listen){

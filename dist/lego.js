@@ -73,12 +73,10 @@ View.prototype._renderRootNode = function _renderRootNode() {
 
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
-    if (this.options.components.length) {
+    if (this.options.components.length && !this.isloaded) {
+        this.isloaded = true;
         this.options.components.forEach(function(item, i) {
-            if (!that.isloaded) {
-                that.isloaded = true;
-                Lego.create(item);
-            }
+            Lego.create(item);
         });
     }
 };
@@ -824,7 +822,6 @@ Lego$1.prototype.create = function create(opts) {
         id: "",
         el: this.config.pageEl,
         tagName: "div",
-        config: {},
         insert: "html",
         permis: null,
         view: null,
@@ -862,7 +859,13 @@ Lego$1.prototype.create = function create(opts) {
         this.views[this.currentApp].get(options.el).unEvents();
         this.views[this.currentApp].delete(options.el);
     }
-    var viewObj = new options.view(options);
+    var theView;
+    if (typeof options.view == "string") {
+        theView = require(options.view);
+    } else {
+        theView = options.view;
+    }
+    var viewObj = new theView(options);
     this.views[this.currentApp].set(options.el, viewObj);
     if (options.listen) {
         for (var key in options.listen) {
