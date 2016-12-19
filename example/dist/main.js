@@ -46,11 +46,11 @@
 
 	'use strict';
 
-	var _jquery = __webpack_require__(6);
+	var _jquery = __webpack_require__(5);
 
 	var _jquery2 = _interopRequireDefault(_jquery);
 
-	var _lego = __webpack_require__(7);
+	var _lego = __webpack_require__(6);
 
 	var _lego2 = _interopRequireDefault(_lego);
 
@@ -70,8 +70,7 @@
 /* 2 */,
 /* 3 */,
 /* 4 */,
-/* 5 */,
-/* 6 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -10297,7 +10296,7 @@
 
 
 /***/ },
-/* 7 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global, module, process) {/**
@@ -10313,15 +10312,15 @@
 	    return ex && (typeof ex === "undefined" ? "undefined" : _typeof(ex)) === "object" && "default" in ex ? ex["default"] : ex;
 	}
 
-	var Events = _interopDefault(__webpack_require__(10));
+	var Events = _interopDefault(__webpack_require__(9));
 
-	var director = __webpack_require__(11);
+	var director = __webpack_require__(10);
 
-	var object_observe = __webpack_require__(12);
+	var object_observe = __webpack_require__(11);
 
-	var hyperx = _interopDefault(__webpack_require__(13));
+	var hyperx = _interopDefault(__webpack_require__(12));
 
-	var vdom = _interopDefault(__webpack_require__(15));
+	var vdom = _interopDefault(__webpack_require__(14));
 
 	window.hx = hyperx(vdom.h);
 
@@ -11336,10 +11335,10 @@
 	};
 
 	module.exports = Lego$1;
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(8)(module), __webpack_require__(9)))
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(7)(module), __webpack_require__(8)))
 
 /***/ },
-/* 8 */
+/* 7 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -11355,7 +11354,7 @@
 
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
@@ -11541,7 +11540,7 @@
 
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -11849,7 +11848,7 @@
 
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -12579,7 +12578,7 @@
 	}( true ? exports : window));
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports) {
 
 	/*!
@@ -13326,10 +13325,10 @@
 
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var attrToProp = __webpack_require__(14)
+	var attrToProp = __webpack_require__(13)
 
 	var VAR = 0, TEXT = 1, OPEN = 2, CLOSE = 3, ATTR = 4
 	var ATTR_KEY = 5, ATTR_KEY_W = 6
@@ -13595,7 +13594,7 @@
 
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports) {
 
 	module.exports = attributeToProperty
@@ -13620,15 +13619,15 @@
 
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var diff = __webpack_require__(16)
-	var patch = __webpack_require__(29)
-	var h = __webpack_require__(38)
-	var create = __webpack_require__(49)
-	var VNode = __webpack_require__(40)
-	var VText = __webpack_require__(41)
+	var diff = __webpack_require__(15)
+	var patch = __webpack_require__(28)
+	var h = __webpack_require__(37)
+	var create = __webpack_require__(48)
+	var VNode = __webpack_require__(39)
+	var VText = __webpack_require__(40)
 
 	module.exports = {
 	    diff: diff,
@@ -13641,28 +13640,28 @@
 
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var diff = __webpack_require__(17)
+	var diff = __webpack_require__(16)
 
 	module.exports = diff
 
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArray = __webpack_require__(18)
+	var isArray = __webpack_require__(17)
 
-	var VPatch = __webpack_require__(19)
-	var isVNode = __webpack_require__(21)
-	var isVText = __webpack_require__(22)
-	var isWidget = __webpack_require__(23)
-	var isThunk = __webpack_require__(24)
-	var handleThunk = __webpack_require__(25)
+	var VPatch = __webpack_require__(18)
+	var isVNode = __webpack_require__(20)
+	var isVText = __webpack_require__(21)
+	var isWidget = __webpack_require__(22)
+	var isThunk = __webpack_require__(23)
+	var handleThunk = __webpack_require__(24)
 
-	var diffProps = __webpack_require__(26)
+	var diffProps = __webpack_require__(25)
 
 	module.exports = diff
 
@@ -14083,7 +14082,7 @@
 
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports) {
 
 	var nativeIsArray = Array.isArray
@@ -14097,10 +14096,10 @@
 
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var version = __webpack_require__(20)
+	var version = __webpack_require__(19)
 
 	VirtualPatch.NONE = 0
 	VirtualPatch.VTEXT = 1
@@ -14125,17 +14124,17 @@
 
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports) {
 
 	module.exports = "2"
 
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var version = __webpack_require__(20)
+	var version = __webpack_require__(19)
 
 	module.exports = isVirtualNode
 
@@ -14145,10 +14144,10 @@
 
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var version = __webpack_require__(20)
+	var version = __webpack_require__(19)
 
 	module.exports = isVirtualText
 
@@ -14158,7 +14157,7 @@
 
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports) {
 
 	module.exports = isWidget
@@ -14169,7 +14168,7 @@
 
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports) {
 
 	module.exports = isThunk
@@ -14180,13 +14179,13 @@
 
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isVNode = __webpack_require__(21)
-	var isVText = __webpack_require__(22)
-	var isWidget = __webpack_require__(23)
-	var isThunk = __webpack_require__(24)
+	var isVNode = __webpack_require__(20)
+	var isVText = __webpack_require__(21)
+	var isWidget = __webpack_require__(22)
+	var isThunk = __webpack_require__(23)
 
 	module.exports = handleThunk
 
@@ -14226,11 +14225,11 @@
 
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isObject = __webpack_require__(27)
-	var isHook = __webpack_require__(28)
+	var isObject = __webpack_require__(26)
+	var isHook = __webpack_require__(27)
 
 	module.exports = diffProps
 
@@ -14290,7 +14289,7 @@
 
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -14301,7 +14300,7 @@
 
 
 /***/ },
-/* 28 */
+/* 27 */
 /***/ function(module, exports) {
 
 	module.exports = isHook
@@ -14314,24 +14313,24 @@
 
 
 /***/ },
-/* 29 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var patch = __webpack_require__(30)
+	var patch = __webpack_require__(29)
 
 	module.exports = patch
 
 
 /***/ },
-/* 30 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var document = __webpack_require__(31)
-	var isArray = __webpack_require__(18)
+	var document = __webpack_require__(30)
+	var isArray = __webpack_require__(17)
 
-	var render = __webpack_require__(33)
-	var domIndex = __webpack_require__(35)
-	var patchOp = __webpack_require__(36)
+	var render = __webpack_require__(32)
+	var domIndex = __webpack_require__(34)
+	var patchOp = __webpack_require__(35)
 	module.exports = patch
 
 	function patch(rootNode, patches, renderOptions) {
@@ -14409,12 +14408,12 @@
 
 
 /***/ },
-/* 31 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {var topLevel = typeof global !== 'undefined' ? global :
 	    typeof window !== 'undefined' ? window : {}
-	var minDoc = __webpack_require__(32);
+	var minDoc = __webpack_require__(31);
 
 	if (typeof document !== 'undefined') {
 	    module.exports = document;
@@ -14431,23 +14430,23 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 32 */
+/* 31 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 33 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var document = __webpack_require__(31)
+	var document = __webpack_require__(30)
 
-	var applyProperties = __webpack_require__(34)
+	var applyProperties = __webpack_require__(33)
 
-	var isVNode = __webpack_require__(21)
-	var isVText = __webpack_require__(22)
-	var isWidget = __webpack_require__(23)
-	var handleThunk = __webpack_require__(25)
+	var isVNode = __webpack_require__(20)
+	var isVText = __webpack_require__(21)
+	var isWidget = __webpack_require__(22)
+	var handleThunk = __webpack_require__(24)
 
 	module.exports = createElement
 
@@ -14489,11 +14488,11 @@
 
 
 /***/ },
-/* 34 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isObject = __webpack_require__(27)
-	var isHook = __webpack_require__(28)
+	var isObject = __webpack_require__(26)
+	var isHook = __webpack_require__(27)
 
 	module.exports = applyProperties
 
@@ -14592,7 +14591,7 @@
 
 
 /***/ },
-/* 35 */
+/* 34 */
 /***/ function(module, exports) {
 
 	// Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
@@ -14683,15 +14682,15 @@
 
 
 /***/ },
-/* 36 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var applyProperties = __webpack_require__(34)
+	var applyProperties = __webpack_require__(33)
 
-	var isWidget = __webpack_require__(23)
-	var VPatch = __webpack_require__(19)
+	var isWidget = __webpack_require__(22)
+	var VPatch = __webpack_require__(18)
 
-	var updateWidget = __webpack_require__(37)
+	var updateWidget = __webpack_require__(36)
 
 	module.exports = applyPatch
 
@@ -14840,10 +14839,10 @@
 
 
 /***/ },
-/* 37 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isWidget = __webpack_require__(23)
+	var isWidget = __webpack_require__(22)
 
 	module.exports = updateWidget
 
@@ -14861,33 +14860,33 @@
 
 
 /***/ },
-/* 38 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var h = __webpack_require__(39)
+	var h = __webpack_require__(38)
 
 	module.exports = h
 
 
 /***/ },
-/* 39 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isArray = __webpack_require__(18);
+	var isArray = __webpack_require__(17);
 
-	var VNode = __webpack_require__(40);
-	var VText = __webpack_require__(41);
-	var isVNode = __webpack_require__(21);
-	var isVText = __webpack_require__(22);
-	var isWidget = __webpack_require__(23);
-	var isHook = __webpack_require__(28);
-	var isVThunk = __webpack_require__(24);
+	var VNode = __webpack_require__(39);
+	var VText = __webpack_require__(40);
+	var isVNode = __webpack_require__(20);
+	var isVText = __webpack_require__(21);
+	var isWidget = __webpack_require__(22);
+	var isHook = __webpack_require__(27);
+	var isVThunk = __webpack_require__(23);
 
-	var parseTag = __webpack_require__(42);
-	var softSetHook = __webpack_require__(44);
-	var evHook = __webpack_require__(45);
+	var parseTag = __webpack_require__(41);
+	var softSetHook = __webpack_require__(43);
+	var evHook = __webpack_require__(44);
 
 	module.exports = h;
 
@@ -15013,14 +15012,14 @@
 
 
 /***/ },
-/* 40 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var version = __webpack_require__(20)
-	var isVNode = __webpack_require__(21)
-	var isWidget = __webpack_require__(23)
-	var isThunk = __webpack_require__(24)
-	var isVHook = __webpack_require__(28)
+	var version = __webpack_require__(19)
+	var isVNode = __webpack_require__(20)
+	var isWidget = __webpack_require__(22)
+	var isThunk = __webpack_require__(23)
+	var isVHook = __webpack_require__(27)
 
 	module.exports = VirtualNode
 
@@ -15091,10 +15090,10 @@
 
 
 /***/ },
-/* 41 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var version = __webpack_require__(20)
+	var version = __webpack_require__(19)
 
 	module.exports = VirtualText
 
@@ -15107,12 +15106,12 @@
 
 
 /***/ },
-/* 42 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var split = __webpack_require__(43);
+	var split = __webpack_require__(42);
 
 	var classIdSplit = /([\.#]?[a-zA-Z0-9\u007F-\uFFFF_:-]+)/;
 	var notClassId = /^\.|#/;
@@ -15167,7 +15166,7 @@
 
 
 /***/ },
-/* 43 */
+/* 42 */
 /***/ function(module, exports) {
 
 	/*!
@@ -15279,7 +15278,7 @@
 
 
 /***/ },
-/* 44 */
+/* 43 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15302,12 +15301,12 @@
 
 
 /***/ },
-/* 45 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var EvStore = __webpack_require__(46);
+	var EvStore = __webpack_require__(45);
 
 	module.exports = EvHook;
 
@@ -15335,12 +15334,12 @@
 
 
 /***/ },
-/* 46 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var OneVersionConstraint = __webpack_require__(47);
+	var OneVersionConstraint = __webpack_require__(46);
 
 	var MY_VERSION = '7';
 	OneVersionConstraint('ev-store', MY_VERSION);
@@ -15361,12 +15360,12 @@
 
 
 /***/ },
-/* 47 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var Individual = __webpack_require__(48);
+	var Individual = __webpack_require__(47);
 
 	module.exports = OneVersion;
 
@@ -15389,7 +15388,7 @@
 
 
 /***/ },
-/* 48 */
+/* 47 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {'use strict';
@@ -15415,10 +15414,10 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 49 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var createElement = __webpack_require__(33)
+	var createElement = __webpack_require__(32)
 
 	module.exports = createElement
 

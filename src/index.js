@@ -20,6 +20,7 @@ class Lego {
             pageEl: '',     //页面渲染容器
             defaultApp: '', //默认应用
             rootUri: '',    //根目录
+            ui: {},   //ui组件库
             routerConfig: {},   //路由配置
             screenWidth: window.innerWidth  //应用窗口宽度
         };
@@ -40,6 +41,7 @@ class Lego {
         this.Router = Router;
         this.View = BaseView;
         this.Data = BaseData;
+        this.UI = this.config.ui;
         // 实例容器
         this.views = {}; //视图容器
         this.datas = {};    //数据容器
