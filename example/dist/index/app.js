@@ -40,18 +40,17 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ({
-
-/***/ 0:
+/******/ ([
+/* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var _main = __webpack_require__(52);
+	var _main = __webpack_require__(4);
 
 	var _main2 = _interopRequireDefault(_main);
 
-	var _menu = __webpack_require__(53);
+	var _menu = __webpack_require__(5);
 
 	var _menu2 = _interopRequireDefault(_menu);
 
@@ -69,8 +68,10 @@
 	HBY.startApp();
 
 /***/ },
-
-/***/ 52:
+/* 1 */,
+/* 2 */,
+/* 3 */,
+/* 4 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -129,8 +130,7 @@
 	exports.default = MainView;
 
 /***/ },
-
-/***/ 53:
+/* 5 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -188,5 +188,4 @@
 	exports.default = MenuView;
 
 /***/ }
-
-/******/ });
+/******/ ]);

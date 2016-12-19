@@ -103,16 +103,10 @@ class Lego {
             this.views[this.currentApp].get(options.el).unEvents();
             this.views[this.currentApp].delete(options.el);
         }
-        let theView;
-        if(typeof options.view == 'string'){
-            theView = require(options.view);
-        }else{
-            theView = options.view;
-        }
-        const viewObj = new theView(options);
+        const viewObj = new options.view(options);
         this.views[this.currentApp].set(options.el, viewObj);
 
-        if(options.listen){
+        if(!this.$.isEmptyObject(options.listen)){
             for(let key in options.listen) {
                 this.Eventer.removeListener(key);
                 this.Eventer.on(key, options.listen[key]);

@@ -1,6 +1,6 @@
 {
   "name": "lego-core",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "ES6 front end framework",
   "main": "dist/lego.js",
   "directories": {
@@ -19,7 +19,7 @@
     "legojs",
     "lego-core"
   ],
-  "author": "legojs",
+  "author": "jlego",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/jlego/legojs/issues"

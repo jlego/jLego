@@ -859,15 +859,9 @@ Lego$1.prototype.create = function create(opts) {
         this.views[this.currentApp].get(options.el).unEvents();
         this.views[this.currentApp].delete(options.el);
     }
-    var theView;
-    if (typeof options.view == "string") {
-        theView = require(options.view);
-    } else {
-        theView = options.view;
-    }
-    var viewObj = new theView(options);
+    var viewObj = new options.view(options);
     this.views[this.currentApp].set(options.el, viewObj);
-    if (options.listen) {
+    if (!this.$.isEmptyObject(options.listen)) {
         for (var key in options.listen) {
             this$1.Eventer.removeListener(key);
             this$1.Eventer.on(key, options.listen[key]);
