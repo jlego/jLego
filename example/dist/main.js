@@ -10301,7 +10301,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global, module, process) {/**
-	 * lego.js v0.0.9
+	 * lego.js v0.1.0
 	 * (c) 2016 Ronghui Yu
 	 * @license MIT
 	 */
@@ -10322,10 +10322,6 @@
 	var hyperx = _interopDefault(__webpack_require__(13));
 
 	var vdom = _interopDefault(__webpack_require__(15));
-
-	var diff = _interopDefault(__webpack_require__(16));
-
-	var patch = _interopDefault(__webpack_require__(29));
 
 	window.hx = hyperx(vdom.h);
 
@@ -10390,8 +10386,8 @@
 	    if (this.data && _typeof(this.data) === "object") {
 	        Object.observe(this.data, function (changes) {
 	            var newNode = that.render();
-	            var patches = diff(that.oldNode, newNode);
-	            that.rootNode = patch(that.rootNode, patches);
+	            var patches = vdom.diff(that.oldNode, newNode);
+	            that.rootNode = vdom.patch(that.rootNode, patches);
 	            that.oldNode = newNode;
 	            that._renderComponents();
 	        });
@@ -10454,7 +10450,7 @@
 	};
 
 	View.prototype.render = function render() {
-	    return this;
+	    return "";
 	};
 
 	View.prototype.refresh = function refresh() {

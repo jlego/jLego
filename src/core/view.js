@@ -1,8 +1,6 @@
 import "object.observe";
 import hyperx from 'hyperx';
 import vdom from 'virtual-dom';
-import diff from 'virtual-dom/diff';
-import patch from 'virtual-dom/patch';
 window.hx = hyperx(vdom.h);
 
 class View {
@@ -80,8 +78,8 @@ class View {
             Object.observe(this.data, (changes) =>{
                 // debug.log(changes);
                 const newNode = that.render();
-                let patches = diff(that.oldNode, newNode);
-                that.rootNode = patch(that.rootNode, patches);
+                let patches = vdom.diff(that.oldNode, newNode);
+                that.rootNode = vdom.patch(that.rootNode, patches);
                 that.oldNode = newNode;
                 that._renderComponents();
             });
@@ -166,7 +164,7 @@ class View {
      * @return {[type]} [description]
      */
     render() {
-        return this;
+        return '';
     }
     /**
      * [refresh 刷新视图]

@@ -1,5 +1,5 @@
 /**
- * lego.js v0.0.9
+ * lego.js v0.1.0
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -18,10 +18,6 @@ var object_observe = require("object.observe");
 var hyperx = _interopDefault(require("hyperx"));
 
 var vdom = _interopDefault(require("virtual-dom"));
-
-var diff = _interopDefault(require("virtual-dom/diff"));
-
-var patch = _interopDefault(require("virtual-dom/patch"));
 
 window.hx = hyperx(vdom.h);
 
@@ -86,8 +82,8 @@ View.prototype._observe = function _observe() {
     if (this.data && typeof this.data === "object") {
         Object.observe(this.data, function(changes) {
             var newNode = that.render();
-            var patches = diff(that.oldNode, newNode);
-            that.rootNode = patch(that.rootNode, patches);
+            var patches = vdom.diff(that.oldNode, newNode);
+            that.rootNode = vdom.patch(that.rootNode, patches);
             that.oldNode = newNode;
             that._renderComponents();
         });
@@ -150,7 +146,7 @@ View.prototype.$ = function $(selector) {
 };
 
 View.prototype.render = function render() {
-    return this;
+    return "";
 };
 
 View.prototype.refresh = function refresh() {
