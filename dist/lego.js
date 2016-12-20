@@ -1,5 +1,5 @@
 /**
- * lego.js v0.1.0
+ * lego.js v0.1.1
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -782,7 +782,6 @@ var Lego$1 = function Lego$1(opts) {
         pageEl: "",
         defaultApp: "",
         rootUri: "",
-        ui: {},
         routerConfig: {},
         screenWidth: window.innerWidth
     };
@@ -801,7 +800,7 @@ var Lego$1 = function Lego$1(opts) {
     this.Router = director.Router;
     this.View = View;
     this.Data = Data;
-    this.UI = this.config.ui;
+    this.UI = {};
     this.views = {};
     this.datas = {};
     this.permis = {};
@@ -872,6 +871,11 @@ Lego$1.prototype.create = function create(opts) {
 Lego$1.init = function init(opts) {
     if (opts === void 0) opts = {};
     new this(opts);
+};
+
+Lego$1.registerUI = function registerUI(opts) {
+    if (opts === void 0) opts = {};
+    Object.assign(this.UI, opts);
 };
 
 Lego$1.prototype.randomKey = function randomKey(len) {

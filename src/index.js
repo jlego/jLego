@@ -20,8 +20,8 @@ class Lego {
             pageEl: '',     //页面渲染容器
             defaultApp: '', //默认应用
             rootUri: '',    //根目录
-            ui: {},   //ui组件库
             routerConfig: {},   //路由配置
+            // ui: {}, //ui库
             screenWidth: window.innerWidth  //应用窗口宽度
         };
         Object.assign(this.config, opts);
@@ -41,7 +41,6 @@ class Lego {
         this.Router = Router;
         this.View = BaseView;
         this.Data = BaseData;
-        this.UI = this.config.ui;
         // 实例容器
         this.views = {}; //视图容器
         this.datas = {};    //数据容器
@@ -125,6 +124,15 @@ class Lego {
      */
     static init(opts = {}){
         new this(opts);
+    }
+    /**
+     * [registerUI 注册UI组件]
+     * @param  {Object} opts [description]
+     * @return {[type]}      [description]
+     */
+    static registerUI(opts = {}){
+        this.UI = this.UI || {};
+        Object.assign(this.UI, opts);
     }
     /**
      * [randomKey 随机字符串]
