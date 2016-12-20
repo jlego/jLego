@@ -782,6 +782,7 @@ var Lego$1 = function Lego$1(opts) {
         pageEl: "",
         defaultApp: "",
         rootUri: "",
+        ui: {},
         routerConfig: {},
         screenWidth: window.innerWidth
     };
@@ -800,6 +801,7 @@ var Lego$1 = function Lego$1(opts) {
     this.Router = director.Router;
     this.View = View;
     this.Data = Data;
+    this.UI = this.config.ui;
     this.views = {};
     this.datas = {};
     this.permis = {};
