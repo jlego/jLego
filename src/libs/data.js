@@ -28,7 +28,7 @@ class Data {
     setOptions(apiName, opts = {}) {
         // console.log('setter: ' + value);
         if(!this.datas.get(apiName)) return this;
-        const newOpts = Lego.$.extend(true, this.datas.get(apiName), opts);
+        const newOpts = $.extend(true, this.datas.get(apiName), opts);
         this.datas.set(apiName, newOpts);
         return this;
     }
@@ -50,12 +50,12 @@ class Data {
                 if(data){
                     if(listTarget && Array.isArray(data[listTarget]) && model){
                         data[listTarget].forEach(function(item, i){
-                            data[listTarget][i] = Lego.$.extend({}, model, item);
+                            data[listTarget][i] = $.extend({}, model, item);
                         });
                     }
                     if(!listTarget && Array.isArray(data) && !model){
                         data.forEach(function(item, i){
-                            data[i] = Lego.$.extend({}, model, item);
+                            data[i] = $.extend({}, model, item);
                         });
                     }
                 }
@@ -76,10 +76,10 @@ class Data {
             // 并发读取远程URL
             let promisesArr = apiNameArr.map(async apiName => {
                 let option = that.datas.get(apiName) || {};
-                if(!Lego.$.isEmptyObject(option.data) && !option.reset){
+                if(!Lego.isEmptyObject(option.data) && !option.reset){
                     // 取缓存数据
                     return await option.data;
-                }else if(that.datas.has(apiName) && option.url && (Lego.$.isEmptyObject(option.data) || option.reset)){
+                }else if(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(option.data) || option.reset)){
                     // 取新数据
                     let req = new Request( option.url, {
                         method: option.method || "GET",

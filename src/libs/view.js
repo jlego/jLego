@@ -16,7 +16,7 @@ class View {
             listen: null,
             config: {}
         };
-        Lego.$.extend(true, this.options, opts);
+        Object.assign(this.options, opts);
         this.Eventer = Lego.Eventer;
         this.setElement(this.options.el);
         this.data = this.options.data || this.data || {};
@@ -100,7 +100,7 @@ class View {
      * @param {[type]} el [description]
      */
     _setElement(el){
-        this.$el = el instanceof Lego.$ ? el : Lego.$(el);
+        this.$el = el instanceof window.$ ? el : window.$(el);
         this.el = this.$el[0];
     }
     /**
