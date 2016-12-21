@@ -1,5 +1,5 @@
 /**
- * lego.js v0.1.7
+ * lego.js v0.2.0
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -19,12 +19,13 @@ var hyperx = _interopDefault(require("hyperx"));
 
 var vdom = _interopDefault(require("virtual-dom"));
 
-var LegoCore = function LegoCore(opts) {
+var Core = function Core(opts) {
     if (opts === void 0) opts = {};
     var that = this;
     this.config = {
         alias: "Lego",
         version: "1.0.0",
+        $: null,
         isDebug: true,
         isAnimate: false,
         isPermit: false,
@@ -47,11 +48,10 @@ var LegoCore = function LegoCore(opts) {
     this.timer = {};
     this.routers = new Map();
     this.Eventer = new Events();
-    window[this.config.alias] = window.Lego = this;
     return this;
 };
 
-LegoCore.prototype.create = function create(opts) {
+Core.prototype.create = function create(opts) {
     var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this, options = {
@@ -107,16 +107,17 @@ LegoCore.prototype.create = function create(opts) {
     return viewObj;
 };
 
-LegoCore.prototype.init = function init(opts) {
+Core.prototype.init = function init(opts) {
     if (opts === void 0) opts = {};
     if (!this.isEmptyObject(opts)) {
         Object.assign(this.config, opts);
     }
+    window.$ = this.$ = this.config.$;
     window[this.config.alias] = window.Lego = this;
     return this;
 };
 
-LegoCore.prototype.components = function components(comName, coms) {
+Core.prototype.components = function components(comName, coms) {
     if (coms === void 0) coms = {};
     this.UI = this.UI || {};
     if (typeof comName === "string") {
@@ -131,7 +132,7 @@ LegoCore.prototype.components = function components(comName, coms) {
     }
 };
 
-LegoCore.prototype.randomKey = function randomKey(len) {
+Core.prototype.randomKey = function randomKey(len) {
     len = len || 32;
     var $chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     var maxPos = $chars.length;
@@ -142,15 +143,15 @@ LegoCore.prototype.randomKey = function randomKey(len) {
     return pwd;
 };
 
-LegoCore.prototype.isEmptyObject = function isEmptyObject(e) {
-    var t;
-    for (t in e) {
+Core.prototype.isEmptyObject = function isEmptyObject(obj) {
+    if (obj === void 0) obj = {};
+    for (var val in obj) {
         return !1;
     }
     return !0;
 };
 
-LegoCore.prototype._debugger = function _debugger() {
+Core.prototype._debugger = function _debugger() {
     window.debug = {};
     if (!window.console) {
         return function() {};
@@ -170,12 +171,12 @@ LegoCore.prototype._debugger = function _debugger() {
     }
 };
 
-LegoCore.prototype._initObj = function _initObj(appName) {
+Core.prototype._initObj = function _initObj(appName) {
     this.views[appName] = this.views[appName] || new Map();
     this.timer[appName] = this.timer[appName] || new Map();
 };
 
-LegoCore.prototype._clearObj = function _clearObj(appName) {
+Core.prototype._clearObj = function _clearObj(appName) {
     var that = this;
     if (this.prevApp !== this.currentApp) {
         this.timer[appName].forEach(function(value, key) {
@@ -186,7 +187,7 @@ LegoCore.prototype._clearObj = function _clearObj(appName) {
     }
 };
 
-LegoCore.prototype.startApp = function startApp(appPath, opts) {
+Core.prototype.startApp = function startApp(appPath, opts) {
     if (opts === void 0) opts = {};
     if (!$) {
         debug.error("$ is undefined!");
@@ -229,7 +230,7 @@ LegoCore.prototype.startApp = function startApp(appPath, opts) {
     });
 };
 
-LegoCore.prototype.getUrlParam = function getUrlParam(name) {
+Core.prototype.getUrlParam = function getUrlParam(name) {
     window.pageParams = {};
     if (window.pageParams[name]) {
         return window.pageParams[name];
@@ -247,17 +248,17 @@ LegoCore.prototype.getUrlParam = function getUrlParam(name) {
     }
 };
 
-LegoCore.prototype.trigger = function trigger(event, data) {
+Core.prototype.trigger = function trigger(event, data) {
     this.Eventer.emit(event, data);
 };
 
-LegoCore.prototype.getAppName = function getAppName() {
+Core.prototype.getAppName = function getAppName() {
     var hash = window.location.hash.replace(/#/, "");
     hash = hash.indexOf("/") == 0 ? hash.replace(/\//, "") : "";
     return hash.split("/")[0] || this.config.defaultApp;
 };
 
-LegoCore.prototype.getView = function getView(el, appName) {
+Core.prototype.getView = function getView(el, appName) {
     if (appName === void 0) appName = this.getAppName();
     el = el instanceof window.$ ? el : window.$(el);
     if (el.length && this.views[appName].get(el)) {
@@ -266,7 +267,7 @@ LegoCore.prototype.getView = function getView(el, appName) {
     return null;
 };
 
-LegoCore.prototype.setTimer = function setTimer(name, timer) {
+Core.prototype.setTimer = function setTimer(name, timer) {
     if (name && timer) {
         var oldTimerMap = this.timer[this.getAppName()], oldTimer = oldTimerMap.get(name);
         if (oldTimer) {
@@ -278,7 +279,7 @@ LegoCore.prototype.setTimer = function setTimer(name, timer) {
     }
 };
 
-LegoCore.prototype.router = function router(routerOption) {
+Core.prototype.router = function router(routerOption) {
     var appName = this.currentApp;
     if (appName == "index") {
         return;
@@ -290,7 +291,9 @@ LegoCore.prototype.router = function router(routerOption) {
     return this.routers.get(appName);
 };
 
-var Lego$2 = new LegoCore();
+window.Lego = new Core();
+
+var LegoCore$1 = window.Lego;
 
 window.hx = hyperx(vdom.h);
 
@@ -351,10 +354,11 @@ View.prototype._renderComponents = function _renderComponents() {
 };
 
 View.prototype._observe = function _observe() {
+    var this$1 = this;
     var that = this;
     if (this.data && typeof this.data === "object") {
         Object.observe(this.data, function(changes) {
-            var newNode = that.render();
+            var newNode = this$1.render();
             var patches = vdom.diff(that.oldNode, newNode);
             that.rootNode = vdom.patch(that.rootNode, patches);
             that.oldNode = newNode;
@@ -1040,8 +1044,8 @@ Data.prototype.getData = function getData(apiName) {
     };
 }(typeof global === "object" ? global : typeof window === "object" ? window : typeof self === "object" ? self : undefined);
 
-Lego$2.View = View;
+LegoCore$1.View = View;
 
-Lego$2.Data = Data;
+LegoCore$1.Data = Data;
 
-module.exports = Lego$2;
+module.exports = LegoCore$1;

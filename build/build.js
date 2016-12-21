@@ -72,12 +72,12 @@ function genConfig(opts) {
         ]
     };
 
-    if (opts.alias == 'observe') {
-        config.plugins = [flow(), node(), cjs()];
-    }
-    if (opts.alias == 'data') {
-        config.plugins = [async(), regenerator()];
-    }
+    // if (opts.alias == 'observe') {
+    //     config.plugins = [flow(), node(), cjs()];
+    // }
+    // if (opts.alias == 'data') {
+    //     config.plugins = [async(), regenerator()];
+    // }
     if (opts.env) {
         config.plugins.push(
             // flow(),
@@ -105,7 +105,7 @@ function genConfig(opts) {
 function buildEntry(config) {
     const isProd = /min\.js$/.test(config.dest)
     return rollup.rollup(config).then(bundle => {
-        const code = bundle.generate(config).code
+        const code = bundle.generate(config).code;
         if (isProd) {
             var minified = (config.banner ? config.banner + '\n' : '') + uglifyjs.minify(code, {
                 fromString: true,

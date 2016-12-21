@@ -77,7 +77,7 @@ class View {
         if(this.data && typeof this.data === 'object'){
             Object.observe(this.data, (changes) =>{
                 // debug.log(changes);
-                const newNode = that.render();
+                const newNode = this.render();
                 let patches = vdom.diff(that.oldNode, newNode);
                 that.rootNode = vdom.patch(that.rootNode, patches);
                 that.oldNode = newNode;

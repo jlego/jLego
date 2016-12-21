@@ -1,28 +1,24 @@
-// import 'babel-polyfill';
 import Events from "events";
 import { Router } from 'director';
 
-class LegoCore {
+class Core {
     constructor(opts = {}) {
         const that = this;
         this.config = {
             alias: 'Lego',
             version: '1.0.0',
-            // $: null,    //dom操作对象, 必须
+            $: null,    //dom操作对象, 必须
             isDebug: true,
             isAnimate: false,  //是否开启动画
             isPermit: false,  //是否开启操作权限
             isMultiWindow: false, //是否多窗口
-            // isVDom: true, //是否开启虚拟DOM
             pageEl: '',     //页面渲染容器
             defaultApp: '', //默认应用
             rootUri: '',    //根目录
             routerConfig: {},   //路由配置
-            // ui: {}, //ui库
             screenWidth: window.innerWidth  //应用窗口宽度
         };
         Object.assign(this.config, opts);
-        // window.$ = this.$ = this.config.$;
 
         this._debugger();
 
@@ -31,8 +27,7 @@ class LegoCore {
         // 基类
         this.Event = Events;
         this.Router = Router;
-        // this.View = BaseView;
-        // this.Data = BaseData;
+
         // 实例容器
         this.views = {}; //视图容器
         this.datas = {};    //数据容器
@@ -40,8 +35,6 @@ class LegoCore {
         this.timer = {};   //计时器对象
         this.routers = new Map();
         this.Eventer = new Events(); //全局事件对象
-        window[this.config.alias] = window.Lego = this;
-        // this.startApp(this.currentApp);
         return this;
     }
     /**
@@ -116,6 +109,7 @@ class LegoCore {
      */
     init(opts = {}){
         if(!this.isEmptyObject(opts)) Object.assign(this.config, opts);
+        window.$ = this.$ = this.config.$;
         window[this.config.alias] = window.Lego = this;
         return this;
     }
@@ -152,14 +146,13 @@ class LegoCore {
     }
     /**
      * [isEmptyObject description]
-     * @param  {[type]}  e [description]
+     * @param  {[type]}  obj [description]
      * @return {Boolean}   [description]
      */
-    isEmptyObject(e) {  
-        let t;  
-        for (t in e) return !1;  
-        return !0  
-    } 
+    isEmptyObject(obj = {}) {
+        for (let val in obj) return !1;
+        return !0;
+    }
     /**
      * _debugger 调试器
      * @return {[type]} [description]
@@ -332,4 +325,5 @@ class LegoCore {
         return this.routers.get(appName);
     }
 }
-export default new LegoCore();
+window.Lego = new Core();
+export default window.Lego;
