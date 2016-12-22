@@ -180,9 +180,7 @@ class View {
      */
     remove(){
         this.unEvents();
-        $('[cid=' + this.options.id + ']').hide("normal", function(){
-            $(this).remove();
-        });
+        $('[cid=' + this.options.id + ']').remove();
         Lego.views[Lego.getAppName()].delete(this.options.el);
     }
 }
