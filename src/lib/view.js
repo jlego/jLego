@@ -53,7 +53,8 @@ class View {
         const content = this.render();
         this.oldNode = content;
         this.rootNode = vdom.create(content);
-        this.$el[this.options.insert](this.rootNode);
+        $(this.rootNode).attr('cid', this.options.id);
+        this.$el[this.options.insert]($(this.rootNode));
     }
     /**
      * [_renderComponents 渲染组件]
@@ -179,7 +180,10 @@ class View {
      */
     remove(){
         this.unEvents();
-        this.$el.children().remove();
+        $('[cid=' + this.options.id + ']').hide("normal", function(){
+            $(this).remove();
+        });
+        Lego.views[Lego.getAppName()].delete(this.options.el);
     }
 }
 export default View;

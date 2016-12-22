@@ -26,6 +26,7 @@ class ListView extends HBY.View {
     }
     theClick(event){
         event.stopPropagation();
+        this.remove();
         debug.warn('66666666666');
     }
 }

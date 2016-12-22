@@ -1,5 +1,5 @@
 /**
- * lego.js v0.2.0
+ * lego.js v0.2.1
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -340,7 +340,8 @@ View.prototype._renderRootNode = function _renderRootNode() {
     var content = this.render();
     this.oldNode = content;
     this.rootNode = vdom.create(content);
-    this.$el[this.options.insert](this.rootNode);
+    $(this.rootNode).attr("cid", this.options.id);
+    this.$el[this.options.insert]($(this.rootNode));
 };
 
 View.prototype._renderComponents = function _renderComponents() {
@@ -432,7 +433,10 @@ View.prototype.refresh = function refresh() {
 
 View.prototype.remove = function remove() {
     this.unEvents();
-    this.$el.children().remove();
+    $("[cid=" + this.options.id + "]").hide("normal", function() {
+        $(this).remove();
+    });
+    Lego.views[Lego.getAppName()].delete(this.options.el);
 };
 
 function __async(g) {
