@@ -28,6 +28,7 @@ class Core {
         this.Event = Events;
         this.Router = Router;
 
+        this.idCounter = 0;
         // 实例容器
         this.views = {}; //视图容器
         this.datas = {};    //数据容器
@@ -63,7 +64,7 @@ class Core {
                 onAnimateAfter() {} //动画后回调
             };
         Object.assign(options, opts);
-        options.id = options.id || ((this.config.alias + window.location.hash.replace(/\//g, '_') + '_' + options.el).replace(/#/g, ''));
+        options.id = options.id || this.uniqueId(this.config.alias + '_');
         options.onBefore = options.onBefore.bind(this);
         options.onAfter = options.onAfter.bind(this);
         options.onAnimateBefore = options.onAnimateBefore.bind(this);
@@ -81,16 +82,9 @@ class Core {
             }
         }
         typeof options.onBefore === 'function' && options.onBefore();
-        if(this.views[this.prevApp].has(options.el) && !this.config.isMultiWindow){
-            this.views[this.prevApp].get(options.el).unEvents();
-            this.views[this.prevApp].delete(options.el);
-        }
-        if(this.views[this.currentApp].has(options.el) && !this.config.isMultiWindow){
-            this.views[this.currentApp].get(options.el).unEvents();
-            this.views[this.currentApp].delete(options.el);
-        }
+
         const viewObj = new options.view(options);
-        this.views[this.currentApp].set(options.el, viewObj);
+        this.views[this.currentApp].set(viewObj.el, viewObj);
 
         if(!this.isEmptyObject(options.listen)){
             for(let key in options.listen) {
@@ -145,6 +139,15 @@ class Core {
         return pwd;
     }
     /**
+     * [uniqueId 实例唯一码]
+     * @param  {[type]} prefix [description]
+     * @return {[type]}        [description]
+     */
+    uniqueId(prefix) {
+        const id = ++this.idCounter + '';
+        return prefix ? prefix + id : id;
+    }
+    /**
      * [isEmptyObject description]
      * @param  {[type]}  obj [description]
      * @return {Boolean}   [description]
@@ -180,7 +183,7 @@ class Core {
      * @return {[type]}         [description]
      */
     _initObj(appName){
-        this.views[appName] = this.views[appName] || new Map();
+        this.views[appName] = this.views[appName] || new WeakMap();
         this.timer[appName] = this.timer[appName] || new Map();
     }
     /**
@@ -288,8 +291,8 @@ class Core {
      */
     getView(el, appName = this.getAppName()){
         el = el instanceof window.$ ? el : window.$(el);
-        if(el.length && this.views[appName].get(el)){
-            return this.views[appName].get(el);
+        if(el.length && this.views[appName].has(el[0])){
+            return this.views[appName].get(el[0]);
         }
         return null;
     }

@@ -18,11 +18,12 @@ class View {
         };
         Object.assign(this.options, opts);
         this.Eventer = Lego.Eventer;
-        this.setElement(this.options.el);
+        this._setElement(this.options.el);
         this.data = this.options.data || this.data || {};
         this.server = null;
         this.isloaded = false;  //是否已加载过
         this._renderRootNode();
+        this.setElement(this.options.el);
         this._observe();
         if(this.options.dataSource){
             const dataSource = this.options.dataSource;
@@ -53,8 +54,10 @@ class View {
         const content = this.render();
         this.oldNode = content;
         this.rootNode = vdom.create(content);
-        $(this.rootNode).attr('cid', this.options.id);
-        this.$el[this.options.insert]($(this.rootNode));
+        $(this.rootNode).attr('view-id', this.options.id);
+        this._$el[this.options.insert]($(this.rootNode));
+        this.$el = this.$('[view-id=' + this.options.id + ']');
+        this.el = this.$el[0];
     }
     /**
      * [_renderComponents 渲染组件]
@@ -101,8 +104,7 @@ class View {
      * @param {[type]} el [description]
      */
     _setElement(el){
-        this.$el = el instanceof window.$ ? el : window.$(el);
-        this.el = this.$el[0];
+        this._$el = el instanceof window.$ ? el : window.$(el);
     }
     /**
      * [delegateEvents description]
@@ -158,7 +160,7 @@ class View {
      * @return {[type]}          [description]
      */
     $(selector) {
-        return this.$el.find(selector);
+        return this._$el.find(selector);
     }
     /**
      * render 渲染视图
@@ -180,8 +182,8 @@ class View {
      */
     remove(){
         this.unEvents();
-        $('[cid=' + this.options.id + ']').remove();
-        Lego.views[Lego.getAppName()].delete(this.options.el);
+        Lego.views[Lego.getAppName()].delete(this.el);
+        this.$el.remove();
     }
 }
 export default View;

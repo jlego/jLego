@@ -1,5 +1,5 @@
 /**
- * lego.js v0.2.1
+ * lego.js v0.2.6
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -42,6 +42,7 @@ var Core = function Core(opts) {
     this.currentApp = "index";
     this.Event = Events;
     this.Router = director.Router;
+    this.idCounter = 0;
     this.views = {};
     this.datas = {};
     this.permis = {};
@@ -73,7 +74,7 @@ Core.prototype.create = function create(opts) {
         onAnimateAfter: function onAnimateAfter() {}
     };
     Object.assign(options, opts);
-    options.id = options.id || (this.config.alias + window.location.hash.replace(/\//g, "_") + "_" + options.el).replace(/#/g, "");
+    options.id = options.id || this.uniqueId(this.config.alias + "_");
     options.onBefore = options.onBefore.bind(this);
     options.onAfter = options.onAfter.bind(this);
     options.onAnimateBefore = options.onAnimateBefore.bind(this);
@@ -87,16 +88,8 @@ Core.prototype.create = function create(opts) {
         }
     }
     typeof options.onBefore === "function" && options.onBefore();
-    if (this.views[this.prevApp].has(options.el) && !this.config.isMultiWindow) {
-        this.views[this.prevApp].get(options.el).unEvents();
-        this.views[this.prevApp].delete(options.el);
-    }
-    if (this.views[this.currentApp].has(options.el) && !this.config.isMultiWindow) {
-        this.views[this.currentApp].get(options.el).unEvents();
-        this.views[this.currentApp].delete(options.el);
-    }
     var viewObj = new options.view(options);
-    this.views[this.currentApp].set(options.el, viewObj);
+    this.views[this.currentApp].set(viewObj.el, viewObj);
     if (!this.isEmptyObject(options.listen)) {
         for (var key in options.listen) {
             this$1.Eventer.removeListener(key);
@@ -143,6 +136,11 @@ Core.prototype.randomKey = function randomKey(len) {
     return pwd;
 };
 
+Core.prototype.uniqueId = function uniqueId(prefix) {
+    var id = ++this.idCounter + "";
+    return prefix ? prefix + id : id;
+};
+
 Core.prototype.isEmptyObject = function isEmptyObject(obj) {
     if (obj === void 0) obj = {};
     for (var val in obj) {
@@ -172,7 +170,7 @@ Core.prototype._debugger = function _debugger() {
 };
 
 Core.prototype._initObj = function _initObj(appName) {
-    this.views[appName] = this.views[appName] || new Map();
+    this.views[appName] = this.views[appName] || new WeakMap();
     this.timer[appName] = this.timer[appName] || new Map();
 };
 
@@ -261,8 +259,8 @@ Core.prototype.getAppName = function getAppName() {
 Core.prototype.getView = function getView(el, appName) {
     if (appName === void 0) appName = this.getAppName();
     el = el instanceof window.$ ? el : window.$(el);
-    if (el.length && this.views[appName].get(el)) {
-        return this.views[appName].get(el);
+    if (el.length && this.views[appName].has(el[0])) {
+        return this.views[appName].get(el[0]);
     }
     return null;
 };
@@ -308,11 +306,12 @@ var View = function View(opts) {
     };
     Object.assign(this.options, opts);
     this.Eventer = Lego.Eventer;
-    this.setElement(this.options.el);
+    this._setElement(this.options.el);
     this.data = this.options.data || this.data || {};
     this.server = null;
     this.isloaded = false;
     this._renderRootNode();
+    this.setElement(this.options.el);
     this._observe();
     if (this.options.dataSource) {
         var dataSource = this.options.dataSource;
@@ -340,8 +339,10 @@ View.prototype._renderRootNode = function _renderRootNode() {
     var content = this.render();
     this.oldNode = content;
     this.rootNode = vdom.create(content);
-    $(this.rootNode).attr("cid", this.options.id);
-    this.$el[this.options.insert]($(this.rootNode));
+    $(this.rootNode).attr("view-id", this.options.id);
+    this._$el[this.options.insert]($(this.rootNode));
+    this.$el = this.$("[view-id=" + this.options.id + "]");
+    this.el = this.$el[0];
 };
 
 View.prototype._renderComponents = function _renderComponents() {
@@ -376,8 +377,7 @@ View.prototype.setElement = function setElement(element) {
 };
 
 View.prototype._setElement = function _setElement(el) {
-    this.$el = el instanceof window.$ ? el : window.$(el);
-    this.el = this.$el[0];
+    this._$el = el instanceof window.$ ? el : window.$(el);
 };
 
 View.prototype.delegateEvents = function delegateEvents() {
@@ -420,7 +420,7 @@ View.prototype.undelegate = function undelegate(eventName, selector, listener) {
 };
 
 View.prototype.$ = function $(selector) {
-    return this.$el.find(selector);
+    return this._$el.find(selector);
 };
 
 View.prototype.render = function render() {
@@ -433,10 +433,8 @@ View.prototype.refresh = function refresh() {
 
 View.prototype.remove = function remove() {
     this.unEvents();
-    $("[cid=" + this.options.id + "]").hide("normal", function() {
-        $(this).remove();
-    });
-    Lego.views[Lego.getAppName()].delete(this.options.el);
+    Lego.views[Lego.getAppName()].delete(this.el);
+    this.$el.remove();
 };
 
 function __async(g) {
