@@ -11,7 +11,7 @@ npm install -S lego-core
 ```
 
 # Instantiation
-Entry ·.js· file
+Entry `.js` file
 ```javascript
 import jQuery from 'jquery';
 import Lego from 'lego-core';
@@ -32,16 +32,14 @@ import subView from './view/item';
 Lego.router({
     '/home' () {
         Lego.create({
-        	el: 'body',
+            el: 'body',
             view: listView,
-            data: {
-                version: 20161201,
-                name: 'lego'
-            },
+            data: {},
             components: [{
             	el: '#theId',
 	            view: subView,
-	            data: {}
+	            data: {},
+		    components: []
             }]
         });
     }
