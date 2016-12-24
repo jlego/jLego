@@ -22,11 +22,13 @@ Lego.init({
     version: '20161202', //The version number of the release
     $: jQuery, //Dom operation library
     pageEl: '#container', //Page rendering container
-    defaultApp: 'home', //The application launches by default
+    defaultApp: 'home', //The application launches module by default
     rootUri: '/example/dist/', //Root directory
 })
 Lego.startApp('index');  //Launch the main page application
 ```
+Get the global parameters, E.g `Lego.config.pageEl`
+
 # View/Component
 Create a file `/src/home/view/home.js` 
 ```javascript
@@ -58,7 +60,7 @@ import itemView from './view/item';
 Lego.router({
     '/home' () {
         Lego.create({
-        	el: 'body',
+        	el: '#container', //There is no such attribute，the default is Lego.config.pageEl
             view: homeView,
             data: {
             	buttonText: 'click me'
