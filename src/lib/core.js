@@ -59,16 +59,12 @@ class Core {
                 data: null, //静态数据
                 dataSource: null, //动态数据
                 onBefore() {}, //视图开始前回调
-                onAfter() {}, //视图执行后回调
-                onAnimateBefore() {}, //动画前回调
-                onAnimateAfter() {} //动画后回调
+                onAfter() {} //视图执行后回调
             };
         Object.assign(options, opts);
-        options.id = options.id || this.uniqueId(this.config.alias + '_');
+        options.id = options.id || this.uniqueId('v');
         options.onBefore = options.onBefore.bind(this);
         options.onAfter = options.onAfter.bind(this);
-        options.onAnimateBefore = options.onAnimateBefore.bind(this);
-        options.onAnimateAfter = options.onAnimateAfter.bind(this);
         // 操作权限
         if (options.permis) {
             const module = options.permis.module,
@@ -289,8 +285,8 @@ class Core {
      * @param  {[type]} appName [description]
      * @return {[type]}         [description]
      */
-    getView(el, appName = this.getAppName()){
-        el = el instanceof window.$ ? el : window.$(el);
+    getView(viewId, appName = this.getAppName()){
+        const el = viewId instanceof window.$ ? viewId : window.$('[view-id=' + viewId + ']');
         if(el.length && this.views[appName].has(el[0])){
             return this.views[appName].get(el[0]);
         }

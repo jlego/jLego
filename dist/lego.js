@@ -1,5 +1,5 @@
 /**
- * lego.js v0.2.6
+ * lego.js v0.2.8
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -69,16 +69,12 @@ Core.prototype.create = function create(opts) {
         data: null,
         dataSource: null,
         onBefore: function onBefore() {},
-        onAfter: function onAfter() {},
-        onAnimateBefore: function onAnimateBefore() {},
-        onAnimateAfter: function onAnimateAfter() {}
+        onAfter: function onAfter() {}
     };
     Object.assign(options, opts);
-    options.id = options.id || this.uniqueId(this.config.alias + "_");
+    options.id = options.id || this.uniqueId("v");
     options.onBefore = options.onBefore.bind(this);
     options.onAfter = options.onAfter.bind(this);
-    options.onAnimateBefore = options.onAnimateBefore.bind(this);
-    options.onAnimateAfter = options.onAnimateAfter.bind(this);
     if (options.permis) {
         var module = options.permis.module, operate = options.permis.operate, hide = options.permis.hide, userId = options.permis.userid || 0;
         if (hide) {
@@ -256,9 +252,9 @@ Core.prototype.getAppName = function getAppName() {
     return hash.split("/")[0] || this.config.defaultApp;
 };
 
-Core.prototype.getView = function getView(el, appName) {
+Core.prototype.getView = function getView(viewId, appName) {
     if (appName === void 0) appName = this.getAppName();
-    el = el instanceof window.$ ? el : window.$(el);
+    var el = viewId instanceof window.$ ? viewId : window.$("[view-id=" + viewId + "]");
     if (el.length && this.views[appName].has(el[0])) {
         return this.views[appName].get(el[0]);
     }
