@@ -51,12 +51,44 @@ class Home extends Lego.View {
 }
 export default Home;
 ```
+# dataSource
+Create a file `/src/home/data/home.js` 
+```javascript
+class HomeData extends Lego.Data {
+    constructor(opts = {}) {
+        const options = {
+            'apiName_a': {
+                url: './content.json',
+                listTarget: 'data',  //If it is a list of data
+                model: {	//for set the default model data value
+                    first: '',
+                    last: '',
+                    id: 0
+                },
+                // reset: true   //Whether to re-pull the remote data， yes is 'true'
+            },
+            'apiName_b': {
+                url: './content.json'
+            }
+	    ...
+        };
+        $.extend(true, options, opts);
+        super(options);
+    }
+    //return format data
+    parse(datas) {
+        return datas[0].data;
+    }
+}
+export default HomeData;
+```
 
 # Router
 Create a file `/src/home/app.js` , this is home module entrance
 ```javascript
 import homeView from './view/home';
 import itemView from './view/item';
+import homeData from './data/home';
 Lego.router({
     '/home' () {
         Lego.create({
@@ -68,7 +100,10 @@ Lego.router({
             components: [{
             	el: '#theId',
 	            view: itemView,
-	            data: {},
+	            dataSource: {
+		    	api: ['apiName_a', 'apiName_b'],
+			server: homeData
+		    },
 	            components: []
             }]
         });
