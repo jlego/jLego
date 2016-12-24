@@ -25,25 +25,55 @@ Lego.init({
 })
 Lego.startApp('index');  //Launch the main page application
 ```
+# View/Component
+View file `home.js` 
+```javascript
+import './asset/home.css';
+class Home extends Lego.View {
+    constructor(opts = {}) {
+        const options = {
+            events: {
+                'click #button': 'theClick'
+            }
+        };
+        super(options);
+    }
+    render() {
+        return hx`<button id="button">${this.data.buttonText}</button>`;
+    }
+    theClick(event){
+        console.log('You clicked this button');
+    }
+}
+export default Home;
+```
+
 # Router
 ```javascript
-import listView from './view/list';
-import subView from './view/item';
+import homeView from './view/home';
+import itemView from './view/item';
 Lego.router({
     '/home' () {
         Lego.create({
-            el: 'body',
-            view: listView,
-            data: {},
+        	el: 'body',
+            view: homeView,
+            data: {
+            	buttonText: 'click me'
+            },
             components: [{
             	el: '#theId',
-	            view: subView,
+	            view: itemView,
 	            data: {},
-		    components: []
+	            components: []
             }]
         });
     }
 });
+```
+#Building
+Terminal command
+```html
+npm run build
 ```
 
 # Other resources
