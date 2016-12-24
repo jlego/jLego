@@ -2,7 +2,7 @@
 
 Component web front-end development framework
 
-virtual-dom + ES6 + Router + Components + sass/less
+virtual-dom + ES6 + Router + Components + sass/less + babel
 
 # Install
 
@@ -110,7 +110,7 @@ Lego.router({
     }
 });
 ```
-#Building
+#Build the project
 Terminal command
 ```html
 npm run build
