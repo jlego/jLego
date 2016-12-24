@@ -62,7 +62,7 @@ Lego.router({
         Lego.create({
         	el: '#container', //There is no such attribute，the default is Lego.config.pageEl
             view: homeView,
-            data: {
+            data: {  //Modifying the data property will trigger the view update
             	buttonText: 'click me'
             },
             components: [{
