@@ -1,6 +1,8 @@
 ![preview](https://github.com/jlego/legojs/blob/master/lego-logo.png)
 
-virtual-dom + ES6 + Router + Components + sass/less  ===  Component web front-end development framework
+Component web front-end development framework
+
+virtual-dom + ES6 + Router + Components + sass/less
 
 # Install
 
@@ -11,7 +13,7 @@ npm install -S lego-core
 ```
 
 # Instantiation
-Entry `.js` file
+Create the application entry file `/src/main.js`
 ```javascript
 import jQuery from 'jquery';
 import Lego from 'lego-core';
@@ -26,7 +28,7 @@ Lego.init({
 Lego.startApp('index');  //Launch the main page application
 ```
 # View/Component
-View file `home.js` 
+Create a file `/src/home/view/home.js` 
 ```javascript
 import './asset/home.css';
 class Home extends Lego.View {
@@ -49,6 +51,7 @@ export default Home;
 ```
 
 # Router
+Create a file `/src/home/app.js` , this is home module entrance
 ```javascript
 import homeView from './view/home';
 import itemView from './view/item';
