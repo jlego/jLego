@@ -55,6 +55,12 @@ class View {
         this.oldNode = content;
         this.rootNode = vdom.create(content);
         $(this.rootNode).attr('view-id', this.options.id);
+        if(this.options.style){
+            $(this.rootNode).css(this.options.style);
+        }
+        if(this.options.attr){
+            $(this.rootNode).attr(this.options.attr);
+        }
         this._$el[this.options.insert]($(this.rootNode));
         this.$el = this.$('[view-id=' + this.options.id + ']');
         this.el = this.$el[0];
