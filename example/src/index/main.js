@@ -11,7 +11,7 @@ class MainView extends HBY.View {
     render() {
         const tmpl = hx`
         <div id="app" class="app-navbar-fixed app-sidebar-fixed">
-            <div class="sidebar app-aside" id="sidebar"></div>
+            <div id="sidebar"></div>
             <div class="app-content">
                 <header class="navbar navbar-default navbar-static-top">
                     <div class="navbar-header">

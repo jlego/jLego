@@ -10,6 +10,7 @@ class MenuView extends HBY.View {
     }
     render() {
         const tmpl = hx`
+        <div class="sidebar app-aside" id="sidebar">
         <div class="sidebar-container perfect-scrollbar ps-container ps-active-y">
             <nav>
                 <ul class="main-navigation-menu">
@@ -135,6 +136,7 @@ class MenuView extends HBY.View {
                     </li>
                 </ul>
             </nav>
+        </div>
         </div>
         `;
         return tmpl;

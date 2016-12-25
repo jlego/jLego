@@ -46,23 +46,20 @@ class Core {
     create(opts = {}){
         const that = this,
             options = {
-                id: '',
-                el: this.config.pageEl,
-                tagName: 'div',
-                insert: 'html',
-                permis: null, //权限
+                // el: this.config.pageEl,
+                // permis: null, //权限
                 view: null, //视图类
                 components: [],
                 events: {},
                 listen: {},
-                scrollbar: null,
+                // scrollbar: null,
                 data: null, //静态数据
                 dataSource: null, //动态数据
                 onBefore() {}, //视图开始前回调
                 onAfter() {} //视图执行后回调
             };
         Object.assign(options, opts);
-        options.id = options.id || this.uniqueId('v');
+        options.vid = this.uniqueId('v');
         options.onBefore = options.onBefore.bind(this);
         options.onAfter = options.onAfter.bind(this);
         // 操作权限

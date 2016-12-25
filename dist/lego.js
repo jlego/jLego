@@ -1,5 +1,5 @@
 /**
- * lego.js v0.2.9
+ * lego.js v0.3.3
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -56,23 +56,17 @@ Core.prototype.create = function create(opts) {
     var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this, options = {
-        id: "",
-        el: this.config.pageEl,
-        tagName: "div",
-        insert: "html",
-        permis: null,
         view: null,
         components: [],
         events: {},
         listen: {},
-        scrollbar: null,
         data: null,
         dataSource: null,
         onBefore: function onBefore() {},
         onAfter: function onAfter() {}
     };
     Object.assign(options, opts);
-    options.id = options.id || this.uniqueId("v");
+    options.vid = this.uniqueId("v");
     options.onBefore = options.onBefore.bind(this);
     options.onAfter = options.onAfter.bind(this);
     if (options.permis) {
@@ -335,15 +329,19 @@ View.prototype._renderRootNode = function _renderRootNode() {
     var content = this.render();
     this.oldNode = content;
     this.rootNode = vdom.create(content);
-    $(this.rootNode).attr("view-id", this.options.id);
+    this.$el = $(this.rootNode);
+    this.$el.attr("view-id", this.options.vid);
     if (this.options.style) {
-        $(this.rootNode).css(this.options.style);
+        this.$el.css(this.options.style);
     }
     if (this.options.attr) {
-        $(this.rootNode).attr(this.options.attr);
+        this.$el.attr(this.options.attr);
     }
-    this._$el[this.options.insert]($(this.rootNode));
-    this.$el = this.$("[view-id=" + this.options.id + "]");
+    if (!this.options.el || this.options.el == "body") {
+        this._$el.html(this.$el);
+    } else {
+        this._$el.replaceWith(this.$el);
+    }
     this.el = this.$el[0];
 };
 
@@ -379,6 +377,7 @@ View.prototype.setElement = function setElement(element) {
 };
 
 View.prototype._setElement = function _setElement(el) {
+    el = el || Lego.config.pageEl;
     this._$el = el instanceof window.$ ? el : window.$(el);
 };
 
@@ -422,7 +421,7 @@ View.prototype.undelegate = function undelegate(eventName, selector, listener) {
 };
 
 View.prototype.$ = function $(selector) {
-    return this._$el.find(selector);
+    return this.$el.find(selector);
 };
 
 View.prototype.render = function render() {

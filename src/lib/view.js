@@ -54,15 +54,19 @@ class View {
         const content = this.render();
         this.oldNode = content;
         this.rootNode = vdom.create(content);
-        $(this.rootNode).attr('view-id', this.options.id);
+        this.$el = $(this.rootNode);
+        this.$el.attr('view-id', this.options.vid);
         if(this.options.style){
-            $(this.rootNode).css(this.options.style);
+            this.$el.css(this.options.style);
         }
         if(this.options.attr){
-            $(this.rootNode).attr(this.options.attr);
+            this.$el.attr(this.options.attr);
         }
-        this._$el[this.options.insert]($(this.rootNode));
-        this.$el = this.$('[view-id=' + this.options.id + ']');
+        if(!this.options.el || this.options.el == 'body'){
+            this._$el.html(this.$el);
+        }else{
+            this._$el.replaceWith(this.$el);
+        }
         this.el = this.$el[0];
     }
     /**
@@ -110,6 +114,7 @@ class View {
      * @param {[type]} el [description]
      */
     _setElement(el){
+        el = el || Lego.config.pageEl;
         this._$el = el instanceof window.$ ? el : window.$(el);
     }
     /**
@@ -166,7 +171,7 @@ class View {
      * @return {[type]}          [description]
      */
     $(selector) {
-        return this._$el.find(selector);
+        return this.$el.find(selector);
     }
     /**
      * render 渲染视图

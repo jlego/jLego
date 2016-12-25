@@ -7,6 +7,7 @@ HBY.create({
     view: mainView,
     components: [{
     	el: '#sidebar',
+        scrollbar: true,
     	view: menuView
     }]
 });
