@@ -6,14 +6,15 @@ class HomeView extends HBY.View {
                 'click #400': 'theClick'
             }
         };
-        $.extend(true, options, opts);
+        Object.assign(options, opts);
         super(options);
     }
     render() {
-        let data = this.data.list || [];
+        let data = this.options.data || [];
+        console.warn('uuuuuuuuuuuuu', data);
         let vDom = hx`<div>
           ${data.map((model, i) => {
-            return hx`<a id="${model.first}" href="#/home" style="display:block;">${model.first}</a>\n`
+            return hx`<a href="#/home" style="display:block;">${model.first}</a>\n`
           })}
         </div>`;
         return vDom;

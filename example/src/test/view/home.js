@@ -10,7 +10,7 @@ class HomeView extends HBY.View {
         super(options);
     }
     render() {
-        let data = this.data || [];
+        let data = this.options.data || [];
         let vDom = hx`<div>
           ${data.map((model, i) => {
             return hx`<a id="${model.first}" href="#/home" style="display:block;">${model.last}</a>\n`

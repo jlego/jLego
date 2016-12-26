@@ -19,11 +19,11 @@ class View {
         Object.assign(this.options, opts);
         this.Eventer = Lego.Eventer;
         this._setElement(this.options.el);
-        this.data = this.options.data || this.data || {};
         this.server = null;
         this.isloaded = false;  //是否已加载过
         this._renderRootNode();
         this.setElement(this.options.el);
+        this.options.data = this.options.data || {};
         this._observe();
         if(this.options.dataSource){
             const dataSource = this.options.dataSource;
@@ -34,11 +34,7 @@ class View {
                     this.server = dataSource.server;
                 }
                 this.server.fetch(dataSource.api, (resp) => {
-                    if(Array.isArray(resp)){
-                        this.data.list = resp;
-                    }else{
-                        this.data = resp;
-                    }
+                    this.options.data = resp;
                     this.refresh();
                 });
             }
@@ -54,9 +50,19 @@ class View {
         const content = this.render();
         this.oldNode = content;
         this.rootNode = vdom.create(content);
-        $(this.rootNode).attr('view-id', this.options.id);
-        this._$el[this.options.insert]($(this.rootNode));
-        this.$el = this.$('[view-id=' + this.options.id + ']');
+        this.$el = $(this.rootNode);
+        this.$el.attr('view-id', this.options.vid);
+        if(this.options.style){
+            this.$el.css(this.options.style);
+        }
+        if(this.options.attr){
+            this.$el.attr(this.options.attr);
+        }
+        if(!this.options.el || this.options.el == 'body'){
+            this._$el.html(this.$el);
+        }else{
+            this._$el.replaceWith(this.$el);
+        }
         this.el = this.$el[0];
     }
     /**
@@ -65,11 +71,14 @@ class View {
      */
     _renderComponents(){
         const that = this;
-        if(this.options.components.length && !this.isloaded) {
-            this.isloaded = true;
-            this.options.components.forEach(function(item, i){
-                Lego.create(item);
-            });
+        if(this.options.components){
+            if(this.options.components.length && !this.isloaded) {
+                this.isloaded = true;
+                this.options.components.forEach(function(item, i){
+                    const tagName = item.el ? that.$(item.el)[0].tagName : '';
+                    if(tagName) Lego.create(Lego.UI[tagName.toLowerCase()], item);
+                });
+            }
         }
     }
     /**
@@ -78,8 +87,8 @@ class View {
      */
     _observe(){
         const that = this;
-        if(this.data && typeof this.data === 'object'){
-            Object.observe(this.data, (changes) =>{
+        if(this.options && typeof this.options === 'object'){
+            Object.observe(this.options, (changes) =>{
                 // debug.log(changes);
                 const newNode = this.render();
                 let patches = vdom.diff(that.oldNode, newNode);
@@ -104,6 +113,7 @@ class View {
      * @param {[type]} el [description]
      */
     _setElement(el){
+        el = el || Lego.config.pageEl;
         this._$el = el instanceof window.$ ? el : window.$(el);
     }
     /**
@@ -132,7 +142,7 @@ class View {
      * @return {[type]}           [description]
      */
     delegate(eventName, selector, listener) {
-        this.$el.on(eventName + '.delegateEvents' + this.options.id, selector, listener);
+        this.$el.on(eventName + '.delegateEvents' + this.options.vid, selector, listener);
         return this;
     }
     /**
@@ -140,7 +150,7 @@ class View {
      * @return {[type]} [description]
      */
     unEvents() {
-        if (this.$el) this.$el.off('.delegateEvents' + this.options.id);
+        if (this.$el) this.$el.off('.delegateEvents' + this.options.vid);
         return this;
     }
     /**
@@ -151,7 +161,7 @@ class View {
      * @return {[type]}           [description]
      */
     undelegate(eventName, selector, listener) {
-        this.$el.off(eventName + '.delegateEvents' + this.options.id, selector, listener);
+        this.$el.off(eventName + '.delegateEvents' + this.options.vid, selector, listener);
         return this;
     }
     /**
@@ -160,7 +170,7 @@ class View {
      * @return {[type]}          [description]
      */
     $(selector) {
-        return this._$el.find(selector);
+        return this.$el.find(selector);
     }
     /**
      * render 渲染视图
@@ -174,7 +184,7 @@ class View {
      * @return {[type]} [description]
      */
     refresh() {
-        this.data.__v = Lego.randomKey();
+        this.options.__v = Lego.randomKey();
     }
     /**
      * [remove 销毁视图]

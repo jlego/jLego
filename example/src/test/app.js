@@ -5,8 +5,7 @@ import listData from './data/list';
 HBY.router({
     '/test' () {
         console.warn('7777777777777');
-        HBY.create({
-            view: listView,
+        HBY.create(listView, {
             dataSource: {
                 api: ['gg', 'ff'],
                 server: listData
@@ -22,8 +21,7 @@ HBY.router({
         });
     },
     '/test/list' () {
-        HBY.create({
-            view: listView,
+        HBY.create(listView, {
             data: {
                 list: [
                     { first: 'home', last: '99999' },
@@ -32,14 +30,12 @@ HBY.router({
             },
             components: [{
                 el: '#home',
-                view: homeView,
                 data: [
                     { first: 'home2', last: '999992' },
                     { first: 'test2', last: 'mmmmm2' }
                 ]
             }, {
                 el: '#test',
-                view: homeView,
                 data: [
                     { first: 'home3', last: '999993' },
                     { first: 'test3', last: 'mmmmm3' }
