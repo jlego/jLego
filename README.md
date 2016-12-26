@@ -44,9 +44,9 @@ class Home extends Lego.View {
     }
     render() {
         return hx`
-	<button id="button">${this.options.buttonText}</button>
-	<item id="theId"></item>    //the component replace this tag and be rendered to here;
-	`;
+	  <button id="button">${this.options.data.buttonText}</button>
+	    <item id="theId"></item>    //the component replace this tag and be rendered to here;
+	    `;
     }
     theClick(event){
         console.log('You clicked this button');
@@ -75,7 +75,7 @@ class HomeData extends Lego.Data {
             }
 	    ...
         };
-        $.extend(true, options, opts);
+        Object.assign(options, opts);
         super(options);
     }
     //return format data
@@ -95,15 +95,16 @@ import homeData from './data/home';
 Lego.components('item', itemView);   //Register component;
 Lego.router({
     '/home' () {
-        Lego.create(homeView, {
+        const viewObj = Lego.create(homeView, {
         	el: '#container', //There is no such attribute，the default is Lego.config.pageEl
             data: {  //Modifying the data property will trigger the view update
             	buttonText: 'click me'
             },
-            components: [{
+	    ... //You can customize the parameters too, use "viewObj.options[attributeName]" get the attribute
+            components: [{
             	el: '#theId',
-	            dataSource: {
-		    	  api: ['apiName_a', 'apiName_b'],
+	            dataSource: {   //dynamic data
+		    	  api: ['apiName_a', 'apiName_b'],   //Data dependencies, cacheable
 			      server: homeData
 		        },
 	            components: []
