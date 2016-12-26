@@ -4,8 +4,8 @@ Component web front-end development framework
 
 virtual-dom + ES6 + Router + Components + sass/less + babel
 
-# Install
 
+# Install
 You can install it via npm:
 
 ```html
@@ -43,7 +43,10 @@ class Home extends Lego.View {
         super(options);
     }
     render() {
-        return hx`<button id="button">${this.data.buttonText}</button>`;
+        return hx`
+	<button id="button">${this.data.buttonText}</button>
+	<item id="theId"></item>    //the component replace this tag and be rendered to here;
+	`;
     }
     theClick(event){
         console.log('You clicked this button');
@@ -89,17 +92,16 @@ Create a file `/src/home/app.js` , this is home module entrance
 import homeView from './view/home';
 import itemView from './view/item';
 import homeData from './data/home';
+Lego.components('item', itemView);   //Register component;
 Lego.router({
     '/home' () {
-        Lego.create({
+        Lego.create(homeView, {
         	el: '#container', //There is no such attribute，the default is Lego.config.pageEl
-            view: homeView,
             data: {  //Modifying the data property will trigger the view update
             	buttonText: 'click me'
             },
             components: [{
             	el: '#theId',
-	            view: itemView,
 	            dataSource: {
 		    	api: ['apiName_a', 'apiName_b'],
 			server: homeData
