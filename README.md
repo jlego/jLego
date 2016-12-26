@@ -44,7 +44,7 @@ class Home extends Lego.View {
     }
     render() {
         return hx`
-	<button id="button">${this.data.buttonText}</button>
+	<button id="button">${this.options.buttonText}</button>
 	<item id="theId"></item>    //the component replace this tag and be rendered to here;
 	`;
     }
@@ -103,9 +103,9 @@ Lego.router({
             components: [{
             	el: '#theId',
 	            dataSource: {
-		    	api: ['apiName_a', 'apiName_b'],
-			server: homeData
-		    },
+		    	  api: ['apiName_a', 'apiName_b'],
+			      server: homeData
+		        },
 	            components: []
             }]
         });
