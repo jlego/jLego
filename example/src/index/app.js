@@ -2,13 +2,12 @@
 import mainView from './main';
 import menuView from './menu';
 
-HBY.create({
+HBY.components('menu', menuView);
+HBY.create(mainView, {
     el: 'body',
-    view: mainView,
     components: [{
     	el: '#sidebar',
-        scrollbar: true,
-    	view: menuView
+        scrollbar: true
     }]
 });
 HBY.startApp();

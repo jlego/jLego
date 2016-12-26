@@ -10,17 +10,18 @@ class ListView extends HBY.View {
                 }
             }
         };
-        $.extend(true, options, opts);
+        Object.assign(options, opts);
         super(options);
     }
     render() {
-        let data = this.data.list || [];
+        let data = this.options.data || [];
         debug.warn('更新了视图', data);
         let vDom = hx`<div>
           <h1>hello world!</h1>
           ${data.map((model, i) => {
-            return hx`<a id="${model.first}" href="#/home/list" style="display:block;">${model.last}</a>\n`
+            return hx`<a href="#/home/list" style="display:block;">${model.last}</a>\n`
           })}
+          <home id="test"></home>
         </div>`;
         return vDom;
     }

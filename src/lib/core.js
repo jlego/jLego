@@ -40,53 +40,41 @@ class Core {
     }
     /**
      * [create 实例化视图]
-     * @param  {Object} option [description]
+     * @param  {Object} view, option [description]
      * @return {[type]}        [description]
      */
-    create(opts = {}){
-        const that = this,
-            options = {
-                // el: this.config.pageEl,
-                // permis: null, //权限
-                view: null, //视图类
-                components: [],
-                events: {},
-                listen: {},
-                // scrollbar: null,
-                data: null, //静态数据
-                dataSource: null, //动态数据
-                onBefore() {}, //视图开始前回调
-                onAfter() {} //视图执行后回调
-            };
-        Object.assign(options, opts);
-        options.vid = this.uniqueId('v');
-        options.onBefore = options.onBefore.bind(this);
-        options.onAfter = options.onAfter.bind(this);
+    create(view, opts = {}){
+        const that = this;
+        opts.vid = this.uniqueId('v');
+        opts.onBefore = opts.onBefore && opts.onBefore.bind(this);
+        opts.onAfter = opts.onAfter && opts.onAfter.bind(this);
+        if(!view) return;
         // 操作权限
-        if (options.permis) {
-            const module = options.permis.module,
-                operate = options.permis.operate,
-                hide = options.permis.hide,
-                userId = options.permis.userid || 0;
+        if (opts.permis) {
+            const module = opts.permis.module,
+                operate = opts.permis.operate,
+                hide = opts.permis.hide,
+                userId = opts.permis.userid || 0;
             if (hide) {
                 if (!this.permis.check(module, operate, userId)) {
                     return;
                 }
             }
         }
-        typeof options.onBefore === 'function' && options.onBefore();
+        typeof opts.onBefore === 'function' && opts.onBefore();
 
-        const viewObj = new options.view(options);
+        const viewObj = new view(opts);
         this.views[this.currentApp].set(viewObj.el, viewObj);
-
-        if(!this.isEmptyObject(options.listen)){
-            for(let key in options.listen) {
-                this.Eventer.removeListener(key);
-                this.Eventer.on(key, options.listen[key]);
+        if(opts.listen){
+            if(!this.isEmptyObject(opts.listen)){
+                for(let key in opts.listen) {
+                    this.Eventer.removeListener(key);
+                    this.Eventer.on(key, opts.listen[key]);
+                }
             }
         }
 
-        typeof options.onAfter === 'function' && options.onAfter(viewObj);
+        typeof opts.onAfter === 'function' && opts.onAfter(viewObj);
         return viewObj;
     }
     /**
@@ -105,7 +93,7 @@ class Core {
      * @param  {Object} opts [description]
      * @return {[type]}      [description]
      */
-    components(comName, coms = {}){
+    components(comName, coms = {}, isReset = false){
         this.UI = this.UI || {};
         if(typeof comName === 'string') this.UI[comName] = coms;
         if(typeof comName === 'object'){

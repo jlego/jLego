@@ -14,7 +14,7 @@ class ListView extends HBY.View {
         super(options);
     }
     render() {
-        let data = this.data.list || [];
+        let data = this.options.data || [];
         let vDom = hx`<div>
           ${data.map((model, i) => {
             return hx`<a id="${model.first}" href="#/home/list" style="display:block;">${model.last}</a>\n`
