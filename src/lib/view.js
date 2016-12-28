@@ -25,6 +25,13 @@ class View {
         this.setElement(this.options.el);
         this.options.data = this.options.data || {};
         this._observe();
+        this.fetch();
+    }
+    /**
+     * [fetch 拉取数据]
+     * @return {[type]} [description]
+     */
+    fetch(){
         if(this.options.dataSource){
             const dataSource = this.options.dataSource;
             if(dataSource.server){
@@ -51,6 +58,15 @@ class View {
         this.oldNode = content;
         this.rootNode = vdom.create(content);
         this.$el = $(this.rootNode);
+        if(this.options.id || this.options.el){
+            if(this.options.id){
+                this.$el.attr('id', this.options.id);
+            }else{
+                if((new RegExp(/#/)).test(this.options.el)){
+                    this.$el.attr('id', this.options.el.replace(/#/, ''));
+                }
+            }
+        }
         this.$el.attr('view-id', this.options.vid);
         if(this.options.style){
             this.$el.css(this.options.style);

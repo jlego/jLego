@@ -1,5 +1,5 @@
 /**
- * lego.js v0.3.8
+ * lego.js v0.4.0
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -282,7 +282,6 @@ var LegoCore$1 = window.Lego;
 window.hx = hyperx(vdom.h);
 
 var View = function View(opts) {
-    var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this;
     this.options = {
@@ -299,6 +298,11 @@ var View = function View(opts) {
     this.setElement(this.options.el);
     this.options.data = this.options.data || {};
     this._observe();
+    this.fetch();
+};
+
+View.prototype.fetch = function fetch() {
+    var this$1 = this;
     if (this.options.dataSource) {
         var dataSource = this.options.dataSource;
         if (dataSource.server) {
@@ -322,6 +326,15 @@ View.prototype._renderRootNode = function _renderRootNode() {
     this.oldNode = content;
     this.rootNode = vdom.create(content);
     this.$el = $(this.rootNode);
+    if (this.options.id || this.options.el) {
+        if (this.options.id) {
+            this.$el.attr("id", this.options.id);
+        } else {
+            if (new RegExp(/#/).test(this.options.el)) {
+                this.$el.attr("id", this.options.el.replace(/#/, ""));
+            }
+        }
+    }
     this.$el.attr("view-id", this.options.vid);
     if (this.options.style) {
         this.$el.css(this.options.style);
