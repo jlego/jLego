@@ -242,9 +242,9 @@ Core.prototype.getAppName = function getAppName() {
     return hash.split("/")[0] || this.config.defaultApp;
 };
 
-Core.prototype.getView = function getView(viewId, appName) {
+Core.prototype.getView = function getView(el, appName) {
     if (appName === void 0) appName = this.getAppName();
-    var el = viewId instanceof window.$ ? viewId : window.$("[view-id=" + viewId + "]");
+    el = el instanceof window.$ ? el : window.$(el);
     if (el.length && this.views[appName].has(el[0])) {
         return this.views[appName].get(el[0]);
     }
@@ -340,6 +340,9 @@ View.prototype._renderRootNode = function _renderRootNode() {
     }
     if (this.options.attr) {
         this.$el.attr(this.options.attr);
+    }
+    if (this.options.className) {
+        this.$el.addClass(this.options.className);
     }
     if (!this.options.el || this.options.el == "body") {
         this._$el.html(this.$el);
