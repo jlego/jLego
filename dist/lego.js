@@ -1,5 +1,5 @@
 /**
- * lego.js v0.4.0
+ * lego.js v0.4.1
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -293,7 +293,6 @@ var View = function View(opts) {
     this.Eventer = Lego.Eventer;
     this._setElement(this.options.el);
     this.server = null;
-    this.isloaded = false;
     this._renderRootNode();
     this.setElement(this.options.el);
     this.options.data = this.options.data || {};
@@ -352,16 +351,14 @@ View.prototype._renderRootNode = function _renderRootNode() {
 
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
-    if (this.options.components) {
-        if (this.options.components.length && !this.isloaded) {
-            this.isloaded = true;
-            this.options.components.forEach(function(item, i) {
-                var tagName = item.el ? that.$(item.el)[0].tagName : "";
-                if (tagName) {
-                    Lego.create(Lego.UI[tagName.toLowerCase()], item);
-                }
-            });
-        }
+    this.options.components = this.options.components || [];
+    if (this.options.components.length) {
+        this.options.components.forEach(function(item, i) {
+            var tagName = item.el ? that.$(item.el)[0].tagName : "";
+            if (tagName) {
+                Lego.create(Lego.UI[tagName.toLowerCase()], item);
+            }
+        });
     }
 };
 

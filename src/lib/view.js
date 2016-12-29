@@ -20,7 +20,7 @@ class View {
         this.Eventer = Lego.Eventer;
         this._setElement(this.options.el);
         this.server = null;
-        this.isloaded = false;  //是否已加载过
+        // this.isloaded = false;  //是否已加载过
         this._renderRootNode();
         this.setElement(this.options.el);
         this.options.data = this.options.data || {};
@@ -87,14 +87,13 @@ class View {
      */
     _renderComponents(){
         const that = this;
-        if(this.options.components){
-            if(this.options.components.length && !this.isloaded) {
-                this.isloaded = true;
-                this.options.components.forEach(function(item, i){
-                    const tagName = item.el ? that.$(item.el)[0].tagName : '';
-                    if(tagName) Lego.create(Lego.UI[tagName.toLowerCase()], item);
-                });
-            }
+        this.options.components = this.options.components || [];
+        if(this.options.components.length) {
+            // this.isloaded = true;
+            this.options.components.forEach(function(item, i){
+                const tagName = item.el ? that.$(item.el)[0].tagName : '';
+                if(tagName) Lego.create(Lego.UI[tagName.toLowerCase()], item);
+            });
         }
     }
     /**
