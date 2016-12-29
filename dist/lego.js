@@ -1,5 +1,5 @@
 /**
- * lego.js v0.4.1
+ * lego.js v0.4.4
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -47,6 +47,7 @@ var Core = function Core(opts) {
     this.datas = {};
     this.permis = {};
     this.timer = {};
+    this.UI = {};
     this.routers = new Map();
     this.Eventer = new Events();
     return this;
@@ -98,7 +99,6 @@ Core.prototype.init = function init(opts) {
 Core.prototype.components = function components(comName, coms, isReset) {
     if (coms === void 0) coms = {};
     if (isReset === void 0) isReset = false;
-    this.UI = this.UI || {};
     if (typeof comName === "string") {
         this.UI[comName] = coms;
     }
@@ -1057,5 +1057,7 @@ Data.prototype.getData = function getData(apiName) {
 LegoCore$1.View = View;
 
 LegoCore$1.Data = Data;
+
+LegoCore$1.Ux = {};
 
 module.exports = LegoCore$1;

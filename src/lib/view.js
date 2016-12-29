@@ -74,6 +74,9 @@ class View {
         if(this.options.attr){
             this.$el.attr(this.options.attr);
         }
+        if(this.options.className){
+            this.$el.addClass(this.options.className);
+        }
         if(!this.options.el || this.options.el == 'body'){
             this._$el.html(this.$el);
         }else{

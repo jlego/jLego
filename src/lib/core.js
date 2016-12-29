@@ -34,6 +34,7 @@ class Core {
         this.datas = {};    //数据容器
         this.permis = {};   //权限对象
         this.timer = {};   //计时器对象
+        this.UI = {};
         this.routers = new Map();
         this.Eventer = new Events(); //全局事件对象
         return this;
@@ -94,7 +95,6 @@ class Core {
      * @return {[type]}      [description]
      */
     components(comName, coms = {}, isReset = false){
-        this.UI = this.UI || {};
         if(typeof comName === 'string') this.UI[comName] = coms;
         if(typeof comName === 'object'){
             if(!this.isEmptyObject(comName)){
