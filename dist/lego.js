@@ -1,5 +1,5 @@
 /**
- * lego.js v0.4.4
+ * lego.js v0.5.1
  * (c) 2016 Ronghui Yu
  * @license MIT
  */
@@ -291,10 +291,10 @@ var View = function View(opts) {
     };
     Object.assign(this.options, opts);
     this.Eventer = Lego.Eventer;
-    this._setElement(this.options.el);
     this.server = null;
     this._renderRootNode();
     this.setElement(this.options.el);
+    this.setEvent(this.options.el);
     this.options.data = this.options.data || {};
     this._observe();
     this.fetch();
@@ -344,11 +344,6 @@ View.prototype._renderRootNode = function _renderRootNode() {
     if (this.options.className) {
         this.$el.addClass(this.options.className);
     }
-    if (!this.options.el || this.options.el == "body") {
-        this._$el.html(this.$el);
-    } else {
-        this._$el.replaceWith(this.$el);
-    }
     this.el = this.$el[0];
 };
 
@@ -357,9 +352,11 @@ View.prototype._renderComponents = function _renderComponents() {
     this.options.components = this.options.components || [];
     if (this.options.components.length) {
         this.options.components.forEach(function(item, i) {
-            var tagName = item.el ? that.$(item.el)[0].tagName : "";
-            if (tagName) {
-                Lego.create(Lego.UI[tagName.toLowerCase()], item);
+            if ($(item.el).length) {
+                var tagName = item.el ? $(item.el)[0].tagName : "";
+                if (tagName) {
+                    Lego.create(Lego.UI[tagName.toLowerCase()], item);
+                }
             }
         });
     }
@@ -379,16 +376,21 @@ View.prototype._observe = function _observe() {
     }
 };
 
-View.prototype.setElement = function setElement(element) {
+View.prototype.setEvent = function setEvent(el) {
     this.unEvents();
-    this._setElement(element);
     this.delegateEvents();
     return this;
 };
 
-View.prototype._setElement = function _setElement(el) {
-    el = el || Lego.config.pageEl;
-    this._$el = el instanceof window.$ ? el : window.$(el);
+View.prototype.setElement = function setElement(el) {
+    if (el) {
+        this._$el = el instanceof window.$ ? el : window.$(el);
+        if (el == "body") {
+            this._$el.html(this.$el);
+        } else {
+            this._$el.replaceWith(this.$el);
+        }
+    }
 };
 
 View.prototype.delegateEvents = function delegateEvents() {

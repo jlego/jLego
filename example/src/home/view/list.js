@@ -2,7 +2,7 @@ class ListView extends HBY.View {
     constructor(opts = {}) {
         const options = {
             events: {
-                'click #test': 'theClick'
+                'click a': 'theClick'
             },
             listen: {
                 'data_update': (data) => {
@@ -19,7 +19,7 @@ class ListView extends HBY.View {
         let vDom = hx`<div>
           <h1>hello world!</h1>
           ${data.map((model, i) => {
-            return hx`<a href="#/home/list" style="display:block;">${model.last}</a>\n`
+            return hx`<a href="javascript:;" style="display:block;">${model.last}</a>\n`
           })}
           <home id="test"></home>
         </div>`;
@@ -27,7 +27,7 @@ class ListView extends HBY.View {
     }
     theClick(event){
         event.stopPropagation();
-        this.remove();
+        // this.remove();
         debug.warn('66666666666');
     }
 }

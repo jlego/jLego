@@ -6,7 +6,8 @@ HBY.components('home', homeView);
 HBY.router({
     '/home' () {
         console.warn('ppppppppppppppppp');
-        HBY.create(listView, {
+        const theview = HBY.create(listView, {
+            // el: HBY.config.pageEl,
             dataSource: {
                 api: ['test', 'ok'],
                 server: listData
@@ -33,9 +34,11 @@ HBY.router({
                 // }
             }]
         });
+        $(HBY.config.pageEl).html(theview.el);
     },
     '/home/list' () {
         HBY.create(listView, {
+            el: HBY.config.pageEl,
             data: {
                 list: [
                     { first: 'home', last: 'Bond' },
