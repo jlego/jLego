@@ -1,6 +1,6 @@
 /**
- * lego.js v0.5.3
- * (c) 2016 Ronghui Yu
+ * lego.js v0.6.0
+ * (c) 2017 Ronghui Yu
  * @license MIT
  */
 "use strict";
@@ -474,19 +474,9 @@ var Data = function Data(opts) {
     this.datas = new Map();
     this.Eventer = Lego.Eventer;
     for (var key in opts) {
-        this$1.datas.set(key, opts[key]);
-        this$1.datas.get(key).data = {};
+        this$1.datas.set(key, {});
     }
-};
-
-Data.prototype.setOptions = function setOptions(apiName, opts) {
-    if (opts === void 0) opts = {};
-    if (!this.datas.get(apiName)) {
-        return this;
-    }
-    var newOpts = $.extend(true, this.datas.get(apiName), opts);
-    this.datas.set(apiName, newOpts);
-    return this;
+    this.options = opts;
 };
 
 Data.prototype.fetch = function fetch(apiNameArr, callback) {
@@ -494,25 +484,10 @@ Data.prototype.fetch = function fetch(apiNameArr, callback) {
     apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [ apiNameArr ];
     this.__fetch(apiNameArr).then(function(datas) {
         apiNameArr.forEach(function(apiName, index) {
-            var data = datas[index];
-            var listTarget = that.datas.get(apiName).listTarget;
-            var model = that.datas.get(apiName).model;
-            if (data) {
-                if (listTarget && Array.isArray(data[listTarget]) && model) {
-                    data[listTarget].forEach(function(item, i) {
-                        data[listTarget][i] = $.extend({}, model, item);
-                    });
-                }
-                if (!listTarget && Array.isArray(data) && !model) {
-                    data.forEach(function(item, i) {
-                        data[i] = $.extend({}, model, item);
-                    });
-                }
-            }
-            that.datas.get(apiName).data = data;
+            that.datas.set(apiName, datas[index]);
         });
         if (typeof callback == "function") {
-            callback(that.parse(datas));
+            callback(that.parse(datas, apiNameArr.join("_")));
         }
     });
 };
@@ -529,42 +504,56 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
                     context$2$0.prev = 1;
                     promisesArr = apiNameArr.map(function(apiName) {
                         return __async(regeneratorRuntime.mark(function callee$3$0() {
-                            var option, req, response;
+                            var data, option, headers, theBody, key, req, response;
                             return regeneratorRuntime.wrap(function callee$3$0$(context$4$0) {
                                 while (1) {
                                     switch (context$4$0.prev = context$4$0.next) {
                                       case 0:
-                                        option = that.datas.get(apiName) || {};
-                                        if (!(!Lego.isEmptyObject(option.data) && !option.reset)) {
+                                        data = that.datas.get(apiName) || {}, option = that.options[apiName];
+                                        if (!(!Lego.isEmptyObject(data) && !option.reset)) {
                                             context$4$0.next = 7;
                                             break;
                                         }
                                         context$4$0.next = 4;
-                                        return option.data;
+                                        return data;
 
                                       case 4:
                                         return context$4$0.abrupt("return", context$4$0.sent);
 
                                       case 7:
-                                        if (!(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(option.data) || option.reset))) {
-                                            context$4$0.next = 13;
+                                        if (!(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(data) || option.reset))) {
+                                            context$4$0.next = 16;
                                             break;
                                         }
+                                        headers = option.headers || {
+                                            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+                                        };
+                                        theBody = Object.assign({}, option.body ? option.body : {});
+                                        if (headers["Content-type"] == "application/x-www-form-urlencoded; charset=UTF-8") {
+                                            if (theBody && typeof theBody === "object") {
+                                                for (key in theBody) {
+                                                    if (typeof theBody[key] === "object") {
+                                                        theBody[key] = JSON.stringify(theBody[key]);
+                                                    }
+                                                }
+                                                theBody = $.param(theBody);
+                                            }
+                                        }
                                         req = new Request(option.url, {
-                                            method: option.method || "GET",
-                                            headers: option.headers || "none",
+                                            method: option.method || "POST",
+                                            headers: headers,
                                             mode: "same-origin",
                                             credentials: "include",
-                                            body: option.body || undefined
+                                            body: theBody
                                         });
-                                        context$4$0.next = 11;
+                                        context$4$0.next = 14;
                                         return fetch(req);
 
-                                      case 11:
+                                      case 14:
                                         response = context$4$0.sent;
                                         return context$4$0.abrupt("return", response.json());
 
-                                      case 13:
+                                      case 16:
                                       case "end":
                                         return context$4$0.stop();
                                     }
