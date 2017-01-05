@@ -4,5 +4,6 @@ import BaseData from "./lib/data";
 
 LegoCore.View = BaseView;
 LegoCore.Data = BaseData;
+LegoCore.Ux = {};
 
 export default LegoCore;

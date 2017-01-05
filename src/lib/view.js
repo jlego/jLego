@@ -14,15 +14,14 @@ class View {
         this.options = {
             events: null,
             listen: null,
-            config: {}
+            components: []
         };
         Object.assign(this.options, opts);
         this.Eventer = Lego.Eventer;
-        this._setElement(this.options.el);
         this.server = null;
-        // this.isloaded = false;  //是否已加载过
         this._renderRootNode();
         this.setElement(this.options.el);
+        this.setEvent(this.options.el);
         this.options.data = this.options.data || {};
         this._observe();
         this.fetch();
@@ -74,10 +73,8 @@ class View {
         if(this.options.attr){
             this.$el.attr(this.options.attr);
         }
-        if(!this.options.el || this.options.el == 'body'){
-            this._$el.html(this.$el);
-        }else{
-            this._$el.replaceWith(this.$el);
+        if(this.options.className){
+            this.$el.addClass(this.options.className);
         }
         this.el = this.$el[0];
     }
@@ -87,12 +84,13 @@ class View {
      */
     _renderComponents(){
         const that = this;
-        this.options.components = this.options.components || [];
         if(this.options.components.length) {
             // this.isloaded = true;
             this.options.components.forEach(function(item, i){
-                const tagName = item.el ? that.$(item.el)[0].tagName : '';
-                if(tagName) Lego.create(Lego.UI[tagName.toLowerCase()], item);
+                if($(item.el).length){
+                    const tagName = item.el ? $(item.el)[0].tagName : '';
+                    if(tagName) Lego.create(Lego.UI[tagName.toLowerCase()], item);
+                }
             });
         }
     }
@@ -114,12 +112,11 @@ class View {
         }
     }
     /**
-     * [setElement description]
+     * [setEvent description]
      * @param {[type]} element [description]
      */
-    setElement(element) {
+    setEvent(el) {
         this.unEvents();
-        this._setElement(element);
         this.delegateEvents();
         return this;
     }
@@ -127,9 +124,15 @@ class View {
      * [_setElement description]
      * @param {[type]} el [description]
      */
-    _setElement(el){
-        el = el || Lego.config.pageEl;
-        this._$el = el instanceof window.$ ? el : window.$(el);
+    setElement(el){
+        if(el) {
+            this._$el = el instanceof window.$ ? el : window.$(el);
+            if(el == 'body'){
+                this._$el.html(this.$el);
+            }else{
+                this._$el.replaceWith(this.$el);
+            }
+        }
     }
     /**
      * [delegateEvents description]

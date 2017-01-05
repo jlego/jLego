@@ -34,6 +34,7 @@ class Core {
         this.datas = {};    //数据容器
         this.permis = {};   //权限对象
         this.timer = {};   //计时器对象
+        this.UI = {};
         this.routers = new Map();
         this.Eventer = new Events(); //全局事件对象
         return this;
@@ -94,7 +95,6 @@ class Core {
      * @return {[type]}      [description]
      */
     components(comName, coms = {}, isReset = false){
-        this.UI = this.UI || {};
         if(typeof comName === 'string') this.UI[comName] = coms;
         if(typeof comName === 'object'){
             if(!this.isEmptyObject(comName)){
@@ -270,8 +270,8 @@ class Core {
      * @param  {[type]} appName [description]
      * @return {[type]}         [description]
      */
-    getView(viewId, appName = this.getAppName()){
-        const el = viewId instanceof window.$ ? viewId : window.$('[view-id=' + viewId + ']');
+    getView(el, appName = this.getAppName()){
+        el = el instanceof window.$ ? el : window.$(el);
         if(el.length && this.views[appName].has(el[0])){
             return this.views[appName].get(el[0]);
         }

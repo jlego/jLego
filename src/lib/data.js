@@ -15,9 +15,11 @@ class Data {
         this.datas = new Map();
         this.Eventer = Lego.Eventer;
         for(let key in opts){
-            this.datas.set(key, opts[key]);
-            this.datas.get(key).data = {};
+            this.datas.set(key, {});
+            // this.datas.set(key, opts[key]);
+            // this.datas.get(key).data = {};
         }
+        this.options = opts;
     }
     /**
      * [setOptions 设置参数]
@@ -25,13 +27,13 @@ class Data {
      * @param  {Object} opts    [description]
      * @return {[type]}         [description]
      */
-    setOptions(apiName, opts = {}) {
-        // console.log('setter: ' + value);
-        if(!this.datas.get(apiName)) return this;
-        const newOpts = $.extend(true, this.datas.get(apiName), opts);
-        this.datas.set(apiName, newOpts);
-        return this;
-    }
+    // setOptions(apiName, opts = {}) {
+    //     // console.log('setter: ' + value);
+    //     if(!this.datas.get(apiName)) return this;
+    //     const newOpts = $.extend(true, this.datas.get(apiName), opts);
+    //     this.datas.set(apiName, newOpts);
+    //     return this;
+    // }
     /**
      * [fetch 加载数据接口]
      * @param  {[type]}   apiNameArr [description]
@@ -43,25 +45,25 @@ class Data {
         apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [apiNameArr];
         this.__fetch(apiNameArr).then((datas) => {
             apiNameArr.forEach((apiName, index)=> {
-                const data = datas[index];
-                const listTarget = that.datas.get(apiName).listTarget;
-                const model = that.datas.get(apiName).model;
-                // 添加模型数据
-                if(data){
-                    if(listTarget && Array.isArray(data[listTarget]) && model){
-                        data[listTarget].forEach(function(item, i){
-                            data[listTarget][i] = $.extend({}, model, item);
-                        });
-                    }
-                    if(!listTarget && Array.isArray(data) && !model){
-                        data.forEach(function(item, i){
-                            data[i] = $.extend({}, model, item);
-                        });
-                    }
-                }
-                that.datas.get(apiName).data = data;
+                // const data = datas[index];
+                // const listTarget = that.datas.get(apiName).listTarget;
+                // const model = that.datas.get(apiName).model;
+                // // 添加模型数据
+                // if(data){
+                //     if(listTarget && Array.isArray(data[listTarget]) && model){
+                //         data[listTarget].forEach(function(item, i){
+                //             data[listTarget][i] = $.extend({}, model, item);
+                //         });
+                //     }
+                //     if(!listTarget && Array.isArray(data) && !model){
+                //         data.forEach(function(item, i){
+                //             data[i] = $.extend({}, model, item);
+                //         });
+                //     }
+                // }
+                that.datas.set(apiName, datas[index]);
             });
-            if(typeof callback == 'function') callback(that.parse(datas));
+            if(typeof callback == 'function') callback(that.parse(datas, apiNameArr.join('_')));
         });
     }
     /**
@@ -75,18 +77,31 @@ class Data {
         try {
             // 并发读取远程URL
             let promisesArr = apiNameArr.map(async apiName => {
-                let option = that.datas.get(apiName) || {};
-                if(!Lego.isEmptyObject(option.data) && !option.reset){
+                let data = that.datas.get(apiName) || {},
+                    option = that.options[apiName];
+                if(!Lego.isEmptyObject(data) && !option.reset){
                     // 取缓存数据
-                    return await option.data;
-                }else if(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(option.data) || option.reset)){
+                    return await data;
+                }else if(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(data) || option.reset)){
+                    let headers = option.headers || { "Content-type": "application/x-www-form-urlencoded; charset=UTF-8" };
+                    let theBody = Object.assign({}, option.body ? option.body : {});
+                    if(headers["Content-type"] == "application/x-www-form-urlencoded; charset=UTF-8"){
+                        if(theBody && typeof theBody === 'object'){
+                            for(let key in theBody){
+                                if(typeof theBody[key] === 'object'){
+                                    theBody[key] = JSON.stringify(theBody[key]);
+                                }
+                            }
+                            theBody = $.param(theBody);
+                        }
+                    }
                     // 取新数据
                     let req = new Request( option.url, {
-                        method: option.method || "GET",
-                        headers: option.headers || 'none',
+                        method: option.method || "POST",
+                        headers: headers,
                         mode: 'same-origin', // same-origin|no-cors（默认）|cors
                         credentials: 'include',  //omit（默认，不带cookie）|same-origin(同源带cookie)|include(总是带cookie)
-                        body: option.body || undefined
+                        body: theBody
                     });
                     let response = await fetch(req);
                     return response.json();

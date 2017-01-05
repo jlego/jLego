@@ -1,6 +1,6 @@
 /**
- * lego.js v0.4.1
- * (c) 2016 Ronghui Yu
+ * lego.js v0.6.1
+ * (c) 2017 Ronghui Yu
  * @license MIT
  */
 "use strict";
@@ -47,6 +47,7 @@ var Core = function Core(opts) {
     this.datas = {};
     this.permis = {};
     this.timer = {};
+    this.UI = {};
     this.routers = new Map();
     this.Eventer = new Events();
     return this;
@@ -98,7 +99,6 @@ Core.prototype.init = function init(opts) {
 Core.prototype.components = function components(comName, coms, isReset) {
     if (coms === void 0) coms = {};
     if (isReset === void 0) isReset = false;
-    this.UI = this.UI || {};
     if (typeof comName === "string") {
         this.UI[comName] = coms;
     }
@@ -242,9 +242,9 @@ Core.prototype.getAppName = function getAppName() {
     return hash.split("/")[0] || this.config.defaultApp;
 };
 
-Core.prototype.getView = function getView(viewId, appName) {
+Core.prototype.getView = function getView(el, appName) {
     if (appName === void 0) appName = this.getAppName();
-    var el = viewId instanceof window.$ ? viewId : window.$("[view-id=" + viewId + "]");
+    el = el instanceof window.$ ? el : window.$(el);
     if (el.length && this.views[appName].has(el[0])) {
         return this.views[appName].get(el[0]);
     }
@@ -287,14 +287,14 @@ var View = function View(opts) {
     this.options = {
         events: null,
         listen: null,
-        config: {}
+        components: []
     };
     Object.assign(this.options, opts);
     this.Eventer = Lego.Eventer;
-    this._setElement(this.options.el);
     this.server = null;
     this._renderRootNode();
     this.setElement(this.options.el);
+    this.setEvent(this.options.el);
     this.options.data = this.options.data || {};
     this._observe();
     this.fetch();
@@ -341,22 +341,21 @@ View.prototype._renderRootNode = function _renderRootNode() {
     if (this.options.attr) {
         this.$el.attr(this.options.attr);
     }
-    if (!this.options.el || this.options.el == "body") {
-        this._$el.html(this.$el);
-    } else {
-        this._$el.replaceWith(this.$el);
+    if (this.options.className) {
+        this.$el.addClass(this.options.className);
     }
     this.el = this.$el[0];
 };
 
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
-    this.options.components = this.options.components || [];
     if (this.options.components.length) {
         this.options.components.forEach(function(item, i) {
-            var tagName = item.el ? that.$(item.el)[0].tagName : "";
-            if (tagName) {
-                Lego.create(Lego.UI[tagName.toLowerCase()], item);
+            if ($(item.el).length) {
+                var tagName = item.el ? $(item.el)[0].tagName : "";
+                if (tagName) {
+                    Lego.create(Lego.UI[tagName.toLowerCase()], item);
+                }
             }
         });
     }
@@ -376,16 +375,21 @@ View.prototype._observe = function _observe() {
     }
 };
 
-View.prototype.setElement = function setElement(element) {
+View.prototype.setEvent = function setEvent(el) {
     this.unEvents();
-    this._setElement(element);
     this.delegateEvents();
     return this;
 };
 
-View.prototype._setElement = function _setElement(el) {
-    el = el || Lego.config.pageEl;
-    this._$el = el instanceof window.$ ? el : window.$(el);
+View.prototype.setElement = function setElement(el) {
+    if (el) {
+        this._$el = el instanceof window.$ ? el : window.$(el);
+        if (el == "body") {
+            this._$el.html(this.$el);
+        } else {
+            this._$el.replaceWith(this.$el);
+        }
+    }
 };
 
 View.prototype.delegateEvents = function delegateEvents() {
@@ -469,19 +473,9 @@ var Data = function Data(opts) {
     this.datas = new Map();
     this.Eventer = Lego.Eventer;
     for (var key in opts) {
-        this$1.datas.set(key, opts[key]);
-        this$1.datas.get(key).data = {};
+        this$1.datas.set(key, {});
     }
-};
-
-Data.prototype.setOptions = function setOptions(apiName, opts) {
-    if (opts === void 0) opts = {};
-    if (!this.datas.get(apiName)) {
-        return this;
-    }
-    var newOpts = $.extend(true, this.datas.get(apiName), opts);
-    this.datas.set(apiName, newOpts);
-    return this;
+    this.options = opts;
 };
 
 Data.prototype.fetch = function fetch(apiNameArr, callback) {
@@ -489,25 +483,10 @@ Data.prototype.fetch = function fetch(apiNameArr, callback) {
     apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [ apiNameArr ];
     this.__fetch(apiNameArr).then(function(datas) {
         apiNameArr.forEach(function(apiName, index) {
-            var data = datas[index];
-            var listTarget = that.datas.get(apiName).listTarget;
-            var model = that.datas.get(apiName).model;
-            if (data) {
-                if (listTarget && Array.isArray(data[listTarget]) && model) {
-                    data[listTarget].forEach(function(item, i) {
-                        data[listTarget][i] = $.extend({}, model, item);
-                    });
-                }
-                if (!listTarget && Array.isArray(data) && !model) {
-                    data.forEach(function(item, i) {
-                        data[i] = $.extend({}, model, item);
-                    });
-                }
-            }
-            that.datas.get(apiName).data = data;
+            that.datas.set(apiName, datas[index]);
         });
         if (typeof callback == "function") {
-            callback(that.parse(datas));
+            callback(that.parse(datas, apiNameArr.join("_")));
         }
     });
 };
@@ -524,42 +503,56 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
                     context$2$0.prev = 1;
                     promisesArr = apiNameArr.map(function(apiName) {
                         return __async(regeneratorRuntime.mark(function callee$3$0() {
-                            var option, req, response;
+                            var data, option, headers, theBody, key, req, response;
                             return regeneratorRuntime.wrap(function callee$3$0$(context$4$0) {
                                 while (1) {
                                     switch (context$4$0.prev = context$4$0.next) {
                                       case 0:
-                                        option = that.datas.get(apiName) || {};
-                                        if (!(!Lego.isEmptyObject(option.data) && !option.reset)) {
+                                        data = that.datas.get(apiName) || {}, option = that.options[apiName];
+                                        if (!(!Lego.isEmptyObject(data) && !option.reset)) {
                                             context$4$0.next = 7;
                                             break;
                                         }
                                         context$4$0.next = 4;
-                                        return option.data;
+                                        return data;
 
                                       case 4:
                                         return context$4$0.abrupt("return", context$4$0.sent);
 
                                       case 7:
-                                        if (!(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(option.data) || option.reset))) {
-                                            context$4$0.next = 13;
+                                        if (!(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(data) || option.reset))) {
+                                            context$4$0.next = 16;
                                             break;
                                         }
+                                        headers = option.headers || {
+                                            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+                                        };
+                                        theBody = Object.assign({}, option.body ? option.body : {});
+                                        if (headers["Content-type"] == "application/x-www-form-urlencoded; charset=UTF-8") {
+                                            if (theBody && typeof theBody === "object") {
+                                                for (key in theBody) {
+                                                    if (typeof theBody[key] === "object") {
+                                                        theBody[key] = JSON.stringify(theBody[key]);
+                                                    }
+                                                }
+                                                theBody = $.param(theBody);
+                                            }
+                                        }
                                         req = new Request(option.url, {
-                                            method: option.method || "GET",
-                                            headers: option.headers || "none",
+                                            method: option.method || "POST",
+                                            headers: headers,
                                             mode: "same-origin",
                                             credentials: "include",
-                                            body: option.body || undefined
+                                            body: theBody
                                         });
-                                        context$4$0.next = 11;
+                                        context$4$0.next = 14;
                                         return fetch(req);
 
-                                      case 11:
+                                      case 14:
                                         response = context$4$0.sent;
                                         return context$4$0.abrupt("return", response.json());
 
-                                      case 13:
+                                      case 16:
                                       case "end":
                                         return context$4$0.stop();
                                     }
@@ -1057,5 +1050,7 @@ Data.prototype.getData = function getData(apiName) {
 LegoCore$1.View = View;
 
 LegoCore$1.Data = Data;
+
+LegoCore$1.Ux = {};
 
 module.exports = LegoCore$1;

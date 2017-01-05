@@ -6,6 +6,7 @@ HBY.router({
     '/test' () {
         console.warn('7777777777777');
         HBY.create(listView, {
+            el: HBY.config.pageEl,
             dataSource: {
                 api: ['gg', 'ff'],
                 server: listData
@@ -22,6 +23,7 @@ HBY.router({
     },
     '/test/list' () {
         HBY.create(listView, {
+            el: HBY.config.pageEl,
             data: {
                 list: [
                     { first: 'home', last: '99999' },
