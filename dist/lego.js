@@ -1,5 +1,5 @@
 /**
- * lego.js v0.6.0
+ * lego.js v0.6.1
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -287,7 +287,7 @@ var View = function View(opts) {
     this.options = {
         events: null,
         listen: null,
-        config: {}
+        components: []
     };
     Object.assign(this.options, opts);
     this.Eventer = Lego.Eventer;
@@ -349,7 +349,6 @@ View.prototype._renderRootNode = function _renderRootNode() {
 
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
-    this.options.components = this.options.components || [];
     if (this.options.components.length) {
         this.options.components.forEach(function(item, i) {
             if ($(item.el).length) {
