@@ -1,5 +1,5 @@
 /**
- * lego.js v0.6.0
+ * lego.js v0.6.5
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -25,7 +25,6 @@ var Core = function Core(opts) {
     this.config = {
         alias: "Lego",
         version: "1.0.0",
-        $: null,
         isDebug: true,
         isAnimate: false,
         isPermit: false,
@@ -91,7 +90,6 @@ Core.prototype.init = function init(opts) {
     if (!this.isEmptyObject(opts)) {
         Object.assign(this.config, opts);
     }
-    window.$ = this.$ = this.config.$;
     window[this.config.alias] = window.Lego = this;
     return this;
 };
@@ -173,7 +171,7 @@ Core.prototype._clearObj = function _clearObj(appName) {
 
 Core.prototype.startApp = function startApp(appPath, opts) {
     if (opts === void 0) opts = {};
-    if (!$) {
+    if (!window.$) {
         debug.error("$ is undefined!");
         return;
     }
@@ -286,8 +284,7 @@ var View = function View(opts) {
     var that = this;
     this.options = {
         events: null,
-        listen: null,
-        config: {}
+        listen: null
     };
     Object.assign(this.options, opts);
     this.Eventer = Lego.Eventer;

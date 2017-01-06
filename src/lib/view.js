@@ -13,8 +13,7 @@ class View {
         const that = this;
         this.options = {
             events: null,
-            listen: null,
-            config: {}
+            listen: null
         };
         Object.assign(this.options, opts);
         this.Eventer = Lego.Eventer;
