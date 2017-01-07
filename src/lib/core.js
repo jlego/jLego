@@ -1,5 +1,7 @@
 import Events from "events";
 import { Router } from 'director';
+// import jQuery from 'jquery';
+// window.$ = window.jQuery = jQuery;
 
 class Core {
     constructor(opts = {}) {
@@ -7,7 +9,6 @@ class Core {
         this.config = {
             alias: 'Lego',
             version: '1.0.0',
-            $: null,    //dom操作对象, 必须
             isDebug: true,
             isAnimate: false,  //是否开启动画
             isPermit: false,  //是否开启操作权限
@@ -85,7 +86,6 @@ class Core {
      */
     init(opts = {}){
         if(!this.isEmptyObject(opts)) Object.assign(this.config, opts);
-        window.$ = this.$ = this.config.$;
         window[this.config.alias] = window.Lego = this;
         return this;
     }
@@ -188,7 +188,7 @@ class Core {
      * @return {[type]}        [description]
      */
     startApp(appPath, opts = {}) {
-        if(!$){
+        if(!window.$){
             debug.error('$ is undefined!');
             return;
         }
