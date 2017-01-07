@@ -122,7 +122,7 @@ class Data {
      * @param  {[type]} data [description]
      * @return {[type]}      [description]
      */
-    parse(datas){
+    parse(datas, apiName){
         return datas;
     }
     /**
