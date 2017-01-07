@@ -22,19 +22,6 @@ class Data {
         this.options = opts;
     }
     /**
-     * [setOptions 设置参数]
-     * @param  {[type]} apiName [description]
-     * @param  {Object} opts    [description]
-     * @return {[type]}         [description]
-     */
-    // setOptions(apiName, opts = {}) {
-    //     // console.log('setter: ' + value);
-    //     if(!this.datas.get(apiName)) return this;
-    //     const newOpts = $.extend(true, this.datas.get(apiName), opts);
-    //     this.datas.set(apiName, newOpts);
-    //     return this;
-    // }
-    /**
      * [fetch 加载数据接口]
      * @param  {[type]}   apiNameArr [description]
      * @param  {Function} callback   [description]
@@ -45,22 +32,6 @@ class Data {
         apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [apiNameArr];
         this.__fetch(apiNameArr).then((datas) => {
             apiNameArr.forEach((apiName, index)=> {
-                // const data = datas[index];
-                // const listTarget = that.datas.get(apiName).listTarget;
-                // const model = that.datas.get(apiName).model;
-                // // 添加模型数据
-                // if(data){
-                //     if(listTarget && Array.isArray(data[listTarget]) && model){
-                //         data[listTarget].forEach(function(item, i){
-                //             data[listTarget][i] = $.extend({}, model, item);
-                //         });
-                //     }
-                //     if(!listTarget && Array.isArray(data) && !model){
-                //         data.forEach(function(item, i){
-                //             data[i] = $.extend({}, model, item);
-                //         });
-                //     }
-                // }
                 that.datas.set(apiName, datas[index]);
             });
             if(typeof callback == 'function') callback(that.parse(datas, apiNameArr.join('_')));
