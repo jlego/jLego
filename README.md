@@ -17,10 +17,10 @@ Create the application entry file `/src/main.js`
 ```javascript
 import jQuery from 'jquery';
 import Lego from 'lego-core';
+window.$ = window.jQuery = jQuery;
 Lego.init({
     alias: 'Lego', //Lego instance alias
     version: '20161202', //The version number of the release
-    $: jQuery, //Dom operation library
     pageEl: '#container', //Page rendering container
     defaultApp: 'home', //The application launches module by default
     rootUri: '/example/dist/', //Root directory
@@ -62,12 +62,8 @@ class HomeData extends Lego.Data {
         const options = {
             'apiName_a': {
                 url: './content.json',
-                listTarget: 'data',  //If it is a list of data
-                model: {	//for set the default model data value
-                    first: '',
-                    last: '',
-                    id: 0
-                },
+		method: 'GET',
+                body: {param: paramValue}
                 // reset: true   //Whether to re-pull the remote data， yes is 'true'
             },
             'apiName_b': {
@@ -79,7 +75,7 @@ class HomeData extends Lego.Data {
         super(options);
     }
     //return format data
-    parse(datas) {
+    parse(datas, apiName) {
         return datas[0].data;
     }
 }
