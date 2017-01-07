@@ -68,7 +68,7 @@ class Data {
                     }
                     // 取新数据
                     let req = new Request( option.url, {
-                        method: option.method || "POST",
+                        method: option.method || "GET",
                         headers: headers,
                         mode: 'same-origin', // same-origin|no-cors（默认）|cors
                         credentials: 'include',  //omit（默认，不带cookie）|same-origin(同源带cookie)|include(总是带cookie)
