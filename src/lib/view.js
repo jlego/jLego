@@ -52,6 +52,7 @@ class View {
      * @return {[type]} [description]
      */
     _renderRootNode(){
+        this.renderBefore();
         const content = this.render();
         this.oldNode = content;
         this.rootNode = vdom.create(content);
@@ -61,7 +62,9 @@ class View {
                 this.$el.attr('id', this.options.id);
             }else{
                 if((new RegExp(/#/)).test(this.options.el)){
-                    this.$el.attr('id', this.options.el.replace(/#/, ''));
+                    const theId = this.options.el.replace(/#/, '');
+                    this.$el.attr('id', theId);
+                    this.options.id = theId;
                 }
             }
         }
@@ -76,6 +79,7 @@ class View {
             this.$el.addClass(this.options.className);
         }
         this.el = this.$el[0];
+        this.renderAfter();
     }
     /**
      * [_renderComponents 渲染组件]
@@ -103,11 +107,13 @@ class View {
         if(this.options && typeof this.options === 'object'){
             Object.observe(this.options, (changes) =>{
                 // debug.log(changes);
+                that.renderBefore();
                 const newNode = this.render();
                 let patches = vdom.diff(that.oldNode, newNode);
                 that.rootNode = vdom.patch(that.rootNode, patches);
                 that.oldNode = newNode;
                 that._renderComponents();
+                that.renderAfter();
             });
         }
     }
@@ -196,6 +202,20 @@ class View {
      */
     render() {
         return '';
+    }
+    /**
+     * [renderBefore description]
+     * @return {[type]} [description]
+     */
+    renderBefore(){
+        return this;
+    }
+    /**
+     * [renderAfter description]
+     * @return {[type]} [description]
+     */
+    renderAfter(){
+        return this;
     }
     /**
      * [refresh 刷新视图]

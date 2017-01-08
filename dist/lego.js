@@ -1,5 +1,5 @@
 /**
- * lego.js v0.6.5
+ * lego.js v0.6.9
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -318,6 +318,7 @@ View.prototype.fetch = function fetch() {
 };
 
 View.prototype._renderRootNode = function _renderRootNode() {
+    this.renderBefore();
     var content = this.render();
     this.oldNode = content;
     this.rootNode = vdom.create(content);
@@ -327,7 +328,9 @@ View.prototype._renderRootNode = function _renderRootNode() {
             this.$el.attr("id", this.options.id);
         } else {
             if (new RegExp(/#/).test(this.options.el)) {
-                this.$el.attr("id", this.options.el.replace(/#/, ""));
+                var theId = this.options.el.replace(/#/, "");
+                this.$el.attr("id", theId);
+                this.options.id = theId;
             }
         }
     }
@@ -342,6 +345,7 @@ View.prototype._renderRootNode = function _renderRootNode() {
         this.$el.addClass(this.options.className);
     }
     this.el = this.$el[0];
+    this.renderAfter();
 };
 
 View.prototype._renderComponents = function _renderComponents() {
@@ -364,11 +368,13 @@ View.prototype._observe = function _observe() {
     var that = this;
     if (this.options && typeof this.options === "object") {
         Object.observe(this.options, function(changes) {
+            that.renderBefore();
             var newNode = this$1.render();
             var patches = vdom.diff(that.oldNode, newNode);
             that.rootNode = vdom.patch(that.rootNode, patches);
             that.oldNode = newNode;
             that._renderComponents();
+            that.renderAfter();
         });
     }
 };
@@ -435,6 +441,14 @@ View.prototype.$ = function $(selector) {
 
 View.prototype.render = function render() {
     return "";
+};
+
+View.prototype.renderBefore = function renderBefore() {
+    return this;
+};
+
+View.prototype.renderAfter = function renderAfter() {
+    return this;
 };
 
 View.prototype.refresh = function refresh() {
@@ -537,7 +551,7 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
                                             }
                                         }
                                         req = new Request(option.url, {
-                                            method: option.method || "POST",
+                                            method: option.method || "GET",
                                             headers: headers,
                                             mode: "same-origin",
                                             credentials: "include",
@@ -598,7 +612,7 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
     }).call(this));
 };
 
-Data.prototype.parse = function parse(datas) {
+Data.prototype.parse = function parse(datas, apiName) {
     return datas;
 };
 

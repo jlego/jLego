@@ -206,7 +206,6 @@ class Core {
         this.currentApp = appName;
         this._initObj(appName);
         if (typeof options.onBefore == 'function') options.onBefore();
-        // this.$(this.config.pageEl).scrollTop(0);
         $.ajax({
             type: "GET",
             url: this.config.rootUri + appName + '/app.js?' + this.config.version,
