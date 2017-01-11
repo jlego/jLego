@@ -1,5 +1,5 @@
 /**
- * lego.js v0.6.9
+ * lego.js v0.7.0
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -118,6 +118,13 @@ Core.prototype.randomKey = function randomKey(len) {
         pwd += $chars.charAt(Math.floor(Math.random() * maxPos));
     }
     return pwd;
+};
+
+Core.prototype.uuid = function uuid() {
+    function S4() {
+        return ((1 + Math.random()) * 65536 | 0).toString(16).substring(1);
+    }
+    return S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4();
 };
 
 Core.prototype.uniqueId = function uniqueId(prefix) {
@@ -320,9 +327,13 @@ View.prototype.fetch = function fetch() {
 View.prototype._renderRootNode = function _renderRootNode() {
     this.renderBefore();
     var content = this.render();
-    this.oldNode = content;
-    this.rootNode = vdom.create(content);
-    this.$el = $(this.rootNode);
+    if (content) {
+        this.oldNode = content;
+        this.rootNode = vdom.create(content);
+        this.$el = $(this.rootNode);
+    } else {
+        this.$el = $("<div></div>");
+    }
     if (this.options.id || this.options.el) {
         if (this.options.id) {
             this.$el.attr("id", this.options.id);

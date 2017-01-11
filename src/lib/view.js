@@ -54,9 +54,13 @@ class View {
     _renderRootNode(){
         this.renderBefore();
         const content = this.render();
-        this.oldNode = content;
-        this.rootNode = vdom.create(content);
-        this.$el = $(this.rootNode);
+        if(content){
+            this.oldNode = content;
+            this.rootNode = vdom.create(content);
+            this.$el = $(this.rootNode);
+        }else{
+            this.$el = $('<div></div>');
+        }
         if(this.options.id || this.options.el){
             if(this.options.id){
                 this.$el.attr('id', this.options.id);
