@@ -13,7 +13,8 @@ class View {
         const that = this;
         this.options = {
             events: null,
-            listen: null
+            listen: null,
+            components: []
         };
         Object.assign(this.options, opts);
         this.Eventer = Lego.Eventer;
@@ -54,9 +55,13 @@ class View {
     _renderRootNode(){
         this.renderBefore();
         const content = this.render();
-        this.oldNode = content;
-        this.rootNode = vdom.create(content);
-        this.$el = $(this.rootNode);
+        if(content){
+            this.oldNode = content;
+            this.rootNode = vdom.create(content);
+            this.$el = $(this.rootNode);
+        }else{
+            this.$el = $('<div></div>');
+        }
         if(this.options.id || this.options.el){
             if(this.options.id){
                 this.$el.attr('id', this.options.id);
@@ -87,9 +92,7 @@ class View {
      */
     _renderComponents(){
         const that = this;
-        this.options.components = this.options.components || [];
         if(this.options.components.length) {
-            // this.isloaded = true;
             this.options.components.forEach(function(item, i){
                 if($(item.el).length){
                     const tagName = item.el ? $(item.el)[0].tagName : '';
