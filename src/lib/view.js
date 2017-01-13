@@ -94,9 +94,11 @@ class View {
         const that = this;
         if(this.options.components.length) {
             this.options.components.forEach(function(item, i){
-                if($(item.el).length){
-                    const tagName = item.el ? $(item.el)[0].tagName : '';
-                    if(tagName) Lego.create(Lego.UI[tagName.toLowerCase()], item);
+                if(that.$(item.el).length){
+                    const tagName = item.el ? that.$(item.el)[0].tagName.toLowerCase() : '';
+                    if(tagName){
+                        that[tagName + '_' + that.options.vid] = Lego.create(Lego.UI[tagName], item);
+                    }
                 }
             });
         }

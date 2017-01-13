@@ -1,5 +1,5 @@
 /**
- * lego.js v0.7.2
+ * lego.js v0.7.8
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -357,10 +357,10 @@ View.prototype._renderComponents = function _renderComponents() {
     var that = this;
     if (this.options.components.length) {
         this.options.components.forEach(function(item, i) {
-            if ($(item.el).length) {
-                var tagName = item.el ? $(item.el)[0].tagName : "";
+            if (that.$(item.el).length) {
+                var tagName = item.el ? that.$(item.el)[0].tagName.toLowerCase() : "";
                 if (tagName) {
-                    Lego.create(Lego.UI[tagName.toLowerCase()], item);
+                    that[tagName + "_" + that.options.vid] = Lego.create(Lego.UI[tagName], item);
                 }
             }
         });
