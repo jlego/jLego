@@ -1,5 +1,5 @@
 /**
- * lego.js v0.7.1
+ * lego.js v0.7.2
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -559,7 +559,7 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
                                             headers: headers,
                                             mode: "same-origin",
                                             credentials: "include",
-                                            body: theBody
+                                            body: option.method == "POST" ? theBody : undefined
                                         });
                                         context$4$0.next = 14;
                                         return fetch(req);
