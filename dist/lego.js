@@ -1,5 +1,5 @@
 /**
- * lego.js v0.7.0
+ * lego.js v0.7.1
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -118,13 +118,6 @@ Core.prototype.randomKey = function randomKey(len) {
         pwd += $chars.charAt(Math.floor(Math.random() * maxPos));
     }
     return pwd;
-};
-
-Core.prototype.uuid = function uuid() {
-    function S4() {
-        return ((1 + Math.random()) * 65536 | 0).toString(16).substring(1);
-    }
-    return S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4();
 };
 
 Core.prototype.uniqueId = function uniqueId(prefix) {
@@ -291,7 +284,8 @@ var View = function View(opts) {
     var that = this;
     this.options = {
         events: null,
-        listen: null
+        listen: null,
+        components: []
     };
     Object.assign(this.options, opts);
     this.Eventer = Lego.Eventer;
@@ -361,7 +355,6 @@ View.prototype._renderRootNode = function _renderRootNode() {
 
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
-    this.options.components = this.options.components || [];
     if (this.options.components.length) {
         this.options.components.forEach(function(item, i) {
             if ($(item.el).length) {
