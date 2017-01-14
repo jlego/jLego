@@ -16,8 +16,6 @@ class Data {
         this.Eventer = Lego.Eventer;
         for(let key in opts){
             this.datas.set(key, {});
-            // this.datas.set(key, opts[key]);
-            // this.datas.get(key).data = {};
         }
         this.options = opts;
     }
@@ -30,11 +28,11 @@ class Data {
     fetch(apiNameArr, callback){
         let that = this;
         apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [apiNameArr];
-        this.__fetch(apiNameArr).then((datas) => {
+        this.__fetch(apiNameArr).then((result) => {
             apiNameArr.forEach((apiName, index)=> {
-                that.datas.set(apiName, datas[index]);
+                that.datas.set(apiName, result[index]);
             });
-            if(typeof callback == 'function') callback(that.parse(datas, apiNameArr.join('_')));
+            if(typeof callback == 'function') callback(that.parse(result, apiNameArr.join('_')));
         });
     }
     /**
