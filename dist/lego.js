@@ -1,5 +1,5 @@
 /**
- * lego.js v0.7.8
+ * lego.js v0.8.1
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -285,6 +285,7 @@ var View = function View(opts) {
     this.options = {
         events: null,
         listen: null,
+        context: opts.context || window,
         components: []
     };
     Object.assign(this.options, opts);
@@ -360,7 +361,8 @@ View.prototype._renderComponents = function _renderComponents() {
             if (that.$(item.el).length) {
                 var tagName = item.el ? that.$(item.el)[0].tagName.toLowerCase() : "";
                 if (tagName) {
-                    that[tagName + "_" + that.options.vid] = Lego.create(Lego.UI[tagName], item);
+                    item.context = that;
+                    Lego.create(Lego.UI[tagName], item);
                 }
             }
         });
@@ -497,12 +499,12 @@ var Data = function Data(opts) {
 Data.prototype.fetch = function fetch(apiNameArr, callback) {
     var that = this;
     apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [ apiNameArr ];
-    this.__fetch(apiNameArr).then(function(datas) {
+    this.__fetch(apiNameArr).then(function(result) {
         apiNameArr.forEach(function(apiName, index) {
-            that.datas.set(apiName, datas[index]);
+            that.datas.set(apiName, result[index]);
         });
         if (typeof callback == "function") {
-            callback(that.parse(datas, apiNameArr.join("_")));
+            callback(that.parse(result, apiNameArr.join("_")));
         }
     });
 };
@@ -617,6 +619,9 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
 };
 
 Data.prototype.parse = function parse(datas, apiName) {
+    if (typeof this[apiName] == "function") {
+        return this[apiName](datas);
+    }
     return datas;
 };
 

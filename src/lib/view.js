@@ -14,6 +14,7 @@ class View {
         this.options = {
             events: null,
             listen: null,
+            context: opts.context || window,
             components: []
         };
         Object.assign(this.options, opts);
@@ -97,7 +98,8 @@ class View {
                 if(that.$(item.el).length){
                     const tagName = item.el ? that.$(item.el)[0].tagName.toLowerCase() : '';
                     if(tagName){
-                        that[tagName + '_' + that.options.vid] = Lego.create(Lego.UI[tagName], item);
+                        item.context = that;
+                        Lego.create(Lego.UI[tagName], item);
                     }
                 }
             });

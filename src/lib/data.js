@@ -92,6 +92,7 @@ class Data {
      * @return {[type]}      [description]
      */
     parse(datas, apiName){
+        if(typeof this[apiName] == 'function') return this[apiName](datas);
         return datas;
     }
     /**
