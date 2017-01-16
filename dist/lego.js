@@ -1,5 +1,5 @@
 /**
- * lego.js v0.8.1
+ * lego.js v0.8.5
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -299,17 +299,25 @@ var View = function View(opts) {
     this.fetch();
 };
 
-View.prototype.fetch = function fetch() {
+View.prototype.fetch = function fetch(opts) {
     var this$1 = this;
+    if (opts === void 0) opts = {};
     if (this.options.dataSource) {
         var dataSource = this.options.dataSource;
+        dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
+        dataSource.api.forEach(function(apiName) {
+            dataSource[apiName] = $.extend(true, {}, dataSource.server.options[apiName], opts);
+        });
         if (dataSource.server) {
             if (typeof dataSource.server == "function") {
                 this.server = new dataSource.server();
             } else {
                 this.server = dataSource.server;
             }
-            this.server.fetch(dataSource.api, function(resp) {
+            this.server.fetch({
+                api: dataSource.api,
+                view: this
+            }, function(resp) {
                 this$1.options.data = resp;
                 this$1.refresh();
             });
@@ -496,28 +504,29 @@ var Data = function Data(opts) {
     this.options = opts;
 };
 
-Data.prototype.fetch = function fetch(apiNameArr, callback) {
-    var that = this;
-    apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [ apiNameArr ];
-    this.__fetch(apiNameArr).then(function(result) {
+Data.prototype.fetch = function fetch(opts, callback) {
+    if (opts === void 0) opts = {};
+    var that = this, apiNameArr = opts.api;
+    this.__fetch(opts).then(function(result) {
         apiNameArr.forEach(function(apiName, index) {
             that.datas.set(apiName, result[index]);
         });
         if (typeof callback == "function") {
-            callback(that.parse(result, apiNameArr.join("_")));
+            callback(that.parse(result, apiNameArr.join("_"), opts.view));
         }
     });
 };
 
-Data.prototype.__fetch = function __fetch(apiNameArr) {
+Data.prototype.__fetch = function __fetch(opts) {
+    if (opts === void 0) opts = {};
     return __async(regeneratorRuntime.mark(function callee$1$0() {
-        var that, results, promisesArr, promise, t$2$0, t$2$1, res;
+        var that, results, apiNameArr, view, promisesArr, promise, t$2$0, t$2$1, res;
         return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
             var this$1 = this;
             while (1) {
                 switch (context$2$0.prev = context$2$0.next) {
                   case 0:
-                    that = this$1, results = [];
+                    that = this$1, results = [], apiNameArr = opts.api, view = opts.view;
                     context$2$0.prev = 1;
                     promisesArr = apiNameArr.map(function(apiName) {
                         return __async(regeneratorRuntime.mark(function callee$3$0() {
@@ -526,7 +535,7 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
                                 while (1) {
                                     switch (context$4$0.prev = context$4$0.next) {
                                       case 0:
-                                        data = that.datas.get(apiName) || {}, option = that.options[apiName];
+                                        data = that.datas.get(apiName) || {}, option = view.options.dataSource[apiName];
                                         if (!(!Lego.isEmptyObject(data) && !option.reset)) {
                                             context$4$0.next = 7;
                                             break;
@@ -618,9 +627,9 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
     }).call(this));
 };
 
-Data.prototype.parse = function parse(datas, apiName) {
+Data.prototype.parse = function parse(datas, apiName, view) {
     if (typeof this[apiName] == "function") {
-        return this[apiName](datas);
+        return this[apiName](datas, view);
     }
     return datas;
 };

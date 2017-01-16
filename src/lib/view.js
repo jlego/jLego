@@ -31,16 +31,24 @@ class View {
      * [fetch 拉取数据]
      * @return {[type]} [description]
      */
-    fetch(){
+    fetch(opts = {}){
         if(this.options.dataSource){
             const dataSource = this.options.dataSource;
+            dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [dataSource.api];
+            dataSource.api.forEach(apiName => {
+                dataSource[apiName] = $.extend(true, {}, dataSource.server.options[apiName], opts);
+            });
             if(dataSource.server){
+                let server = null;
                 if(typeof dataSource.server == 'function'){
-                    this.server = new dataSource.server();
+                    server = new dataSource.server();
                 }else{
-                    this.server = dataSource.server;
+                    server = dataSource.server;
                 }
-                this.server.fetch(dataSource.api, (resp) => {
+                server.fetch({
+                    api: dataSource.api,
+                    view: this
+                }, (resp) => {
                     this.options.data = resp;
                     this.refresh();
                 });

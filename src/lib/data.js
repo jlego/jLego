@@ -25,14 +25,14 @@ class Data {
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    fetch(apiNameArr, callback){
-        let that = this;
-        apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [apiNameArr];
-        this.__fetch(apiNameArr).then((result) => {
+    fetch(opts = {}, callback){
+        let that = this,
+            apiNameArr = opts.api;
+        this.__fetch(opts).then((result) => {
             apiNameArr.forEach((apiName, index)=> {
                 that.datas.set(apiName, result[index]);
             });
-            if(typeof callback == 'function') callback(that.parse(result, apiNameArr.join('_')));
+            if(typeof callback == 'function') callback(that.parse(result, apiNameArr.join('_'), opts.view));
         });
     }
     /**
@@ -40,14 +40,16 @@ class Data {
      * @param  {Object} options [description]
      * @return {[type]}         [description]
      */
-    async __fetch(apiNameArr){
+    async __fetch(opts = {}){
         let that = this,
-            results = [];
+            results = [],
+            apiNameArr = opts.api,
+            view = opts.view;
         try {
             // 并发读取远程URL
             let promisesArr = apiNameArr.map(async apiName => {
                 let data = that.datas.get(apiName) || {},
-                    option = that.options[apiName];
+                    option = view.options.dataSource[apiName];
                 if(!Lego.isEmptyObject(data) && !option.reset){
                     // 取缓存数据
                     return await data;
@@ -91,8 +93,8 @@ class Data {
      * @param  {[type]} data [description]
      * @return {[type]}      [description]
      */
-    parse(datas, apiName){
-        if(typeof this[apiName] == 'function') return this[apiName](datas);
+    parse(datas, apiName, view){
+        if(typeof this[apiName] == 'function') return this[apiName](datas, view);
         return datas;
     }
     /**
