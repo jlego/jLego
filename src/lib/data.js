@@ -20,6 +20,17 @@ class Data {
         this.options = opts;
     }
     /**
+     * [create 发布信息]
+     * @param  {Object}   opts     [description]
+     * @param  {Function} callback [description]
+     * @return {[type]}            [description]
+     */
+    create(opts = {api: '', data: {}}, callback){
+        this.__fetch(opts).then((result) => {
+            if(typeof callback == 'function') callback(result ? result[0] : {error: 1});
+        });
+    }
+    /**
      * [fetch 加载数据接口]
      * @param  {[type]}   apiNameArr [description]
      * @param  {Function} callback   [description]
@@ -43,13 +54,14 @@ class Data {
     async __fetch(opts = {}){
         let that = this,
             results = [],
-            apiNameArr = opts.api,
+            apiNameArr = Array.isArray(opts.api) ? opts.api : [opts.api],
             view = opts.view;
         try {
             // 并发读取远程URL
             let promisesArr = apiNameArr.map(async apiName => {
                 let data = that.datas.get(apiName) || {},
-                    option = view.options.dataSource[apiName];
+                    dataOpts = $.extend(true, {}, that.options[apiName] || {}, opts.data || {}),
+                    option = opts.data ? dataOpts : view.options.dataSource[apiName];
                 if(!Lego.isEmptyObject(data) && !option.reset){
                     // 取缓存数据
                     return await data;

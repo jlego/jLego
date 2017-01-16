@@ -1,5 +1,5 @@
 /**
- * lego.js v0.8.5
+ * lego.js v0.8.6
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -309,12 +309,13 @@ View.prototype.fetch = function fetch(opts) {
             dataSource[apiName] = $.extend(true, {}, dataSource.server.options[apiName], opts);
         });
         if (dataSource.server) {
+            var server = null;
             if (typeof dataSource.server == "function") {
-                this.server = new dataSource.server();
+                server = new dataSource.server();
             } else {
-                this.server = dataSource.server;
+                server = dataSource.server;
             }
-            this.server.fetch({
+            server.fetch({
                 api: dataSource.api,
                 view: this
             }, function(resp) {
@@ -504,6 +505,20 @@ var Data = function Data(opts) {
     this.options = opts;
 };
 
+Data.prototype.create = function create(opts, callback) {
+    if (opts === void 0) opts = {
+        api: "",
+        data: {}
+    };
+    this.__fetch(opts).then(function(result) {
+        if (typeof callback == "function") {
+            callback(result ? result[0] : {
+                error: 1
+            });
+        }
+    });
+};
+
 Data.prototype.fetch = function fetch(opts, callback) {
     if (opts === void 0) opts = {};
     var that = this, apiNameArr = opts.api;
@@ -526,16 +541,18 @@ Data.prototype.__fetch = function __fetch(opts) {
             while (1) {
                 switch (context$2$0.prev = context$2$0.next) {
                   case 0:
-                    that = this$1, results = [], apiNameArr = opts.api, view = opts.view;
+                    that = this$1, results = [], apiNameArr = Array.isArray(opts.api) ? opts.api : [ opts.api ], 
+                    view = opts.view;
                     context$2$0.prev = 1;
                     promisesArr = apiNameArr.map(function(apiName) {
                         return __async(regeneratorRuntime.mark(function callee$3$0() {
-                            var data, option, headers, theBody, key, req, response;
+                            var data, dataOpts, option, headers, theBody, key, req, response;
                             return regeneratorRuntime.wrap(function callee$3$0$(context$4$0) {
                                 while (1) {
                                     switch (context$4$0.prev = context$4$0.next) {
                                       case 0:
-                                        data = that.datas.get(apiName) || {}, option = view.options.dataSource[apiName];
+                                        data = that.datas.get(apiName) || {}, dataOpts = $.extend(true, {}, that.options[apiName] || {}, opts.data || {}), 
+                                        option = opts.data ? dataOpts : view.options.dataSource[apiName];
                                         if (!(!Lego.isEmptyObject(data) && !option.reset)) {
                                             context$4$0.next = 7;
                                             break;
