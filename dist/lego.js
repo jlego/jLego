@@ -1,5 +1,5 @@
 /**
- * lego.js v0.8.7
+ * lego.js v0.8.8
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -294,7 +294,7 @@ var View = function View(opts) {
     this._renderRootNode();
     this.setElement(this.options.el);
     this.setEvent(this.options.el);
-    this.options.data = this.options.data || {};
+    this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data || {};
     this._observe();
     this.fetch();
 };

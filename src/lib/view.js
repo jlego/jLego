@@ -23,7 +23,7 @@ class View {
         this._renderRootNode();
         this.setElement(this.options.el);
         this.setEvent(this.options.el);
-        this.options.data = this.options.data || {};
+        this.options.data = typeof this.options.data == 'function' ? this.options.data() : (this.options.data || {});
         this._observe();
         this.fetch();
     }
