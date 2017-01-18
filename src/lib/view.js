@@ -36,7 +36,7 @@ class View {
             const dataSource = this.options.dataSource;
             dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [dataSource.api];
             dataSource.api.forEach(apiName => {
-                dataSource[apiName] = $.extend(true, {}, dataSource.server.options[apiName], opts);
+                dataSource[apiName] = $.extend(true, {}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
             });
             if(dataSource.server){
                 let server = null;

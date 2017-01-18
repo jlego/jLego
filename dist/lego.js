@@ -1,5 +1,5 @@
 /**
- * lego.js v0.8.6
+ * lego.js v0.8.7
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -306,7 +306,7 @@ View.prototype.fetch = function fetch(opts) {
         var dataSource = this.options.dataSource;
         dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
         dataSource.api.forEach(function(apiName) {
-            dataSource[apiName] = $.extend(true, {}, dataSource.server.options[apiName], opts);
+            dataSource[apiName] = $.extend(true, {}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
         });
         if (dataSource.server) {
             var server = null;
