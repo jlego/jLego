@@ -1,5 +1,5 @@
 /**
- * lego.js v0.8.8
+ * lego.js v0.9.0
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -315,8 +315,7 @@ View.prototype.fetch = function fetch(opts) {
             } else {
                 server = dataSource.server;
             }
-            server.fetch({
-                api: dataSource.api,
+            server.fetch(dataSource.api, {
                 view: this
             }, function(resp) {
                 this$1.options.data = resp;
@@ -505,54 +504,36 @@ var Data = function Data(opts) {
     this.options = opts;
 };
 
-Data.prototype.create = function create(opts, callback) {
-    if (opts === void 0) opts = {
-        api: "",
-        data: {}
-    };
-    this.__fetch(opts).then(function(result) {
-        if (typeof callback == "function") {
-            callback(result ? result[0] : {
-                error: 1
-            });
-        }
-    });
-};
-
-Data.prototype.fetch = function fetch(opts, callback) {
-    if (opts === void 0) opts = {};
-    var that = this, apiNameArr = opts.api;
-    this.__fetch(opts).then(function(result) {
-        apiNameArr.forEach(function(apiName, index) {
+Data.prototype.fetch = function fetch(apis, opts, callback) {
+    var that = this, apiArr = Array.isArray(apis) ? apis : [ apis ];
+    this.__fetch(apis, opts).then(function(result) {
+        apiArr.forEach(function(apiName, index) {
             that.datas.set(apiName, result[index]);
         });
         if (typeof callback == "function") {
-            callback(that.parse(result, apiNameArr.join("_"), opts.view));
+            callback(that.parse(result, apiArr.join("_"), opts.view));
         }
     });
 };
 
-Data.prototype.__fetch = function __fetch(opts) {
-    if (opts === void 0) opts = {};
+Data.prototype.__fetch = function __fetch(apis, opts) {
     return __async(regeneratorRuntime.mark(function callee$1$0() {
-        var that, results, apiNameArr, view, promisesArr, promise, t$2$0, t$2$1, res;
+        var that, results, apiArr, view, promisesArr, promise, t$2$0, t$2$1, res;
         return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
             var this$1 = this;
             while (1) {
                 switch (context$2$0.prev = context$2$0.next) {
                   case 0:
-                    that = this$1, results = [], apiNameArr = Array.isArray(opts.api) ? opts.api : [ opts.api ], 
-                    view = opts.view;
+                    that = this$1, results = [], apiArr = Array.isArray(apis) ? apis : [ apis ], view = !Lego.isEmptyObject(opts) ? opts.view : null;
                     context$2$0.prev = 1;
-                    promisesArr = apiNameArr.map(function(apiName) {
+                    promisesArr = apiArr.map(function(apiName) {
                         return __async(regeneratorRuntime.mark(function callee$3$0() {
-                            var data, dataOpts, option, headers, theBody, key, req, response;
+                            var data, option, headers, theBody, key, req, response;
                             return regeneratorRuntime.wrap(function callee$3$0$(context$4$0) {
                                 while (1) {
                                     switch (context$4$0.prev = context$4$0.next) {
                                       case 0:
-                                        data = that.datas.get(apiName) || {}, dataOpts = $.extend(true, {}, that.options[apiName] || {}, opts.data || {}), 
-                                        option = opts.data ? dataOpts : view.options.dataSource[apiName];
+                                        data = that.datas.get(apiName) || {}, option = $.extend(true, {}, that.options[apiName] || {}, view ? view.options.dataSource[apiName] || {} : {}, opts || {});
                                         if (!(!Lego.isEmptyObject(data) && !option.reset)) {
                                             context$4$0.next = 7;
                                             break;

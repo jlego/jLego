@@ -45,8 +45,7 @@ class View {
                 }else{
                     server = dataSource.server;
                 }
-                server.fetch({
-                    api: dataSource.api,
+                server.fetch(dataSource.api, {
                     view: this
                 }, (resp) => {
                     this.options.data = resp;

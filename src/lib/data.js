@@ -20,30 +20,19 @@ class Data {
         this.options = opts;
     }
     /**
-     * [create 发布信息]
-     * @param  {Object}   opts     [description]
-     * @param  {Function} callback [description]
-     * @return {[type]}            [description]
-     */
-    create(opts = {api: '', data: {}}, callback){
-        this.__fetch(opts).then((result) => {
-            if(typeof callback == 'function') callback(result ? result[0] : {error: 1});
-        });
-    }
-    /**
      * [fetch 加载数据接口]
      * @param  {[type]}   apiNameArr [description]
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    fetch(opts = {}, callback){
+    fetch(apis, opts, callback){
         let that = this,
-            apiNameArr = opts.api;
-        this.__fetch(opts).then((result) => {
-            apiNameArr.forEach((apiName, index)=> {
+            apiArr = Array.isArray(apis) ? apis : [apis];
+        this.__fetch(apis, opts).then((result) => {
+            apiArr.forEach((apiName, index)=> {
                 that.datas.set(apiName, result[index]);
             });
-            if(typeof callback == 'function') callback(that.parse(result, apiNameArr.join('_'), opts.view));
+            if(typeof callback == 'function') callback(that.parse(result, apiArr.join('_'), opts.view));
         });
     }
     /**
@@ -51,17 +40,16 @@ class Data {
      * @param  {Object} options [description]
      * @return {[type]}         [description]
      */
-    async __fetch(opts = {}){
+    async __fetch(apis, opts){
         let that = this,
             results = [],
-            apiNameArr = Array.isArray(opts.api) ? opts.api : [opts.api],
-            view = opts.view;
+            apiArr = Array.isArray(apis) ? apis : [apis],
+            view = !Lego.isEmptyObject(opts) ? opts.view : null;
         try {
             // 并发读取远程URL
-            let promisesArr = apiNameArr.map(async apiName => {
+            let promisesArr = apiArr.map(async apiName => {
                 let data = that.datas.get(apiName) || {},
-                    dataOpts = $.extend(true, {}, that.options[apiName] || {}, opts.data || {}),
-                    option = opts.data ? dataOpts : view.options.dataSource[apiName];
+                    option = $.extend(true, {}, that.options[apiName] || {}, view ? (view.options.dataSource[apiName] || {}) : {}, opts || {});
                 if(!Lego.isEmptyObject(data) && !option.reset){
                     // 取缓存数据
                     return await data;
