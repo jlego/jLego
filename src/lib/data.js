@@ -49,7 +49,7 @@ class Data {
             // 并发读取远程URL
             let promisesArr = apiArr.map(async apiName => {
                 let data = that.datas.get(apiName) || {},
-                    option = $.extend(true, {}, that.options[apiName] || {}, view ? (view.options.dataSource[apiName] || {}) : {}, opts || {});
+                    option = $.extend(true, {reset: true}, that.options[apiName] || {}, view ? (view.options.dataSource[apiName] || {}) : {}, opts || {});
                 if(!Lego.isEmptyObject(data) && !option.reset){
                     // 取缓存数据
                     return await data;

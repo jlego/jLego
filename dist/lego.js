@@ -1,5 +1,5 @@
 /**
- * lego.js v0.9.0
+ * lego.js v0.9.2
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -364,8 +364,10 @@ View.prototype._renderRootNode = function _renderRootNode() {
 
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
-    if (this.options.components.length) {
-        this.options.components.forEach(function(item, i) {
+    var components = this.options.components;
+    components = typeof components == "function" ? components(this.options) : Array.isArray(components) ? components : [ components ];
+    if (components.length) {
+        components.forEach(function(item, i) {
             if (that.$(item.el).length) {
                 var tagName = item.el ? that.$(item.el)[0].tagName.toLowerCase() : "";
                 if (tagName) {
@@ -533,7 +535,9 @@ Data.prototype.__fetch = function __fetch(apis, opts) {
                                 while (1) {
                                     switch (context$4$0.prev = context$4$0.next) {
                                       case 0:
-                                        data = that.datas.get(apiName) || {}, option = $.extend(true, {}, that.options[apiName] || {}, view ? view.options.dataSource[apiName] || {} : {}, opts || {});
+                                        data = that.datas.get(apiName) || {}, option = $.extend(true, {
+                                            reset: true
+                                        }, that.options[apiName] || {}, view ? view.options.dataSource[apiName] || {} : {}, opts || {});
                                         if (!(!Lego.isEmptyObject(data) && !option.reset)) {
                                             context$4$0.next = 7;
                                             break;

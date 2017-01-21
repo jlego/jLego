@@ -100,8 +100,10 @@ class View {
      */
     _renderComponents(){
         const that = this;
-        if(this.options.components.length) {
-            this.options.components.forEach(function(item, i){
+        let components = this.options.components;
+        components = typeof components == 'function' ? components(this.options) : (Array.isArray(components) ? components : [components]);
+        if(components.length) {
+            components.forEach(function(item, i){
                 if(that.$(item.el).length){
                     const tagName = item.el ? that.$(item.el)[0].tagName.toLowerCase() : '';
                     if(tagName){
