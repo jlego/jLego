@@ -1,5 +1,5 @@
 /**
- * lego.js v0.9.2
+ * lego.js v0.9.7
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -38,7 +38,7 @@ var Core = function Core(opts) {
     Object.assign(this.config, opts);
     this._debugger();
     this.prevApp = "";
-    this.currentApp = "index";
+    this.currentApp = "";
     this.Event = Events;
     this.Router = director.Router;
     this.idCounter = 0;
@@ -91,6 +91,7 @@ Core.prototype.init = function init(opts) {
         Object.assign(this.config, opts);
     }
     window[this.config.alias] = window.Lego = this;
+    this.startApp();
     return this;
 };
 
@@ -184,9 +185,9 @@ Core.prototype.startApp = function startApp(appPath, opts) {
     var newHash = hash.indexOf("/") == 0 ? hash.replace(/\//, "") : "";
     newHash = newHash !== "index" ? newHash : "";
     appPath = appPath || newHash || this.config.defaultApp;
-    appName = appPath.indexOf("/") > 0 ? appPath.split("/")[0] : appPath;
+    appName = !this.currentApp ? "index" : appPath.indexOf("/") > 0 ? appPath.split("/")[0] : appPath;
     this.prevApp = this.currentApp;
-    this.currentApp = appName;
+    this.currentApp = !this.currentApp ? "index" : appName;
     this._initObj(appName);
     if (typeof options.onBefore == "function") {
         options.onBefore();
@@ -200,8 +201,8 @@ Core.prototype.startApp = function startApp(appPath, opts) {
         success: function(e) {
             if (appPath && appName !== "index") {
                 that.routers.get(appName).setRoute(appPath);
+                that._clearObj(that.prevApp);
             }
-            that._clearObj(that.prevApp);
             if (typeof options.onAfter == "function") {
                 options.onAfter(e);
             }

@@ -24,7 +24,7 @@ class Core {
         this._debugger();
 
         this.prevApp = ''; //上一个应用名称
-        this.currentApp = 'index'; //当前应用名称
+        this.currentApp = ''; //当前应用名称
         // 基类
         this.Event = Events;
         this.Router = Router;
@@ -87,6 +87,7 @@ class Core {
     init(opts = {}){
         if(!this.isEmptyObject(opts)) Object.assign(this.config, opts);
         window[this.config.alias] = window.Lego = this;
+        this.startApp();
         return this;
     }
     /**
@@ -197,13 +198,13 @@ class Core {
             onAfter() {}
         }, that = this, appName, index;
         Object.assign(options, opts);
-          const hash = window.location.hash.replace(/#/, '');
+        const hash = window.location.hash.replace(/#/, '');
         let newHash = hash.indexOf('/') == 0 ? hash.replace(/\//, '') : '';
         newHash = newHash !== 'index' ? newHash : '';
         appPath = appPath || newHash || this.config.defaultApp;
-        appName = appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath;
+        appName = !this.currentApp ? 'index' : (appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath);
         this.prevApp = this.currentApp;
-        this.currentApp = appName;
+        this.currentApp = !this.currentApp ? 'index' : appName;
         this._initObj(appName);
         if (typeof options.onBefore == 'function') options.onBefore();
         $.ajax({
@@ -215,8 +216,8 @@ class Core {
             success: function(e) {
                 if(appPath && appName !== 'index'){
                     that.routers.get(appName).setRoute(appPath);
+                    that._clearObj(that.prevApp);
                 }
-                that._clearObj(that.prevApp);
                 if (typeof options.onAfter == 'function') options.onAfter(e);
             },
             error: function(e) {
