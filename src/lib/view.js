@@ -14,7 +14,7 @@ class View {
         this.options = {
             events: null,
             listen: null,
-            context: opts.context || window,
+            context: opts.context || document,
             components: []
         };
         Object.assign(this.options, opts);
@@ -36,7 +36,7 @@ class View {
             const dataSource = this.options.dataSource;
             dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [dataSource.api];
             dataSource.api.forEach(apiName => {
-                dataSource[apiName] = $.extend(true, {}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
+                dataSource[apiName] = Lego.extend(dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
             });
             if(dataSource.server){
                 let server = null;
@@ -66,32 +66,39 @@ class View {
         if(content){
             this.oldNode = content;
             this.rootNode = vdom.create(content);
-            this.$el = $(this.rootNode);
+            this.el = this.rootNode;
         }else{
-            this.$el = $('<div></div>');
+            this.el = document.createElement('<div></div>');
         }
         if(this.options.id || this.options.el){
             if(this.options.id){
-                this.$el.attr('id', this.options.id);
+                this.el.setAttribute('id', this.options.id);
             }else{
                 if((new RegExp(/#/)).test(this.options.el)){
                     const theId = this.options.el.replace(/#/, '');
-                    this.$el.attr('id', theId);
+                    this.el.setAttribute('id', theId);
                     this.options.id = theId;
                 }
             }
         }
-        this.$el.attr('view-id', this.options.vid);
+        this.el.setAttribute('view-id', this.options.vid);
         if(this.options.style){
-            this.$el.css(this.options.style);
+            // this.$el.css(this.options.style);
+            for(let key in this.options.style){
+                this.el.style[key] = this.options.style[key];
+            }
         }
         if(this.options.attr){
-            this.$el.attr(this.options.attr);
+            // this.el.setAttribute(this.options.attr);
+            for(let key in this.options.attr){
+                this.el.setAttribute(key, this.options.attr[key]);
+            }
         }
         if(this.options.className){
-            this.$el.addClass(this.options.className);
+            // this.$el.addClass(this.options.className);
+            this.el.className += this.options.className;
         }
-        this.el = this.$el[0];
+        this.$el = window.$ ? window.$(this.el) : {};
         this.renderAfter();
     }
     /**
@@ -148,11 +155,16 @@ class View {
      */
     setElement(el){
         if(el) {
-            this._$el = el instanceof window.$ ? el : window.$(el);
+            let pEl = this.options.context.el || document,
+                _el = typeof el == 'string' ? pEl.querySelector(el) : el;
             if(el == 'body'){
-                this._$el.html(this.$el);
+                let childs = _el.childNodes;  
+                for(let i = childs.length - 1; i >= 0; i--){      
+                    _el.removeChild(childs.item(i));      
+                } 
+                _el.appendChild(this.el);
             }else{
-                this._$el.replaceWith(this.$el);
+                _el.parentNode.replaceChild(this.el, _el);
             }
         }
     }
@@ -182,7 +194,11 @@ class View {
      * @return {[type]}           [description]
      */
     delegate(eventName, selector, listener) {
-        this.$el.on(eventName + '.delegateEvents' + this.options.vid, selector, listener);
+        // this.$el.on(eventName + '.delegateEvents' + this.options.vid, selector, listener);
+        let els = selector ? this.el.querySelectorAll(selector) : [this.el];
+        for(let i = 0; i < els.length; i++){
+            els[i]['on' + eventName] = listener;
+        }
         return this;
     }
     /**
@@ -190,7 +206,13 @@ class View {
      * @return {[type]} [description]
      */
     unEvents() {
-        if (this.$el) this.$el.off('.delegateEvents' + this.options.vid);
+        // if (this.$el) this.$el.off('.delegateEvents' + this.options.vid);
+        let el = this.el;
+        for(let key in el){
+            if(typeof el[key] == 'function' && key.indexOf('on') == 0){
+                delete el[key];
+            } 
+        }
         return this;
     }
     /**
@@ -201,8 +223,20 @@ class View {
      * @return {[type]}           [description]
      */
     undelegate(eventName, selector, listener) {
-        this.$el.off(eventName + '.delegateEvents' + this.options.vid, selector, listener);
+        // this.$el.off(eventName + '.delegateEvents' + this.options.vid, selector, listener);
+        let els = selector ? this.el.querySelectorAll(selector) : [this.el];
+        for(let i = 0; i < els.length; i++){
+            delete els[i]['on' + eventName];
+        }
         return this;
+    }
+    /**
+     * [findEl description]
+     * @param  {[type]} selector [description]
+     * @return {[type]}          [description]
+     */
+    findEl(selector) {
+        return this.el.querySelectorAll(selector);
     }
     /**
      * [$ description]
@@ -210,7 +244,7 @@ class View {
      * @return {[type]}          [description]
      */
     $(selector) {
-        return this.$el.find(selector);
+        return window.$ ? this.$el.find(selector) : null;
     }
     /**
      * render 渲染视图
@@ -247,7 +281,7 @@ class View {
     remove(){
         this.unEvents();
         Lego.views[Lego.getAppName()].delete(this.el);
-        this.$el.remove();
+        this.el.parentNode.removeChild(this.el);
     }
 }
 export default View;

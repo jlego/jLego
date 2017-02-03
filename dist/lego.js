@@ -1,5 +1,5 @@
 /**
- * lego.js v0.9.7
+ * lego.js v1.0.7
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -50,6 +50,35 @@ var Core = function Core(opts) {
     this.routers = new Map();
     this.Eventer = new Events();
     return this;
+};
+
+Core.prototype.extend = function extend() {
+    var opts = [], len = arguments.length;
+    while (len--) opts[len] = arguments[len];
+    var result = {};
+    function assign(source) {
+        var target = {};
+        for (var p in source) {
+            if (source.hasOwnProperty(p)) {
+                if (typeof source[p] !== "object") {
+                    target[p] = source[p];
+                } else {
+                    if (Array.isArray(source[p])) {
+                        target[p] = Array.from(assign(source[p]));
+                    } else {
+                        target[p] = assign(source[p]);
+                    }
+                }
+            }
+        }
+        return target;
+    }
+    for (var i = 0; i < opts.length; i++) {
+        if (typeof opts[i] == "object") {
+            result = Object.assign(result, assign(opts[i]));
+        }
+    }
+    return result;
 };
 
 Core.prototype.create = function create(view, opts) {
@@ -108,6 +137,18 @@ Core.prototype.components = function components(comName, coms, isReset) {
             this.UI = comName;
         }
     }
+};
+
+Core.prototype.param = function param(obj) {
+    if (obj === void 0) obj = {};
+    var result = [];
+    for (var key in obj) {
+        if (typeof obj[key] === "object") {
+            obj[key] = JSON.stringify(obj[key]);
+        }
+        result.push(key + "=" + obj[key]);
+    }
+    return result.join("&");
 };
 
 Core.prototype.randomKey = function randomKey(len) {
@@ -170,12 +211,28 @@ Core.prototype._clearObj = function _clearObj(appName) {
     }
 };
 
+Core.prototype.loadScript = function loadScript(url, callback, appName) {
+    var script = document.createElement("script");
+    script.setAttribute("id", appName);
+    script.type = "text/javascript";
+    if (script.readyState) {
+        script.onreadystatechange = function() {
+            if (script.readyState == "loaded" || script.readyState == "complete") {
+                script.onreadystatechange = null;
+                callback();
+            }
+        };
+    } else {
+        script.onload = function() {
+            callback();
+        };
+    }
+    script.src = url;
+    document.getElementsByTagName("head")[0].appendChild(script);
+};
+
 Core.prototype.startApp = function startApp(appPath, opts) {
     if (opts === void 0) opts = {};
-    if (!window.$) {
-        debug.error("$ is undefined!");
-        return;
-    }
     var options = {
         onBefore: function onBefore() {},
         onAfter: function onAfter() {}
@@ -192,25 +249,16 @@ Core.prototype.startApp = function startApp(appPath, opts) {
     if (typeof options.onBefore == "function") {
         options.onBefore();
     }
-    $.ajax({
-        type: "GET",
-        url: this.config.rootUri + appName + "/app.js?" + this.config.version,
-        dataType: "script",
-        crossDomain: true,
-        cache: true,
-        success: function(e) {
-            if (appPath && appName !== "index") {
-                that.routers.get(appName).setRoute(appPath);
-                that._clearObj(that.prevApp);
-            }
-            if (typeof options.onAfter == "function") {
-                options.onAfter(e);
-            }
-        },
-        error: function(e) {
-            debug.error("Failed to load application module!");
+    this.loadScript(this.config.rootUri + appName + "/app.js?" + this.config.version, function() {
+        if (appPath && appName !== "index") {
+            that.routers.get(appName).setRoute(appPath);
+            document.getElementById(appName).parentNode.removeChild(document.getElementById(appName));
+            that._clearObj(that.prevApp);
         }
-    });
+        if (typeof options.onAfter == "function") {
+            options.onAfter();
+        }
+    }, appName);
 };
 
 Core.prototype.getUrlParam = function getUrlParam(name) {
@@ -243,9 +291,9 @@ Core.prototype.getAppName = function getAppName() {
 
 Core.prototype.getView = function getView(el, appName) {
     if (appName === void 0) appName = this.getAppName();
-    el = el instanceof window.$ ? el : window.$(el);
-    if (el.length && this.views[appName].has(el[0])) {
-        return this.views[appName].get(el[0]);
+    var _el = document.querySelector(el);
+    if (this.views[appName].has(_el)) {
+        return this.views[appName].get(_el);
     }
     return null;
 };
@@ -286,7 +334,7 @@ var View = function View(opts) {
     this.options = {
         events: null,
         listen: null,
-        context: opts.context || window,
+        context: opts.context || document,
         components: []
     };
     Object.assign(this.options, opts);
@@ -307,7 +355,7 @@ View.prototype.fetch = function fetch(opts) {
         var dataSource = this.options.dataSource;
         dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
         dataSource.api.forEach(function(apiName) {
-            dataSource[apiName] = $.extend(true, {}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
+            dataSource[apiName] = Lego.extend(dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
         });
         if (dataSource.server) {
             var server = null;
@@ -329,37 +377,42 @@ View.prototype.fetch = function fetch(opts) {
 };
 
 View.prototype._renderRootNode = function _renderRootNode() {
+    var this$1 = this;
     this.renderBefore();
     var content = this.render();
     if (content) {
         this.oldNode = content;
         this.rootNode = vdom.create(content);
-        this.$el = $(this.rootNode);
+        this.el = this.rootNode;
     } else {
-        this.$el = $("<div></div>");
+        this.el = document.createElement("<div></div>");
     }
     if (this.options.id || this.options.el) {
         if (this.options.id) {
-            this.$el.attr("id", this.options.id);
+            this.el.setAttribute("id", this.options.id);
         } else {
             if (new RegExp(/#/).test(this.options.el)) {
                 var theId = this.options.el.replace(/#/, "");
-                this.$el.attr("id", theId);
+                this.el.setAttribute("id", theId);
                 this.options.id = theId;
             }
         }
     }
-    this.$el.attr("view-id", this.options.vid);
+    this.el.setAttribute("view-id", this.options.vid);
     if (this.options.style) {
-        this.$el.css(this.options.style);
+        for (var key in this.options.style) {
+            this$1.el.style[key] = this$1.options.style[key];
+        }
     }
     if (this.options.attr) {
-        this.$el.attr(this.options.attr);
+        for (var key$1 in this.options.attr) {
+            this$1.el.setAttribute(key$1, this$1.options.attr[key$1]);
+        }
     }
     if (this.options.className) {
-        this.$el.addClass(this.options.className);
+        this.el.className += this.options.className;
     }
-    this.el = this.$el[0];
+    this.$el = window.$ ? window.$(this.el) : {};
     this.renderAfter();
 };
 
@@ -404,11 +457,11 @@ View.prototype.setEvent = function setEvent(el) {
 
 View.prototype.setElement = function setElement(el) {
     if (el) {
-        this._$el = el instanceof window.$ ? el : window.$(el);
+        var pEl = this.options.context.el || document, _el = typeof el == "string" ? pEl.querySelector(el) : el;
         if (el == "body") {
-            this._$el.html(this.$el);
+            _el.appendChild(this.el);
         } else {
-            this._$el.replaceWith(this.$el);
+            _el.parentNode.replaceChild(_el, this.el);
         }
     }
 };
@@ -436,24 +489,37 @@ View.prototype.delegateEvents = function delegateEvents() {
 };
 
 View.prototype.delegate = function delegate(eventName, selector, listener) {
-    this.$el.on(eventName + ".delegateEvents" + this.options.vid, selector, listener);
+    var els = selector ? this.el.querySelectorAll(selector) : [ this.el ];
+    for (var i = 0; i < els.length; i++) {
+        els[i]["on" + eventName] = listener;
+    }
     return this;
 };
 
 View.prototype.unEvents = function unEvents() {
-    if (this.$el) {
-        this.$el.off(".delegateEvents" + this.options.vid);
+    var el = this.el;
+    for (var key in el) {
+        if (typeof el[key] == "function" && key.indexOf("on") == 0) {
+            delete el[key];
+        }
     }
     return this;
 };
 
 View.prototype.undelegate = function undelegate(eventName, selector, listener) {
-    this.$el.off(eventName + ".delegateEvents" + this.options.vid, selector, listener);
+    var els = selector ? this.el.querySelectorAll(selector) : [ this.el ];
+    for (var i = 0; i < els.length; i++) {
+        delete els[i]["on" + eventName];
+    }
     return this;
 };
 
+View.prototype.findEl = function findEl(selector) {
+    return this.el.querySelectorAll(selector);
+};
+
 View.prototype.$ = function $(selector) {
-    return this.$el.find(selector);
+    return window.$ ? this.$el.find(selector) : null;
 };
 
 View.prototype.render = function render() {
@@ -475,7 +541,7 @@ View.prototype.refresh = function refresh() {
 View.prototype.remove = function remove() {
     this.unEvents();
     Lego.views[Lego.getAppName()].delete(this.el);
-    this.$el.remove();
+    this.el.parentNode.removeChild(this.el);
 };
 
 function __async(g) {
@@ -536,7 +602,7 @@ Data.prototype.__fetch = function __fetch(apis, opts) {
                                 while (1) {
                                     switch (context$4$0.prev = context$4$0.next) {
                                       case 0:
-                                        data = that.datas.get(apiName) || {}, option = $.extend(true, {
+                                        data = that.datas.get(apiName) || {}, option = Lego.extend({
                                             reset: true
                                         }, that.options[apiName] || {}, view ? view.options.dataSource[apiName] || {} : {}, opts || {});
                                         if (!(!Lego.isEmptyObject(data) && !option.reset)) {
@@ -565,7 +631,7 @@ Data.prototype.__fetch = function __fetch(apis, opts) {
                                                         theBody[key] = JSON.stringify(theBody[key]);
                                                     }
                                                 }
-                                                theBody = $.param(theBody);
+                                                theBody = Lego.param(theBody);
                                             }
                                         }
                                         req = new Request(option.url, {

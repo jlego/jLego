@@ -1,7 +1,5 @@
 import Events from "events";
 import { Router } from 'director';
-// import jQuery from 'jquery';
-// window.$ = window.jQuery = jQuery;
 
 class Core {
     constructor(opts = {}) {
@@ -39,6 +37,37 @@ class Core {
         this.routers = new Map();
         this.Eventer = new Events(); //全局事件对象
         return this;
+    }
+    /**
+     * [extend 深拷贝对象]
+     * @param  {...[type]} opts [description]
+     * @return {[type]}         [description]
+     */
+    extend(...opts){
+        let result = {};
+        function assign(source){
+            let target = {};
+            for (let p in source) {
+                if (source.hasOwnProperty(p)) {
+                    if(typeof source[p] !== 'object'){
+                        target[p] = source[p];
+                    }else{
+                        if(Array.isArray(source[p])){
+                            target[p] = Array.from(assign(source[p]));
+                        }else{
+                            target[p] = assign(source[p]);
+                        }
+                    }
+                }
+            }
+            return target;
+        }
+        for(let i = 0; i < opts.length; i++){
+            if(typeof opts[i] == 'object'){
+                result = Object.assign(result, assign(opts[i]));
+            }
+        }
+        return result;
     }
     /**
      * [create 实例化视图]
@@ -104,6 +133,21 @@ class Core {
                 this.UI = comName;
             }
         }
+    }
+    /**
+     * [param 序列化普通对象]
+     * @param  {Object} obj [description]
+     * @return {[type]}     [description]
+     */
+    param(obj = {}){
+        let result = [];
+        for(let key in obj){
+            if(typeof obj[key] === 'object'){
+                obj[key] = JSON.stringify(obj[key]);
+            }
+            result.push(key + '=' + obj[key]);
+        }
+        return result.join('&');
     }
     /**
      * [randomKey 随机字符串]
@@ -184,15 +228,37 @@ class Core {
         }
     }
     /**
+     * [loadScript 加载js]
+     * @param  {[type]}   url      [description]
+     * @param  {Function} callback [description]
+     * @param  {[type]}   appName  [description]
+     * @return {[type]}            [description]
+     */
+    loadScript(url, callback, appName) {
+        let script = document.createElement("script");
+        script.setAttribute('id', appName);
+        script.type = "text/javascript";
+        if (script.readyState) { // IE
+            script.onreadystatechange = function() {
+                if (script.readyState == "loaded" || script.readyState == "complete") {
+                    script.onreadystatechange = null;
+                    callback();
+                }
+            };
+        } else { // FF, Chrome, Opera, ...
+            script.onload = function() {
+                callback();
+            };
+        }
+        script.src = url;
+        document.getElementsByTagName("head")[0].appendChild(script);
+    }
+    /**
      * startApp 应用加载器
      * @param  {object} opts 参数
      * @return {[type]}        [description]
      */
     startApp(appPath, opts = {}) {
-        if(!window.$){
-            debug.error('$ is undefined!');
-            return;
-        }
         let options = {
             onBefore() {},
             onAfter() {}
@@ -207,23 +273,14 @@ class Core {
         this.currentApp = !this.currentApp ? 'index' : appName;
         this._initObj(appName);
         if (typeof options.onBefore == 'function') options.onBefore();
-        $.ajax({
-            type: "GET",
-            url: this.config.rootUri + appName + '/app.js?' + this.config.version,
-            dataType: "script",
-            crossDomain: true,
-            cache: true,
-            success: function(e) {
-                if(appPath && appName !== 'index'){
-                    that.routers.get(appName).setRoute(appPath);
-                    that._clearObj(that.prevApp);
-                }
-                if (typeof options.onAfter == 'function') options.onAfter(e);
-            },
-            error: function(e) {
-                debug.error('Failed to load application module!');
+        this.loadScript(this.config.rootUri + appName + '/app.js?' + this.config.version, function() {
+            if(appPath && appName !== 'index'){
+                that.routers.get(appName).setRoute(appPath);
+                document.getElementById(appName).parentNode.removeChild(document.getElementById(appName));
+                that._clearObj(that.prevApp);
             }
-        });
+            if (typeof options.onAfter == 'function') options.onAfter();
+        }, appName);
     }
     /**
      * getUrlParam 获取网址参数
@@ -271,9 +328,9 @@ class Core {
      * @return {[type]}         [description]
      */
     getView(el, appName = this.getAppName()){
-        el = el instanceof window.$ ? el : window.$(el);
-        if(el.length && this.views[appName].has(el[0])){
-            return this.views[appName].get(el[0]);
+        let _el = document.querySelector(el);
+        if(this.views[appName].has(_el)){
+            return this.views[appName].get(_el);
         }
         return null;
     }

@@ -49,7 +49,7 @@ class Data {
             // 并发读取远程URL
             let promisesArr = apiArr.map(async apiName => {
                 let data = that.datas.get(apiName) || {},
-                    option = $.extend(true, {reset: true}, that.options[apiName] || {}, view ? (view.options.dataSource[apiName] || {}) : {}, opts || {});
+                    option = Lego.extend({reset: true}, that.options[apiName] || {}, view ? (view.options.dataSource[apiName] || {}) : {}, opts || {});
                 if(!Lego.isEmptyObject(data) && !option.reset){
                     // 取缓存数据
                     return await data;
@@ -63,7 +63,7 @@ class Data {
                                     theBody[key] = JSON.stringify(theBody[key]);
                                 }
                             }
-                            theBody = $.param(theBody);
+                            theBody = Lego.param(theBody);
                         }
                     }
                     // 取新数据
