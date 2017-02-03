@@ -5,7 +5,7 @@ window.hx = hyperx(vdom.h);
 
 class View {
 	/**
-	 * [constructor description]
+	 * [constructor 构造函数]
 	 * @param  {Object} option [description]
 	 * @return {[type]}        [description]
 	 */
@@ -57,7 +57,7 @@ class View {
         }
     }
     /**
-     * [_renderRootNode description]
+     * [_renderRootNode 渲染当前视图dom根节点]
      * @return {[type]} [description]
      */
     _renderRootNode(){
@@ -83,19 +83,16 @@ class View {
         }
         this.el.setAttribute('view-id', this.options.vid);
         if(this.options.style){
-            // this.$el.css(this.options.style);
             for(let key in this.options.style){
                 this.el.style[key] = this.options.style[key];
             }
         }
         if(this.options.attr){
-            // this.el.setAttribute(this.options.attr);
             for(let key in this.options.attr){
                 this.el.setAttribute(key, this.options.attr[key]);
             }
         }
         if(this.options.className){
-            // this.$el.addClass(this.options.className);
             this.el.className += this.options.className;
         }
         this.$el = window.$ ? window.$(this.el) : {};
@@ -141,7 +138,7 @@ class View {
         }
     }
     /**
-     * [setEvent description]
+     * [setEvent 设置dom]
      * @param {[type]} element [description]
      */
     setEvent(el) {
@@ -150,7 +147,7 @@ class View {
         return this;
     }
     /**
-     * [_setElement description]
+     * [_setElement 插入dom节点]
      * @param {[type]} el [description]
      */
     setElement(el){
@@ -169,7 +166,7 @@ class View {
         }
     }
     /**
-     * [delegateEvents description]
+     * [delegateEvents 通过解析配置绑定事件]
      * @return {[type]} [description]
      */
     delegateEvents() {
@@ -187,14 +184,13 @@ class View {
         return this;
     }
     /**
-     * [delegate description]
+     * [delegate 绑定事件]
      * @param  {[type]} eventName [description]
      * @param  {[type]} selector  [description]
      * @param  {[type]} listener  [description]
      * @return {[type]}           [description]
      */
     delegate(eventName, selector, listener) {
-        // this.$el.on(eventName + '.delegateEvents' + this.options.vid, selector, listener);
         let els = selector ? this.el.querySelectorAll(selector) : [this.el];
         for(let i = 0; i < els.length; i++){
             els[i]['on' + eventName] = listener;
@@ -202,11 +198,10 @@ class View {
         return this;
     }
     /**
-     * [unEvents description]
+     * [unEvents 取消所有绑定事件]
      * @return {[type]} [description]
      */
     unEvents() {
-        // if (this.$el) this.$el.off('.delegateEvents' + this.options.vid);
         let el = this.el;
         for(let key in el){
             if(typeof el[key] == 'function' && key.indexOf('on') == 0){
@@ -216,30 +211,15 @@ class View {
         return this;
     }
     /**
-     * [undelegate description]
-     * @param  {[type]} eventName [description]
-     * @param  {[type]} selector  [description]
-     * @param  {[type]} listener  [description]
-     * @return {[type]}           [description]
-     */
-    undelegate(eventName, selector, listener) {
-        // this.$el.off(eventName + '.delegateEvents' + this.options.vid, selector, listener);
-        let els = selector ? this.el.querySelectorAll(selector) : [this.el];
-        for(let i = 0; i < els.length; i++){
-            delete els[i]['on' + eventName];
-        }
-        return this;
-    }
-    /**
-     * [findEl description]
+     * [find 选择当前视图某节点]
      * @param  {[type]} selector [description]
      * @return {[type]}          [description]
      */
-    findEl(selector) {
+    find(selector) {
         return this.el.querySelectorAll(selector);
     }
     /**
-     * [$ description]
+     * [$ 简化jquery选择节点]
      * @param  {[type]} selector [description]
      * @return {[type]}          [description]
      */
@@ -254,14 +234,14 @@ class View {
         return '';
     }
     /**
-     * [renderBefore description]
+     * [renderBefore 渲染视图前回调]
      * @return {[type]} [description]
      */
     renderBefore(){
         return this;
     }
     /**
-     * [renderAfter description]
+     * [renderAfter 渲染视图后回调]
      * @return {[type]} [description]
      */
     renderAfter(){
