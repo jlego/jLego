@@ -1,5 +1,5 @@
 /**
- * lego.js v1.0.7
+ * lego.js v1.1.12
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -9,7 +9,7 @@ function _interopDefault(ex) {
     return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
 }
 
-var Events = _interopDefault(require("events"));
+var _Events = _interopDefault(require("events"));
 
 var director = require("director");
 
@@ -39,7 +39,7 @@ var Core = function Core(opts) {
     this._debugger();
     this.prevApp = "";
     this.currentApp = "";
-    this.Event = Events;
+    this.Event = _Events;
     this.Router = director.Router;
     this.idCounter = 0;
     this.views = {};
@@ -48,25 +48,29 @@ var Core = function Core(opts) {
     this.timer = {};
     this.UI = {};
     this.routers = new Map();
-    this.Eventer = new Events();
+    this.Eventer = new _Events();
     return this;
+};
+
+Core.prototype.isJson = function isJson(obj) {
+    var isjson = typeof obj == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
+    return isjson;
 };
 
 Core.prototype.extend = function extend() {
     var opts = [], len = arguments.length;
     while (len--) opts[len] = arguments[len];
-    var result = {};
-    function assign(source) {
-        var target = {};
-        for (var p in source) {
-            if (source.hasOwnProperty(p)) {
-                if (typeof source[p] !== "object") {
-                    target[p] = source[p];
+    var result = {}, that = this;
+    function assign(target, source) {
+        for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+                if (!that.isJson(source[key])) {
+                    target[key] = source[key];
                 } else {
-                    if (Array.isArray(source[p])) {
-                        target[p] = Array.from(assign(source[p]));
+                    if (Array.isArray(source[key])) {
+                        target[key] = Array.from(assign(source[key]));
                     } else {
-                        target[p] = assign(source[p]);
+                        target[key] = assign(target[key], source[key]);
                     }
                 }
             }
@@ -74,8 +78,8 @@ Core.prototype.extend = function extend() {
         return target;
     }
     for (var i = 0; i < opts.length; i++) {
-        if (typeof opts[i] == "object") {
-            result = Object.assign(result, assign(opts[i]));
+        if (typeof opts[i] == "object" && !Array.isArray(opts[i])) {
+            result = assign(result, opts[i]);
         }
     }
     return result;
@@ -228,6 +232,9 @@ Core.prototype.loadScript = function loadScript(url, callback, appName) {
         };
     }
     script.src = url;
+    if (document.getElementById(appName)) {
+        document.getElementsByTagName("head")[0].removeChild(document.getElementById(appName));
+    }
     document.getElementsByTagName("head")[0].appendChild(script);
 };
 
@@ -252,7 +259,9 @@ Core.prototype.startApp = function startApp(appPath, opts) {
     this.loadScript(this.config.rootUri + appName + "/app.js?" + this.config.version, function() {
         if (appPath && appName !== "index") {
             that.routers.get(appName).setRoute(appPath);
-            document.getElementById(appName).parentNode.removeChild(document.getElementById(appName));
+            if (document.getElementById(that.prevApp)) {
+                document.getElementsByTagName("head")[0].removeChild(document.getElementById(that.prevApp));
+            }
             that._clearObj(that.prevApp);
         }
         if (typeof options.onAfter == "function") {
@@ -291,7 +300,7 @@ Core.prototype.getAppName = function getAppName() {
 
 Core.prototype.getView = function getView(el, appName) {
     if (appName === void 0) appName = this.getAppName();
-    var _el = document.querySelector(el);
+    var _el = el instanceof window.$ ? el[0] : document.querySelector(el);
     if (this.views[appName].has(_el)) {
         return this.views[appName].get(_el);
     }
@@ -328,6 +337,8 @@ var LegoCore$1 = window.Lego;
 
 window.hx = hyperx(vdom.h);
 
+window.delegateEventSplitter = /^(\S+)\s*(.*)$/;
+
 var View = function View(opts) {
     if (opts === void 0) opts = {};
     var that = this;
@@ -338,11 +349,11 @@ var View = function View(opts) {
         components: []
     };
     Object.assign(this.options, opts);
+    this.isLoaded = false;
     this.Eventer = Lego.Eventer;
     this.server = null;
     this._renderRootNode();
     this.setElement(this.options.el);
-    this.setEvent(this.options.el);
     this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data || {};
     this._observe();
     this.fetch();
@@ -401,6 +412,9 @@ View.prototype._renderRootNode = function _renderRootNode() {
     this.el.setAttribute("view-id", this.options.vid);
     if (this.options.style) {
         for (var key in this.options.style) {
+            if (typeof this$1.options.style[key] == "number") {
+                this$1.options.style[key] += "px";
+            }
             this$1.el.style[key] = this$1.options.style[key];
         }
     }
@@ -422,14 +436,18 @@ View.prototype._renderComponents = function _renderComponents() {
     components = typeof components == "function" ? components(this.options) : Array.isArray(components) ? components : [ components ];
     if (components.length) {
         components.forEach(function(item, i) {
-            if (that.$(item.el).length) {
-                var tagName = item.el ? that.$(item.el)[0].tagName.toLowerCase() : "";
+            if (that.find(item.el).length) {
+                var tagName = item.el ? that.find(item.el)[0].tagName.toLowerCase() : "";
                 if (tagName) {
                     item.context = that;
                     Lego.create(Lego.UI[tagName], item);
                 }
             }
         });
+    }
+    if (!this.isLoaded) {
+        this.isLoaded = true;
+        this.setEvent();
     }
 };
 
@@ -449,8 +467,7 @@ View.prototype._observe = function _observe() {
     }
 };
 
-View.prototype.setEvent = function setEvent(el) {
-    this.unEvents();
+View.prototype.setEvent = function setEvent() {
     this.delegateEvents();
     return this;
 };
@@ -459,21 +476,24 @@ View.prototype.setElement = function setElement(el) {
     if (el) {
         var pEl = this.options.context.el || document, _el = typeof el == "string" ? pEl.querySelector(el) : el;
         if (el == "body") {
+            var childs = _el.childNodes;
+            for (var i = childs.length - 1; i >= 0; i--) {
+                _el.removeChild(childs.item(i));
+            }
             _el.appendChild(this.el);
         } else {
-            _el.parentNode.replaceChild(_el, this.el);
+            _el.parentNode.replaceChild(this.el, _el);
         }
     }
 };
 
-View.prototype.delegateEvents = function delegateEvents() {
+View.prototype.delegateEvents = function delegateEvents(isUnbind) {
     var this$1 = this;
+    if (isUnbind === void 0) isUnbind = false;
     var events = this.options.events;
-    var delegateEventSplitter = /^(\S+)\s*(.*)$/;
     if (!events) {
         return this;
     }
-    this.unEvents();
     for (var key in events) {
         var method = events[key];
         if (typeof method !== "function") {
@@ -483,38 +503,33 @@ View.prototype.delegateEvents = function delegateEvents() {
             continue;
         }
         var match = key.match(delegateEventSplitter);
-        this$1.delegate(match[1], match[2], method.bind(this$1));
+        this$1.delegate(match[1], match[2], method.bind(this$1), isUnbind);
     }
     return this;
 };
 
-View.prototype.delegate = function delegate(eventName, selector, listener) {
+View.prototype.delegate = function delegate(eventName, selector, listener, isUnbind) {
     var els = selector ? this.el.querySelectorAll(selector) : [ this.el ];
     for (var i = 0; i < els.length; i++) {
-        els[i]["on" + eventName] = listener;
-    }
-    return this;
-};
-
-View.prototype.unEvents = function unEvents() {
-    var el = this.el;
-    for (var key in el) {
-        if (typeof el[key] == "function" && key.indexOf("on") == 0) {
-            delete el[key];
+        if (isUnbind) {
+            els[i].removeEventListener(eventName, listener);
+        } else {
+            els[i].removeEventListener(eventName, listener);
+            els[i].addEventListener(eventName, listener);
         }
     }
     return this;
 };
 
-View.prototype.undelegate = function undelegate(eventName, selector, listener) {
-    var els = selector ? this.el.querySelectorAll(selector) : [ this.el ];
-    for (var i = 0; i < els.length; i++) {
-        delete els[i]["on" + eventName];
+View.prototype.unEvents = function unEvents() {
+    this.delegateEvents(true);
+    if (window.$) {
+        this.$el.off();
     }
     return this;
 };
 
-View.prototype.findEl = function findEl(selector) {
+View.prototype.find = function find(selector) {
     return this.el.querySelectorAll(selector);
 };
 
@@ -540,8 +555,8 @@ View.prototype.refresh = function refresh() {
 
 View.prototype.remove = function remove() {
     this.unEvents();
-    Lego.views[Lego.getAppName()].delete(this.el);
     this.el.parentNode.removeChild(this.el);
+    Lego.views[Lego.getAppName()].delete(this.el);
 };
 
 function __async(g) {

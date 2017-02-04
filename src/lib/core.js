@@ -1,4 +1,4 @@
-import Events from "events";
+import _Events from "events";
 import { Router } from 'director';
 
 class Core {
@@ -24,7 +24,7 @@ class Core {
         this.prevApp = ''; //上一个应用名称
         this.currentApp = ''; //当前应用名称
         // 基类
-        this.Event = Events;
+        this.Event = _Events;
         this.Router = Router;
 
         this.idCounter = 0;
@@ -35,8 +35,17 @@ class Core {
         this.timer = {};   //计时器对象
         this.UI = {};
         this.routers = new Map();
-        this.Eventer = new Events(); //全局事件对象
+        this.Eventer = new _Events(); //全局事件对象
         return this;
+    }
+    /**
+     * [isJson 判断是否是json]
+     * @param  {[type]}  obj [description]
+     * @return {Boolean}     [description]
+     */
+    isJson(obj){
+        let isjson = typeof(obj) == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
+        return isjson;
     }
     /**
      * [extend 深拷贝对象]
@@ -44,18 +53,19 @@ class Core {
      * @return {[type]}         [description]
      */
     extend(...opts){
-        let result = {};
-        function assign(source){
-            let target = {};
-            for (let p in source) {
-                if (source.hasOwnProperty(p)) {
-                    if(typeof source[p] !== 'object'){
-                        target[p] = source[p];
+        let result = {},
+            that = this;
+        function assign(target, source){
+            for (let key in source) {
+                if (source.hasOwnProperty(key)) {
+                    if(!that.isJson(source[key])){
+                        target[key] = source[key];
                     }else{
-                        if(Array.isArray(source[p])){
-                            target[p] = Array.from(assign(source[p]));
+                        if(Array.isArray(source[key])){
+                            target[key] = Array.from(assign(source[key]));
                         }else{
-                            target[p] = assign(source[p]);
+                            target[key] = {};
+                            target[key] = assign(target[key], source[key]);
                         }
                     }
                 }
@@ -63,8 +73,8 @@ class Core {
             return target;
         }
         for(let i = 0; i < opts.length; i++){
-            if(typeof opts[i] == 'object'){
-                result = Object.assign(result, assign(opts[i]));
+            if(typeof opts[i] == 'object' && !Array.isArray(opts[i])){
+                result = assign(result, opts[i]);
             }
         }
         return result;
@@ -251,6 +261,7 @@ class Core {
             };
         }
         script.src = url;
+        if(document.getElementById(appName)) document.getElementsByTagName("head")[0].removeChild(document.getElementById(appName));
         document.getElementsByTagName("head")[0].appendChild(script);
     }
     /**
@@ -276,7 +287,9 @@ class Core {
         this.loadScript(this.config.rootUri + appName + '/app.js?' + this.config.version, function() {
             if(appPath && appName !== 'index'){
                 that.routers.get(appName).setRoute(appPath);
-                document.getElementById(appName).parentNode.removeChild(document.getElementById(appName));
+                if(document.getElementById(that.prevApp)){
+                    document.getElementsByTagName("head")[0].removeChild(document.getElementById(that.prevApp));
+                }
                 that._clearObj(that.prevApp);
             }
             if (typeof options.onAfter == 'function') options.onAfter();
@@ -328,7 +341,7 @@ class Core {
      * @return {[type]}         [description]
      */
     getView(el, appName = this.getAppName()){
-        let _el = document.querySelector(el);
+        let _el = el instanceof window.$ ? el[0] : document.querySelector(el);
         if(this.views[appName].has(_el)){
             return this.views[appName].get(_el);
         }

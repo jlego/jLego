@@ -3,6 +3,7 @@ import hyperx from 'hyperx';
 import vdom from 'virtual-dom';
 window.hx = hyperx(vdom.h);
 
+window.delegateEventSplitter = /^(\S+)\s*(.*)$/;
 class View {
 	/**
 	 * [constructor 构造函数]
@@ -18,11 +19,11 @@ class View {
             components: []
         };
         Object.assign(this.options, opts);
+        this.isLoaded = false;
         this.Eventer = Lego.Eventer;
         this.server = null;
         this._renderRootNode();
         this.setElement(this.options.el);
-        this.setEvent(this.options.el);
         this.options.data = typeof this.options.data == 'function' ? this.options.data() : (this.options.data || {});
         this._observe();
         this.fetch();
@@ -84,6 +85,9 @@ class View {
         this.el.setAttribute('view-id', this.options.vid);
         if(this.options.style){
             for(let key in this.options.style){
+                if(typeof this.options.style[key] == 'number'){
+                    this.options.style[key] += 'px';
+                }
                 this.el.style[key] = this.options.style[key];
             }
         }
@@ -108,14 +112,18 @@ class View {
         components = typeof components == 'function' ? components(this.options) : (Array.isArray(components) ? components : [components]);
         if(components.length) {
             components.forEach(function(item, i){
-                if(that.$(item.el).length){
-                    const tagName = item.el ? that.$(item.el)[0].tagName.toLowerCase() : '';
+                if(that.find(item.el).length){
+                    const tagName = item.el ? that.find(item.el)[0].tagName.toLowerCase() : '';
                     if(tagName){
                         item.context = that;
                         Lego.create(Lego.UI[tagName], item);
                     }
                 }
             });
+        }
+        if(!this.isLoaded){
+            this.isLoaded = true;
+            this.setEvent();
         }
     }
     /**
@@ -141,8 +149,7 @@ class View {
      * [setEvent 设置dom]
      * @param {[type]} element [description]
      */
-    setEvent(el) {
-        this.unEvents();
+    setEvent() {
         this.delegateEvents();
         return this;
     }
@@ -155,10 +162,10 @@ class View {
             let pEl = this.options.context.el || document,
                 _el = typeof el == 'string' ? pEl.querySelector(el) : el;
             if(el == 'body'){
-                let childs = _el.childNodes;  
-                for(let i = childs.length - 1; i >= 0; i--){      
-                    _el.removeChild(childs.item(i));      
-                } 
+                let childs = _el.childNodes;
+                for(let i = childs.length - 1; i >= 0; i--){
+                    _el.removeChild(childs.item(i));
+                }
                 _el.appendChild(this.el);
             }else{
                 _el.parentNode.replaceChild(this.el, _el);
@@ -169,17 +176,15 @@ class View {
      * [delegateEvents 通过解析配置绑定事件]
      * @return {[type]} [description]
      */
-    delegateEvents() {
+    delegateEvents(isUnbind = false) {
         const events = this.options.events;
-        const delegateEventSplitter = /^(\S+)\s*(.*)$/;
         if (!events) return this;
-        this.unEvents();
         for (let key in events) {
             let method = events[key];
             if (typeof method !== 'function') method = this[method];
             if (!method) continue;
             let match = key.match(delegateEventSplitter);
-            this.delegate(match[1], match[2], method.bind(this));
+            this.delegate(match[1], match[2], method.bind(this), isUnbind);
         }
         return this;
     }
@@ -190,10 +195,15 @@ class View {
      * @param  {[type]} listener  [description]
      * @return {[type]}           [description]
      */
-    delegate(eventName, selector, listener) {
+    delegate(eventName, selector, listener, isUnbind) {
         let els = selector ? this.el.querySelectorAll(selector) : [this.el];
         for(let i = 0; i < els.length; i++){
-            els[i]['on' + eventName] = listener;
+            if(isUnbind){
+                els[i].removeEventListener(eventName, listener);
+            }else{
+                els[i].removeEventListener(eventName, listener);
+                els[i].addEventListener(eventName, listener);
+            }
         }
         return this;
     }
@@ -202,12 +212,8 @@ class View {
      * @return {[type]} [description]
      */
     unEvents() {
-        let el = this.el;
-        for(let key in el){
-            if(typeof el[key] == 'function' && key.indexOf('on') == 0){
-                delete el[key];
-            } 
-        }
+        this.delegateEvents(true);
+        if(window.$) this.$el.off();
         return this;
     }
     /**
@@ -260,8 +266,8 @@ class View {
      */
     remove(){
         this.unEvents();
-        Lego.views[Lego.getAppName()].delete(this.el);
         this.el.parentNode.removeChild(this.el);
+        Lego.views[Lego.getAppName()].delete(this.el);
     }
 }
 export default View;
