@@ -64,17 +64,16 @@ class Core {
                         if(Array.isArray(source[key])){
                             target[key] = Array.from(assign(source[key]));
                         }else{
-                            target[key] = {};
-                            target[key] = assign(target[key], source[key]);
+                            target[key] = target[key] || {};
+                            assign(target[key], source[key]);
                         }
                     }
                 }
             }
-            return target;
         }
         for(let i = 0; i < opts.length; i++){
             if(typeof opts[i] == 'object' && !Array.isArray(opts[i])){
-                result = assign(result, opts[i]);
+                assign(result, opts[i]);
             }
         }
         return result;

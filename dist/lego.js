@@ -1,5 +1,5 @@
 /**
- * lego.js v1.1.12
+ * lego.js v1.1.13
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -70,16 +70,16 @@ Core.prototype.extend = function extend() {
                     if (Array.isArray(source[key])) {
                         target[key] = Array.from(assign(source[key]));
                     } else {
-                        target[key] = assign(target[key], source[key]);
+                        target[key] = target[key] || {};
+                        assign(target[key], source[key]);
                     }
                 }
             }
         }
-        return target;
     }
     for (var i = 0; i < opts.length; i++) {
         if (typeof opts[i] == "object" && !Array.isArray(opts[i])) {
-            result = assign(result, opts[i]);
+            assign(result, opts[i]);
         }
     }
     return result;
