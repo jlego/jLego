@@ -28,6 +28,7 @@ class View {
         this.options.data = typeof this.options.data == 'function' ? this.options.data() : (this.options.data || {});
         this._observe();
         this.fetch();
+        this.setEvent();
     }
     /**
      * [fetch 拉取数据]
@@ -122,7 +123,6 @@ class View {
                 }
             });
         }
-        this.setEvent();
     }
     /**
      * [_observe 监听数据变化并刷新视图]
@@ -147,7 +147,7 @@ class View {
      * @param {[type]} element [description]
      */
     setEvent() {
-        this.unEvents();
+        this.unBindEvents();
         this.delegateEvents();
         return this;
     }
@@ -182,63 +182,63 @@ class View {
             if (typeof method !== 'function') method = this[method];
             if (!method) continue;
             let match = key.match(delegateEventSplitter);
-            this.on(match[1], match[2], method.bind(this), isUnbind);
+            this.bindEvents(match[1], match[2], method.bind(this), isUnbind);
         }
         return this;
     }
     /**
-     * [on 事件绑定]
+     * [handler description]
+     * @param  {[type]} event [description]
+     * @return {[type]}       [description]
+     */
+    handler(event){
+        let target = event.target, 
+            eventName = event.type,
+            path = event.path,
+            that = this;
+        if(this.eventNameSpace.has(eventName)){
+            let selectorMap = this.eventNameSpace.get(eventName);
+            selectorMap.forEach((listener, selector) => {
+                let els = selector ? this.el.querySelectorAll(selector) : [this.el];
+                for(let i = 0; i < els.length; i++){
+                    if(path.indexOf(els[i]) >= path.indexOf(target)){
+                        if(typeof listener == 'function') listener(event, els[i]);
+                    }
+                }
+            });
+        }
+    }
+    /**
+     * [bindEvents 事件绑定]
      * @param  {[type]} eventName [description]
      * @param  {[type]} selector  [description]
      * @param  {[type]} listener  [description]
      * @return {[type]}           [description]
      */
-    on(eventName, selector, listener, isUnbind = false){
+    bindEvents(eventName, selector, listener, isUnbind = false){
         if(!eventName || !listener) return;
-        let key = selector || 'root', that = this, els = [],
-            nameSpace = 'event_' + this.options.vid;
-        function listenerFun(event){
-            let target = event.currentTarget;
-            let els = selector ? that.el.querySelectorAll(selector) : [that.el];
-            for(let i = 0; i < els.length; i++){
-            console.warn(els[i], target);
-                if(els[i] == target){
-                    let subEvents = that.eventNameSpace.get(eventName);
-                    if(subEvents.has(key)){
-                        let callback = subEvents.get(key);
-                        if(typeof callback == 'function') callback(event);
-                    }
-                }
-            }
-        }
-        function bind(_isUnbind = false){
-            that.el.removeEventListener(eventName, listenerFun);
-            if(!_isUnbind) that.el.addEventListener(eventName, listenerFun, false);
-        }
-        if(this.eventNameSpace.has(eventName)){
-            let subEvents = this.eventNameSpace.get(eventName);
-            if(!isUnbind){
-                subEvents.set(key, listener);
-                bind();
+        if(!isUnbind){
+            if(this.eventNameSpace.has(eventName)){
+                this.eventNameSpace.get(eventName).set(selector, listener);
             }else{
-                if(subEvents.has(key)) subEvents.delete(key);
-                bind(true);
+                let subEvent = new Map();
+                subEvent.set(selector, listener);
+                this.eventNameSpace.set(eventName, subEvent);
             }
+            this.el.removeEventListener(eventName, this.handler.bind(this));
+            this.el.addEventListener(eventName, this.handler.bind(this), false);
         }else{
-            if(!isUnbind){
-                let newEvents = new Map();
-                newEvents.set(key, listener);
-                this.eventNameSpace.set(eventName, newEvents);
-                bind();
+            if(this.eventNameSpace.has(eventName)){
+                this.eventNameSpace.get(eventName).delete(selector);
             }
         }
         return this;
     }
     /**
-     * [unEvents 取消所有绑定事件]
+     * [unBindEvents 取消所有绑定事件]
      * @return {[type]} [description]
      */
-    unEvents() {
+    unBindEvents() {
         this.delegateEvents(true);
         return this;
     }
@@ -291,7 +291,7 @@ class View {
      * @return {[type]} [description]
      */
     remove(){
-        this.unEvents();
+        this.unBindEvents();
         // if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
     }
 }

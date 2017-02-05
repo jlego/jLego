@@ -1,5 +1,5 @@
 /**
- * lego.js v1.2.8
+ * lego.js v1.2.10
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -366,6 +366,7 @@ var View = function View(opts) {
     this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data || {};
     this._observe();
     this.fetch();
+    this.setEvent();
 };
 
 View.prototype.fetch = function fetch(opts) {
@@ -454,7 +455,6 @@ View.prototype._renderComponents = function _renderComponents() {
             }
         });
     }
-    this.setEvent();
 };
 
 View.prototype._observe = function _observe() {
@@ -474,7 +474,7 @@ View.prototype._observe = function _observe() {
 };
 
 View.prototype.setEvent = function setEvent() {
-    this.unEvents();
+    this.unBindEvents();
     this.delegateEvents();
     return this;
 };
@@ -509,63 +509,53 @@ View.prototype.delegateEvents = function delegateEvents(isUnbind) {
             continue;
         }
         var match = key.match(delegateEventSplitter);
-        this$1.on(match[1], match[2], method.bind(this$1), isUnbind);
+        this$1.bindEvents(match[1], match[2], method.bind(this$1), isUnbind);
     }
     return this;
 };
 
-View.prototype.on = function on(eventName, selector, listener, isUnbind) {
+View.prototype.handler = function handler(event) {
+    var this$1 = this;
+    var target = event.target, eventName = event.type, path = event.path, that = this;
+    if (this.eventNameSpace.has(eventName)) {
+        var selectorMap = this.eventNameSpace.get(eventName);
+        selectorMap.forEach(function(listener, selector) {
+            var els = selector ? this$1.el.querySelectorAll(selector) : [ this$1.el ];
+            for (var i = 0; i < els.length; i++) {
+                if (path.indexOf(els[i]) >= path.indexOf(target)) {
+                    if (typeof listener == "function") {
+                        listener(event, els[i]);
+                    }
+                }
+            }
+        });
+    }
+};
+
+View.prototype.bindEvents = function bindEvents(eventName, selector, listener, isUnbind) {
     if (isUnbind === void 0) isUnbind = false;
     if (!eventName || !listener) {
         return;
     }
-    var key = selector || "root", that = this, els = [], nameSpace = "event_" + this.options.vid;
-    function listenerFun(event) {
-        var target = event.currentTarget;
-        var els = selector ? that.el.querySelectorAll(selector) : [ that.el ];
-        for (var i = 0; i < els.length; i++) {
-            console.warn(els[i], target);
-            if (els[i] == target) {
-                var subEvents = that.eventNameSpace.get(eventName);
-                if (subEvents.has(key)) {
-                    var callback = subEvents.get(key);
-                    if (typeof callback == "function") {
-                        callback(event);
-                    }
-                }
-            }
-        }
-    }
-    function bind(_isUnbind) {
-        if (_isUnbind === void 0) _isUnbind = false;
-        that.el.removeEventListener(eventName, listenerFun);
-        if (!_isUnbind) {
-            that.el.addEventListener(eventName, listenerFun, false);
-        }
-    }
-    if (this.eventNameSpace.has(eventName)) {
-        var subEvents = this.eventNameSpace.get(eventName);
-        if (!isUnbind) {
-            subEvents.set(key, listener);
-            bind();
+    if (!isUnbind) {
+        if (this.eventNameSpace.has(eventName)) {
+            this.eventNameSpace.get(eventName).set(selector, listener);
         } else {
-            if (subEvents.has(key)) {
-                subEvents.delete(key);
-            }
-            bind(true);
+            var subEvent = new Map();
+            subEvent.set(selector, listener);
+            this.eventNameSpace.set(eventName, subEvent);
         }
+        this.el.removeEventListener(eventName, this.handler.bind(this));
+        this.el.addEventListener(eventName, this.handler.bind(this), false);
     } else {
-        if (!isUnbind) {
-            var newEvents = new Map();
-            newEvents.set(key, listener);
-            this.eventNameSpace.set(eventName, newEvents);
-            bind();
+        if (this.eventNameSpace.has(eventName)) {
+            this.eventNameSpace.get(eventName).delete(selector);
         }
     }
     return this;
 };
 
-View.prototype.unEvents = function unEvents() {
+View.prototype.unBindEvents = function unBindEvents() {
     this.delegateEvents(true);
     return this;
 };
@@ -595,7 +585,7 @@ View.prototype.refresh = function refresh() {
 };
 
 View.prototype.remove = function remove() {
-    this.unEvents();
+    this.unBindEvents();
 };
 
 function __async(g) {
