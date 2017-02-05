@@ -195,17 +195,31 @@ class View {
         let target = event.target, 
             eventName = event.type,
             path = event.path,
-            that = this;
+            that = this,
+            targetIndex = path.indexOf(target);
         if(this.eventNameSpace.has(eventName)){
-            let selectorMap = this.eventNameSpace.get(eventName);
+            let selectorMap = this.eventNameSpace.get(eventName),
+                resultArr = [];
             selectorMap.forEach((listener, selector) => {
                 let els = selector ? this.el.querySelectorAll(selector) : [this.el];
                 for(let i = 0; i < els.length; i++){
-                    if(path.indexOf(els[i]) >= path.indexOf(target)){
-                        if(typeof listener == 'function') listener(event, els[i]);
+                    let elIndex = path.indexOf(els[i]);
+                    if (elIndex >= targetIndex) {
+                        resultArr.push({order: elIndex, listener: listener, target: els[i]});
                     }
                 }
             });
+            if(resultArr.length){
+                resultArr.sort(function(a, b){
+                    return a.order - b.order;
+                });
+                resultArr.forEach((value, index) => {
+                    let listener = resultArr[index].listener;
+                    if (typeof listener == "function") {
+                        listener(event, resultArr[index].target);
+                    }
+                });
+            }
         }
     }
     /**
@@ -224,9 +238,9 @@ class View {
                 let subEvent = new Map();
                 subEvent.set(selector, listener);
                 this.eventNameSpace.set(eventName, subEvent);
+                this.el.removeEventListener(eventName, this.handler.bind(this));
+                this.el.addEventListener(eventName, this.handler.bind(this), false);
             }
-            this.el.removeEventListener(eventName, this.handler.bind(this));
-            this.el.addEventListener(eventName, this.handler.bind(this), false);
         }else{
             if(this.eventNameSpace.has(eventName)){
                 this.eventNameSpace.get(eventName).delete(selector);

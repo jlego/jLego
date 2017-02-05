@@ -1,5 +1,5 @@
 /**
- * lego.js v1.2.10
+ * lego.js v1.2.11
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -516,19 +516,33 @@ View.prototype.delegateEvents = function delegateEvents(isUnbind) {
 
 View.prototype.handler = function handler(event) {
     var this$1 = this;
-    var target = event.target, eventName = event.type, path = event.path, that = this;
+    var target = event.target, eventName = event.type, path = event.path, that = this, targetIndex = path.indexOf(target);
     if (this.eventNameSpace.has(eventName)) {
-        var selectorMap = this.eventNameSpace.get(eventName);
+        var selectorMap = this.eventNameSpace.get(eventName), resultArr = [];
         selectorMap.forEach(function(listener, selector) {
             var els = selector ? this$1.el.querySelectorAll(selector) : [ this$1.el ];
             for (var i = 0; i < els.length; i++) {
-                if (path.indexOf(els[i]) >= path.indexOf(target)) {
-                    if (typeof listener == "function") {
-                        listener(event, els[i]);
-                    }
+                var elIndex = path.indexOf(els[i]);
+                if (elIndex >= targetIndex) {
+                    resultArr.push({
+                        order: elIndex,
+                        listener: listener,
+                        target: els[i]
+                    });
                 }
             }
         });
+        if (resultArr.length) {
+            resultArr.sort(function(a, b) {
+                return a.order - b.order;
+            });
+            resultArr.forEach(function(value, index) {
+                var listener = resultArr[index].listener;
+                if (typeof listener == "function") {
+                    listener(event, resultArr[index].target);
+                }
+            });
+        }
     }
 };
 
@@ -544,9 +558,9 @@ View.prototype.bindEvents = function bindEvents(eventName, selector, listener, i
             var subEvent = new Map();
             subEvent.set(selector, listener);
             this.eventNameSpace.set(eventName, subEvent);
+            this.el.removeEventListener(eventName, this.handler.bind(this));
+            this.el.addEventListener(eventName, this.handler.bind(this), false);
         }
-        this.el.removeEventListener(eventName, this.handler.bind(this));
-        this.el.addEventListener(eventName, this.handler.bind(this), false);
     } else {
         if (this.eventNameSpace.has(eventName)) {
             this.eventNameSpace.get(eventName).delete(selector);
