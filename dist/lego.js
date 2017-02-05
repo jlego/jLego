@@ -1,5 +1,5 @@
 /**
- * lego.js v1.1.13
+ * lego.js v1.2.8
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -60,8 +60,10 @@ Core.prototype.isJson = function isJson(obj) {
 Core.prototype.extend = function extend() {
     var opts = [], len = arguments.length;
     while (len--) opts[len] = arguments[len];
-    var result = {}, that = this;
+    var that = this;
     function assign(target, source) {
+        if (target === void 0) target = {};
+        if (source === void 0) source = {};
         for (var key in source) {
             if (source.hasOwnProperty(key)) {
                 if (!that.isJson(source[key])) {
@@ -70,19 +72,25 @@ Core.prototype.extend = function extend() {
                     if (Array.isArray(source[key])) {
                         target[key] = Array.from(assign(source[key]));
                     } else {
-                        target[key] = target[key] || {};
-                        assign(target[key], source[key]);
+                        target[key] = assign(target[key], source[key]);
                     }
                 }
             }
         }
+        return target;
     }
-    for (var i = 0; i < opts.length; i++) {
-        if (typeof opts[i] == "object" && !Array.isArray(opts[i])) {
-            assign(result, opts[i]);
+    if (opts.length > 0) {
+        var result = opts[0];
+        if (typeof result == "object" && !Array.isArray(result)) {
+            for (var i = 1; i < opts.length; i++) {
+                if (typeof opts[i] == "object" && !Array.isArray(opts[i])) {
+                    result = assign(result, opts[i]);
+                }
+            }
         }
+        return result;
     }
-    return result;
+    return {};
 };
 
 Core.prototype.create = function create(view, opts) {
@@ -342,6 +350,7 @@ window.delegateEventSplitter = /^(\S+)\s*(.*)$/;
 var View = function View(opts) {
     if (opts === void 0) opts = {};
     var that = this;
+    this.eventNameSpace = new Map();
     this.options = {
         events: null,
         listen: null,
@@ -366,7 +375,7 @@ View.prototype.fetch = function fetch(opts) {
         var dataSource = this.options.dataSource;
         dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
         dataSource.api.forEach(function(apiName) {
-            dataSource[apiName] = Lego.extend(dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
+            dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
         });
         if (dataSource.server) {
             var server = null;
@@ -445,10 +454,7 @@ View.prototype._renderComponents = function _renderComponents() {
             }
         });
     }
-    if (!this.isLoaded) {
-        this.isLoaded = true;
-        this.setEvent();
-    }
+    this.setEvent();
 };
 
 View.prototype._observe = function _observe() {
@@ -468,6 +474,7 @@ View.prototype._observe = function _observe() {
 };
 
 View.prototype.setEvent = function setEvent() {
+    this.unEvents();
     this.delegateEvents();
     return this;
 };
@@ -489,7 +496,6 @@ View.prototype.setElement = function setElement(el) {
 
 View.prototype.delegateEvents = function delegateEvents(isUnbind) {
     var this$1 = this;
-    if (isUnbind === void 0) isUnbind = false;
     var events = this.options.events;
     if (!events) {
         return this;
@@ -503,19 +509,57 @@ View.prototype.delegateEvents = function delegateEvents(isUnbind) {
             continue;
         }
         var match = key.match(delegateEventSplitter);
-        this$1.delegate(match[1], match[2], method.bind(this$1), isUnbind);
+        this$1.on(match[1], match[2], method.bind(this$1), isUnbind);
     }
     return this;
 };
 
-View.prototype.delegate = function delegate(eventName, selector, listener, isUnbind) {
-    var els = selector ? this.el.querySelectorAll(selector) : [ this.el ];
-    for (var i = 0; i < els.length; i++) {
-        if (isUnbind) {
-            els[i].removeEventListener(eventName, listener);
+View.prototype.on = function on(eventName, selector, listener, isUnbind) {
+    if (isUnbind === void 0) isUnbind = false;
+    if (!eventName || !listener) {
+        return;
+    }
+    var key = selector || "root", that = this, els = [], nameSpace = "event_" + this.options.vid;
+    function listenerFun(event) {
+        var target = event.currentTarget;
+        var els = selector ? that.el.querySelectorAll(selector) : [ that.el ];
+        for (var i = 0; i < els.length; i++) {
+            console.warn(els[i], target);
+            if (els[i] == target) {
+                var subEvents = that.eventNameSpace.get(eventName);
+                if (subEvents.has(key)) {
+                    var callback = subEvents.get(key);
+                    if (typeof callback == "function") {
+                        callback(event);
+                    }
+                }
+            }
+        }
+    }
+    function bind(_isUnbind) {
+        if (_isUnbind === void 0) _isUnbind = false;
+        that.el.removeEventListener(eventName, listenerFun);
+        if (!_isUnbind) {
+            that.el.addEventListener(eventName, listenerFun, false);
+        }
+    }
+    if (this.eventNameSpace.has(eventName)) {
+        var subEvents = this.eventNameSpace.get(eventName);
+        if (!isUnbind) {
+            subEvents.set(key, listener);
+            bind();
         } else {
-            els[i].removeEventListener(eventName, listener);
-            els[i].addEventListener(eventName, listener);
+            if (subEvents.has(key)) {
+                subEvents.delete(key);
+            }
+            bind(true);
+        }
+    } else {
+        if (!isUnbind) {
+            var newEvents = new Map();
+            newEvents.set(key, listener);
+            this.eventNameSpace.set(eventName, newEvents);
+            bind();
         }
     }
     return this;
@@ -523,9 +567,6 @@ View.prototype.delegate = function delegate(eventName, selector, listener, isUnb
 
 View.prototype.unEvents = function unEvents() {
     this.delegateEvents(true);
-    if (window.$) {
-        this.$el.off();
-    }
     return this;
 };
 
@@ -555,8 +596,6 @@ View.prototype.refresh = function refresh() {
 
 View.prototype.remove = function remove() {
     this.unEvents();
-    this.el.parentNode.removeChild(this.el);
-    Lego.views[Lego.getAppName()].delete(this.el);
 };
 
 function __async(g) {

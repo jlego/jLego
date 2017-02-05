@@ -53,9 +53,8 @@ class Core {
      * @return {[type]}         [description]
      */
     extend(...opts){
-        let result = {},
-            that = this;
-        function assign(target, source){
+        let that = this;
+        function assign(target = {}, source = {}){
             for (let key in source) {
                 if (source.hasOwnProperty(key)) {
                     if(!that.isJson(source[key])){
@@ -64,19 +63,25 @@ class Core {
                         if(Array.isArray(source[key])){
                             target[key] = Array.from(assign(source[key]));
                         }else{
-                            target[key] = target[key] || {};
-                            assign(target[key], source[key]);
+                            target[key] = assign(target[key], source[key]);
                         }
                     }
                 }
             }
+            return target;
         }
-        for(let i = 0; i < opts.length; i++){
-            if(typeof opts[i] == 'object' && !Array.isArray(opts[i])){
-                assign(result, opts[i]);
+        if(opts.length > 0){
+            let result = opts[0];
+            if(typeof result == 'object' && !Array.isArray(result)){
+                for(let i = 1; i < opts.length; i++){
+                    if(typeof opts[i] == 'object' && !Array.isArray(opts[i])){
+                        result = assign(result, opts[i]);
+                    }
+                }
             }
+            return result;
         }
-        return result;
+        return {};
     }
     /**
      * [create 实例化视图]

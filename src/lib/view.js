@@ -12,6 +12,7 @@ class View {
 	 */
     constructor(opts = {}) {
         const that = this;
+        this.eventNameSpace = new Map();
         this.options = {
             events: null,
             listen: null,
@@ -37,7 +38,7 @@ class View {
             const dataSource = this.options.dataSource;
             dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [dataSource.api];
             dataSource.api.forEach(apiName => {
-                dataSource[apiName] = Lego.extend(dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
+                dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
             });
             if(dataSource.server){
                 let server = null;
@@ -121,10 +122,7 @@ class View {
                 }
             });
         }
-        if(!this.isLoaded){
-            this.isLoaded = true;
-            this.setEvent();
-        }
+        this.setEvent();
     }
     /**
      * [_observe 监听数据变化并刷新视图]
@@ -134,7 +132,6 @@ class View {
         const that = this;
         if(this.options && typeof this.options === 'object'){
             Object.observe(this.options, (changes) =>{
-                // debug.log(changes);
                 that.renderBefore();
                 const newNode = this.render();
                 let patches = vdom.diff(that.oldNode, newNode);
@@ -150,6 +147,7 @@ class View {
      * @param {[type]} element [description]
      */
     setEvent() {
+        this.unEvents();
         this.delegateEvents();
         return this;
     }
@@ -176,7 +174,7 @@ class View {
      * [delegateEvents 通过解析配置绑定事件]
      * @return {[type]} [description]
      */
-    delegateEvents(isUnbind = false) {
+    delegateEvents(isUnbind) {
         const events = this.options.events;
         if (!events) return this;
         for (let key in events) {
@@ -184,25 +182,54 @@ class View {
             if (typeof method !== 'function') method = this[method];
             if (!method) continue;
             let match = key.match(delegateEventSplitter);
-            this.delegate(match[1], match[2], method.bind(this), isUnbind);
+            this.on(match[1], match[2], method.bind(this), isUnbind);
         }
         return this;
     }
     /**
-     * [delegate 绑定事件]
+     * [on 事件绑定]
      * @param  {[type]} eventName [description]
      * @param  {[type]} selector  [description]
      * @param  {[type]} listener  [description]
      * @return {[type]}           [description]
      */
-    delegate(eventName, selector, listener, isUnbind) {
-        let els = selector ? this.el.querySelectorAll(selector) : [this.el];
-        for(let i = 0; i < els.length; i++){
-            if(isUnbind){
-                els[i].removeEventListener(eventName, listener);
+    on(eventName, selector, listener, isUnbind = false){
+        if(!eventName || !listener) return;
+        let key = selector || 'root', that = this, els = [],
+            nameSpace = 'event_' + this.options.vid;
+        function listenerFun(event){
+            let target = event.currentTarget;
+            let els = selector ? that.el.querySelectorAll(selector) : [that.el];
+            for(let i = 0; i < els.length; i++){
+            console.warn(els[i], target);
+                if(els[i] == target){
+                    let subEvents = that.eventNameSpace.get(eventName);
+                    if(subEvents.has(key)){
+                        let callback = subEvents.get(key);
+                        if(typeof callback == 'function') callback(event);
+                    }
+                }
+            }
+        }
+        function bind(_isUnbind = false){
+            that.el.removeEventListener(eventName, listenerFun);
+            if(!_isUnbind) that.el.addEventListener(eventName, listenerFun, false);
+        }
+        if(this.eventNameSpace.has(eventName)){
+            let subEvents = this.eventNameSpace.get(eventName);
+            if(!isUnbind){
+                subEvents.set(key, listener);
+                bind();
             }else{
-                els[i].removeEventListener(eventName, listener);
-                els[i].addEventListener(eventName, listener);
+                if(subEvents.has(key)) subEvents.delete(key);
+                bind(true);
+            }
+        }else{
+            if(!isUnbind){
+                let newEvents = new Map();
+                newEvents.set(key, listener);
+                this.eventNameSpace.set(eventName, newEvents);
+                bind();
             }
         }
         return this;
@@ -213,7 +240,6 @@ class View {
      */
     unEvents() {
         this.delegateEvents(true);
-        if(window.$) this.$el.off();
         return this;
     }
     /**
@@ -266,8 +292,7 @@ class View {
      */
     remove(){
         this.unEvents();
-        this.el.parentNode.removeChild(this.el);
-        Lego.views[Lego.getAppName()].delete(this.el);
+        // if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
     }
 }
 export default View;
