@@ -1,5 +1,5 @@
 /**
- * lego.js v1.2.11
+ * lego.js v1.3.0
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -8,8 +8,6 @@
 function _interopDefault(ex) {
     return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
 }
-
-var _Events = _interopDefault(require("events"));
 
 var director = require("director");
 
@@ -39,7 +37,6 @@ var Core = function Core(opts) {
     this._debugger();
     this.prevApp = "";
     this.currentApp = "";
-    this.Event = _Events;
     this.Router = director.Router;
     this.idCounter = 0;
     this.views = {};
@@ -48,7 +45,6 @@ var Core = function Core(opts) {
     this.timer = {};
     this.UI = {};
     this.routers = new Map();
-    this.Eventer = new _Events();
     return this;
 };
 
@@ -94,7 +90,6 @@ Core.prototype.extend = function extend() {
 };
 
 Core.prototype.create = function create(view, opts) {
-    var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this;
     opts.vid = this.uniqueId("v");
@@ -114,14 +109,6 @@ Core.prototype.create = function create(view, opts) {
     typeof opts.onBefore === "function" && opts.onBefore();
     var viewObj = new view(opts);
     this.views[this.currentApp].set(viewObj.el, viewObj);
-    if (opts.listen) {
-        if (!this.isEmptyObject(opts.listen)) {
-            for (var key in opts.listen) {
-                this$1.Eventer.removeListener(key);
-                this$1.Eventer.on(key, opts.listen[key]);
-            }
-        }
-    }
     typeof opts.onAfter === "function" && opts.onAfter(viewObj);
     return viewObj;
 };
@@ -359,7 +346,6 @@ var View = function View(opts) {
     };
     Object.assign(this.options, opts);
     this.isLoaded = false;
-    this.Eventer = Lego.Eventer;
     this.server = null;
     this._renderRootNode();
     this.setElement(this.options.el);
@@ -624,7 +610,6 @@ var Data = function Data(opts) {
     var this$1 = this;
     if (opts === void 0) opts = {};
     this.datas = new Map();
-    this.Eventer = Lego.Eventer;
     for (var key in opts) {
         this$1.datas.set(key, {});
     }
@@ -766,6 +751,88 @@ Data.prototype.getData = function getData(apiName) {
         return this.datas.get(apiName) ? this.datas.get(apiName) : {};
     } else {
         return this.datas;
+    }
+};
+
+var Event = function Event(opts) {
+    if (opts === void 0) opts = {};
+    var that = this;
+    this.listener = new Map();
+};
+
+Event.prototype.on = function on(eventName, callback) {
+    if (typeof callback !== "function") {
+        return;
+    }
+    var eventFunName = Symbol(callback.name).toString();
+    if (eventName.indexOf(".") >= 0) {
+        var eventsArr = eventName.split(".");
+        eventName = eventsArr.shift();
+        eventFunName = eventsArr.join(".");
+    }
+    if (this.listener.has(eventName)) {
+        var listenerMap = this.listener.get(eventName);
+        if (listenerMap.has(eventFunName)) {
+            var listenerArr = listenerMap.get(eventFunName);
+            listenerArr.push(callback);
+        } else {
+            listenerMap.set(eventFunName, [ callback ]);
+        }
+    } else {
+        var listenerMap$1 = new Map();
+        listenerMap$1.set(eventFunName, [ callback ]);
+        this.listener.set(eventName, listenerMap$1);
+    }
+};
+
+Event.prototype.off = function off(eventName) {
+    if (eventName.indexOf(".") >= 0) {
+        var eventsArr = eventName.split(".");
+        eventName = eventsArr.shift();
+        eventFunName = eventsArr.join(".");
+        if (this.listener.has(eventName)) {
+            var listenerMap = this.listener.get(eventName);
+            if (listenerMap.has(eventFunName)) {
+                listenerMap.delete(eventFunName);
+            }
+        }
+    } else {
+        if (this.listener.has(eventName)) {
+            this.listener.delete(eventName);
+        }
+    }
+};
+
+Event.prototype.trigger = function trigger() {
+    var this$1 = this;
+    var args = [], len = arguments.length;
+    while (len--) args[len] = arguments[len];
+    if (args.length) {
+        var eventName = args.shift(), eventFunName = "";
+        if (eventName.indexOf(".") >= 0) {
+            var eventsArr = eventName.split(".");
+            eventName = eventsArr.shift();
+            eventFunName = eventsArr.join(".");
+        }
+        if (this.listener.has(eventName)) {
+            var listenerMap = this.listener.get(eventName);
+            if (eventFunName) {
+                var listenerArr = listenerMap.get(eventFunName);
+                listenerArr.forEach(function(listener) {
+                    if (typeof listener == "function") {
+                        listener.apply(this$1, args);
+                    }
+                });
+            } else {
+                listenerMap.forEach(function(listenerArr, key) {
+                    listenerArr.forEach(function(listener) {
+                        if (typeof listener == "function") {
+                            listener.apply(this$1, args);
+                        }
+                    });
+                });
+            }
+        }
     }
 };
 
@@ -1208,6 +1275,10 @@ LegoCore$1.View = View;
 
 LegoCore$1.Data = Data;
 
+LegoCore$1.Event = Event;
+
 LegoCore$1.Ux = {};
+
+LegoCore$1.Eventer = new Event();
 
 module.exports = LegoCore$1;

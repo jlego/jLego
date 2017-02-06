@@ -13,7 +13,6 @@ class Data {
      */
     constructor(opts = {}) {
         this.datas = new Map();
-        this.Eventer = Lego.Eventer;
         for(let key in opts){
             this.datas.set(key, {});
         }

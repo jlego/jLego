@@ -21,7 +21,6 @@ class View {
         };
         Object.assign(this.options, opts);
         this.isLoaded = false;
-        this.Eventer = Lego.Eventer;
         this.server = null;
         this._renderRootNode();
         this.setElement(this.options.el);
@@ -192,7 +191,7 @@ class View {
      * @return {[type]}       [description]
      */
     handler(event){
-        let target = event.target, 
+        let target = event.target,
             eventName = event.type,
             path = event.path,
             that = this,

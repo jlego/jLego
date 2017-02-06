@@ -1,4 +1,3 @@
-import _Events from "events";
 import { Router } from 'director';
 
 class Core {
@@ -24,7 +23,6 @@ class Core {
         this.prevApp = ''; //上一个应用名称
         this.currentApp = ''; //当前应用名称
         // 基类
-        this.Event = _Events;
         this.Router = Router;
 
         this.idCounter = 0;
@@ -35,7 +33,6 @@ class Core {
         this.timer = {};   //计时器对象
         this.UI = {};
         this.routers = new Map();
-        this.Eventer = new _Events(); //全局事件对象
         return this;
     }
     /**
@@ -110,14 +107,6 @@ class Core {
 
         const viewObj = new view(opts);
         this.views[this.currentApp].set(viewObj.el, viewObj);
-        if(opts.listen){
-            if(!this.isEmptyObject(opts.listen)){
-                for(let key in opts.listen) {
-                    this.Eventer.removeListener(key);
-                    this.Eventer.on(key, opts.listen[key]);
-                }
-            }
-        }
 
         typeof opts.onAfter === 'function' && opts.onAfter(viewObj);
         return viewObj;
