@@ -3,43 +3,53 @@ import hyperx from 'hyperx';
 import vdom from 'virtual-dom';
 window.hx = hyperx(vdom.h);
 
+window.delegateEventSplitter = /^(\S+)\s*(.*)$/;
 class View {
 	/**
-	 * [constructor description]
+	 * [constructor 构造函数]
 	 * @param  {Object} option [description]
 	 * @return {[type]}        [description]
 	 */
     constructor(opts = {}) {
         const that = this;
+        this.eventNameSpace = new Map();
         this.options = {
             events: null,
             listen: null,
+            context: opts.context || document,
             components: []
         };
         Object.assign(this.options, opts);
-        this.Eventer = Lego.Eventer;
+        this.isLoaded = false;
         this.server = null;
         this._renderRootNode();
         this.setElement(this.options.el);
-        this.setEvent(this.options.el);
-        this.options.data = this.options.data || {};
+        this.options.data = typeof this.options.data == 'function' ? this.options.data() : (this.options.data || {});
         this._observe();
         this.fetch();
+        this.setEvent();
     }
     /**
      * [fetch 拉取数据]
      * @return {[type]} [description]
      */
-    fetch(){
+    fetch(opts = {}){
         if(this.options.dataSource){
             const dataSource = this.options.dataSource;
+            dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [dataSource.api];
+            dataSource.api.forEach(apiName => {
+                dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
+            });
             if(dataSource.server){
+                let server = null;
                 if(typeof dataSource.server == 'function'){
-                    this.server = new dataSource.server();
+                    server = new dataSource.server();
                 }else{
-                    this.server = dataSource.server;
+                    server = dataSource.server;
                 }
-                this.server.fetch(dataSource.api, (resp) => {
+                server.fetch(dataSource.api, {
+                    view: this
+                }, (resp) => {
                     this.options.data = resp;
                     this.refresh();
                 });
@@ -49,7 +59,7 @@ class View {
         }
     }
     /**
-     * [_renderRootNode description]
+     * [_renderRootNode 渲染当前视图dom根节点]
      * @return {[type]} [description]
      */
     _renderRootNode(){
@@ -58,32 +68,39 @@ class View {
         if(content){
             this.oldNode = content;
             this.rootNode = vdom.create(content);
-            this.$el = $(this.rootNode);
+            this.el = this.rootNode;
         }else{
-            this.$el = $('<div></div>');
+            this.el = document.createElement('<div></div>');
         }
         if(this.options.id || this.options.el){
             if(this.options.id){
-                this.$el.attr('id', this.options.id);
+                this.el.setAttribute('id', this.options.id);
             }else{
                 if((new RegExp(/#/)).test(this.options.el)){
                     const theId = this.options.el.replace(/#/, '');
-                    this.$el.attr('id', theId);
+                    this.el.setAttribute('id', theId);
                     this.options.id = theId;
                 }
             }
         }
-        this.$el.attr('view-id', this.options.vid);
+        this.el.setAttribute('view-id', this.options.vid);
         if(this.options.style){
-            this.$el.css(this.options.style);
+            for(let key in this.options.style){
+                if(typeof this.options.style[key] == 'number'){
+                    this.options.style[key] += 'px';
+                }
+                this.el.style[key] = this.options.style[key];
+            }
         }
         if(this.options.attr){
-            this.$el.attr(this.options.attr);
+            for(let key in this.options.attr){
+                this.el.setAttribute(key, this.options.attr[key]);
+            }
         }
         if(this.options.className){
-            this.$el.addClass(this.options.className);
+            this.el.className += this.options.className;
         }
-        this.el = this.$el[0];
+        this.$el = window.$ ? window.$(this.el) : {};
         this.renderAfter();
     }
     /**
@@ -92,11 +109,16 @@ class View {
      */
     _renderComponents(){
         const that = this;
-        if(this.options.components.length) {
-            this.options.components.forEach(function(item, i){
-                if($(item.el).length){
-                    const tagName = item.el ? $(item.el)[0].tagName : '';
-                    if(tagName) Lego.create(Lego.UI[tagName.toLowerCase()], item);
+        let components = this.options.components;
+        components = typeof components == 'function' ? components(this.options) : (Array.isArray(components) ? components : [components]);
+        if(components.length) {
+            components.forEach(function(item, i){
+                if(that.find(item.el).length){
+                    const tagName = item.el ? that.find(item.el)[0].tagName.toLowerCase() : '';
+                    if(tagName){
+                        item.context = that;
+                        Lego.create(Lego.UI[tagName], item);
+                    }
                 }
             });
         }
@@ -109,7 +131,6 @@ class View {
         const that = this;
         if(this.options && typeof this.options === 'object'){
             Object.observe(this.options, (changes) =>{
-                // debug.log(changes);
                 that.renderBefore();
                 const newNode = this.render();
                 let patches = vdom.diff(that.oldNode, newNode);
@@ -121,83 +142,134 @@ class View {
         }
     }
     /**
-     * [setEvent description]
+     * [setEvent 设置dom]
      * @param {[type]} element [description]
      */
-    setEvent(el) {
-        this.unEvents();
+    setEvent() {
+        this.unBindEvents();
         this.delegateEvents();
         return this;
     }
     /**
-     * [_setElement description]
+     * [_setElement 插入dom节点]
      * @param {[type]} el [description]
      */
     setElement(el){
         if(el) {
-            this._$el = el instanceof window.$ ? el : window.$(el);
+            let pEl = this.options.context.el || document,
+                _el = typeof el == 'string' ? pEl.querySelector(el) : el;
             if(el == 'body'){
-                this._$el.html(this.$el);
+                let childs = _el.childNodes;
+                for(let i = childs.length - 1; i >= 0; i--){
+                    _el.removeChild(childs.item(i));
+                }
+                _el.appendChild(this.el);
             }else{
-                this._$el.replaceWith(this.$el);
+                _el.parentNode.replaceChild(this.el, _el);
             }
         }
     }
     /**
-     * [delegateEvents description]
+     * [delegateEvents 通过解析配置绑定事件]
      * @return {[type]} [description]
      */
-    delegateEvents() {
+    delegateEvents(isUnbind) {
         const events = this.options.events;
-        const delegateEventSplitter = /^(\S+)\s*(.*)$/;
         if (!events) return this;
-        this.unEvents();
         for (let key in events) {
             let method = events[key];
             if (typeof method !== 'function') method = this[method];
             if (!method) continue;
             let match = key.match(delegateEventSplitter);
-            this.delegate(match[1], match[2], method.bind(this));
+            this.bindEvents(match[1], match[2], method.bind(this), isUnbind);
         }
         return this;
     }
     /**
-     * [delegate description]
+     * [handler description]
+     * @param  {[type]} event [description]
+     * @return {[type]}       [description]
+     */
+    handler(event){
+        let target = event.target,
+            eventName = event.type,
+            path = event.path,
+            that = this,
+            targetIndex = path.indexOf(target);
+        if(this.eventNameSpace.has(eventName)){
+            let selectorMap = this.eventNameSpace.get(eventName),
+                resultArr = [];
+            selectorMap.forEach((listener, selector) => {
+                let els = selector ? this.el.querySelectorAll(selector) : [this.el];
+                for(let i = 0; i < els.length; i++){
+                    let elIndex = path.indexOf(els[i]);
+                    if (elIndex >= targetIndex) {
+                        resultArr.push({order: elIndex, listener: listener, target: els[i]});
+                    }
+                }
+            });
+            if(resultArr.length){
+                resultArr.sort(function(a, b){
+                    return a.order - b.order;
+                });
+                resultArr.forEach((value, index) => {
+                    let listener = resultArr[index].listener;
+                    if (typeof listener == "function") {
+                        listener(event, resultArr[index].target);
+                    }
+                });
+            }
+        }
+    }
+    /**
+     * [bindEvents 事件绑定]
      * @param  {[type]} eventName [description]
      * @param  {[type]} selector  [description]
      * @param  {[type]} listener  [description]
      * @return {[type]}           [description]
      */
-    delegate(eventName, selector, listener) {
-        this.$el.on(eventName + '.delegateEvents' + this.options.vid, selector, listener);
+    bindEvents(eventName, selector, listener, isUnbind = false){
+        if(!eventName || !listener) return;
+        if(!isUnbind){
+            if(this.eventNameSpace.has(eventName)){
+                this.eventNameSpace.get(eventName).set(selector, listener);
+            }else{
+                let subEvent = new Map();
+                subEvent.set(selector, listener);
+                this.eventNameSpace.set(eventName, subEvent);
+                this.el.removeEventListener(eventName, this.handler.bind(this));
+                this.el.addEventListener(eventName, this.handler.bind(this), false);
+            }
+        }else{
+            if(this.eventNameSpace.has(eventName)){
+                this.eventNameSpace.get(eventName).delete(selector);
+            }
+        }
         return this;
     }
     /**
-     * [unEvents description]
+     * [unBindEvents 取消所有绑定事件]
      * @return {[type]} [description]
      */
-    unEvents() {
-        if (this.$el) this.$el.off('.delegateEvents' + this.options.vid);
+    unBindEvents() {
+        this.delegateEvents(true);
         return this;
     }
     /**
-     * [undelegate description]
-     * @param  {[type]} eventName [description]
-     * @param  {[type]} selector  [description]
-     * @param  {[type]} listener  [description]
-     * @return {[type]}           [description]
+     * [find 选择当前视图某节点]
+     * @param  {[type]} selector [description]
+     * @return {[type]}          [description]
      */
-    undelegate(eventName, selector, listener) {
-        this.$el.off(eventName + '.delegateEvents' + this.options.vid, selector, listener);
-        return this;
+    find(selector) {
+        return this.el.querySelectorAll(selector);
     }
     /**
-     * [$ description]
+     * [$ 简化jquery选择节点]
      * @param  {[type]} selector [description]
      * @return {[type]}          [description]
      */
     $(selector) {
-        return this.$el.find(selector);
+        return window.$ ? this.$el.find(selector) : null;
     }
     /**
      * render 渲染视图
@@ -207,14 +279,14 @@ class View {
         return '';
     }
     /**
-     * [renderBefore description]
+     * [renderBefore 渲染视图前回调]
      * @return {[type]} [description]
      */
     renderBefore(){
         return this;
     }
     /**
-     * [renderAfter description]
+     * [renderAfter 渲染视图后回调]
      * @return {[type]} [description]
      */
     renderAfter(){
@@ -232,9 +304,8 @@ class View {
      * @return {[type]} [description]
      */
     remove(){
-        this.unEvents();
-        Lego.views[Lego.getAppName()].delete(this.el);
-        this.$el.remove();
+        this.unBindEvents();
+        // if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
     }
 }
 export default View;

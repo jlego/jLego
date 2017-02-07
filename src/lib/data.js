@@ -13,11 +13,8 @@ class Data {
      */
     constructor(opts = {}) {
         this.datas = new Map();
-        this.Eventer = Lego.Eventer;
         for(let key in opts){
             this.datas.set(key, {});
-            // this.datas.set(key, opts[key]);
-            // this.datas.get(key).data = {};
         }
         this.options = opts;
     }
@@ -27,14 +24,14 @@ class Data {
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    fetch(apiNameArr, callback){
-        let that = this;
-        apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [apiNameArr];
-        this.__fetch(apiNameArr).then((datas) => {
-            apiNameArr.forEach((apiName, index)=> {
-                that.datas.set(apiName, datas[index]);
+    fetch(apis, opts, callback){
+        let that = this,
+            apiArr = Array.isArray(apis) ? apis : [apis];
+        this.__fetch(apis, opts).then((result) => {
+            apiArr.forEach((apiName, index)=> {
+                that.datas.set(apiName, result[index]);
             });
-            if(typeof callback == 'function') callback(that.parse(datas, apiNameArr.join('_')));
+            if(typeof callback == 'function') callback(that.parse(result, apiArr.join('_'), opts.view));
         });
     }
     /**
@@ -42,14 +39,16 @@ class Data {
      * @param  {Object} options [description]
      * @return {[type]}         [description]
      */
-    async __fetch(apiNameArr){
+    async __fetch(apis, opts){
         let that = this,
-            results = [];
+            results = [],
+            apiArr = Array.isArray(apis) ? apis : [apis],
+            view = !Lego.isEmptyObject(opts) ? opts.view : null;
         try {
             // 并发读取远程URL
-            let promisesArr = apiNameArr.map(async apiName => {
+            let promisesArr = apiArr.map(async apiName => {
                 let data = that.datas.get(apiName) || {},
-                    option = that.options[apiName];
+                    option = Lego.extend({reset: true}, that.options[apiName] || {}, view ? (view.options.dataSource[apiName] || {}) : {}, opts || {});
                 if(!Lego.isEmptyObject(data) && !option.reset){
                     // 取缓存数据
                     return await data;
@@ -63,7 +62,7 @@ class Data {
                                     theBody[key] = JSON.stringify(theBody[key]);
                                 }
                             }
-                            theBody = $.param(theBody);
+                            theBody = Lego.param(theBody);
                         }
                     }
                     // 取新数据
@@ -93,7 +92,8 @@ class Data {
      * @param  {[type]} data [description]
      * @return {[type]}      [description]
      */
-    parse(datas, apiName){
+    parse(datas, apiName, view){
+        if(typeof this[apiName] == 'function') return this[apiName](datas, view);
         return datas;
     }
     /**

@@ -1,5 +1,5 @@
 /**
- * lego.js v0.7.2
+ * lego.js v1.3.2
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -8,8 +8,6 @@
 function _interopDefault(ex) {
     return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
 }
-
-var Events = _interopDefault(require("events"));
 
 var director = require("director");
 
@@ -38,8 +36,7 @@ var Core = function Core(opts) {
     Object.assign(this.config, opts);
     this._debugger();
     this.prevApp = "";
-    this.currentApp = "index";
-    this.Event = Events;
+    this.currentApp = "";
     this.Router = director.Router;
     this.idCounter = 0;
     this.views = {};
@@ -48,12 +45,51 @@ var Core = function Core(opts) {
     this.timer = {};
     this.UI = {};
     this.routers = new Map();
-    this.Eventer = new Events();
     return this;
 };
 
+Core.prototype.isJson = function isJson(obj) {
+    var isjson = typeof obj == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
+    return isjson;
+};
+
+Core.prototype.extend = function extend() {
+    var opts = [], len = arguments.length;
+    while (len--) opts[len] = arguments[len];
+    var that = this;
+    function assign(target, source) {
+        if (target === void 0) target = {};
+        if (source === void 0) source = {};
+        for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+                if (!that.isJson(source[key])) {
+                    target[key] = source[key];
+                } else {
+                    if (Array.isArray(source[key])) {
+                        target[key] = Array.from(source[key]);
+                    } else {
+                        target[key] = assign(target[key], source[key]);
+                    }
+                }
+            }
+        }
+        return target;
+    }
+    if (opts.length > 0) {
+        var result = opts[0];
+        if (typeof result == "object" && !Array.isArray(result)) {
+            for (var i = 1; i < opts.length; i++) {
+                if (typeof opts[i] == "object" && !Array.isArray(opts[i])) {
+                    result = assign(result, opts[i]);
+                }
+            }
+        }
+        return result;
+    }
+    return {};
+};
+
 Core.prototype.create = function create(view, opts) {
-    var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this;
     opts.vid = this.uniqueId("v");
@@ -73,14 +109,6 @@ Core.prototype.create = function create(view, opts) {
     typeof opts.onBefore === "function" && opts.onBefore();
     var viewObj = new view(opts);
     this.views[this.currentApp].set(viewObj.el, viewObj);
-    if (opts.listen) {
-        if (!this.isEmptyObject(opts.listen)) {
-            for (var key in opts.listen) {
-                this$1.Eventer.removeListener(key);
-                this$1.Eventer.on(key, opts.listen[key]);
-            }
-        }
-    }
     typeof opts.onAfter === "function" && opts.onAfter(viewObj);
     return viewObj;
 };
@@ -91,6 +119,7 @@ Core.prototype.init = function init(opts) {
         Object.assign(this.config, opts);
     }
     window[this.config.alias] = window.Lego = this;
+    this.startApp();
     return this;
 };
 
@@ -107,6 +136,18 @@ Core.prototype.components = function components(comName, coms, isReset) {
             this.UI = comName;
         }
     }
+};
+
+Core.prototype.param = function param(obj) {
+    if (obj === void 0) obj = {};
+    var result = [];
+    for (var key in obj) {
+        if (typeof obj[key] === "object") {
+            obj[key] = JSON.stringify(obj[key]);
+        }
+        result.push(key + "=" + obj[key]);
+    }
+    return result.join("&");
 };
 
 Core.prototype.randomKey = function randomKey(len) {
@@ -169,12 +210,31 @@ Core.prototype._clearObj = function _clearObj(appName) {
     }
 };
 
+Core.prototype.loadScript = function loadScript(url, callback, appName) {
+    var script = document.createElement("script");
+    script.setAttribute("id", appName);
+    script.type = "text/javascript";
+    if (script.readyState) {
+        script.onreadystatechange = function() {
+            if (script.readyState == "loaded" || script.readyState == "complete") {
+                script.onreadystatechange = null;
+                callback();
+            }
+        };
+    } else {
+        script.onload = function() {
+            callback();
+        };
+    }
+    script.src = url;
+    if (document.getElementById(appName)) {
+        document.getElementsByTagName("head")[0].removeChild(document.getElementById(appName));
+    }
+    document.getElementsByTagName("head")[0].appendChild(script);
+};
+
 Core.prototype.startApp = function startApp(appPath, opts) {
     if (opts === void 0) opts = {};
-    if (!window.$) {
-        debug.error("$ is undefined!");
-        return;
-    }
     var options = {
         onBefore: function onBefore() {},
         onAfter: function onAfter() {}
@@ -184,32 +244,25 @@ Core.prototype.startApp = function startApp(appPath, opts) {
     var newHash = hash.indexOf("/") == 0 ? hash.replace(/\//, "") : "";
     newHash = newHash !== "index" ? newHash : "";
     appPath = appPath || newHash || this.config.defaultApp;
-    appName = appPath.indexOf("/") > 0 ? appPath.split("/")[0] : appPath;
+    appName = !this.currentApp ? "index" : appPath.indexOf("/") > 0 ? appPath.split("/")[0] : appPath;
     this.prevApp = this.currentApp;
-    this.currentApp = appName;
+    this.currentApp = !this.currentApp ? "index" : appName;
     this._initObj(appName);
     if (typeof options.onBefore == "function") {
         options.onBefore();
     }
-    $.ajax({
-        type: "GET",
-        url: this.config.rootUri + appName + "/app.js?" + this.config.version,
-        dataType: "script",
-        crossDomain: true,
-        cache: true,
-        success: function(e) {
-            if (appPath && appName !== "index") {
-                that.routers.get(appName).setRoute(appPath);
+    this.loadScript(this.config.rootUri + appName + "/app.js?" + this.config.version, function() {
+        if (appPath && appName !== "index") {
+            that.routers.get(appName).setRoute(appPath);
+            if (document.getElementById(that.prevApp)) {
+                document.getElementsByTagName("head")[0].removeChild(document.getElementById(that.prevApp));
             }
             that._clearObj(that.prevApp);
-            if (typeof options.onAfter == "function") {
-                options.onAfter(e);
-            }
-        },
-        error: function(e) {
-            debug.error("Failed to load application module!");
         }
-    });
+        if (typeof options.onAfter == "function") {
+            options.onAfter();
+        }
+    }, appName);
 };
 
 Core.prototype.getUrlParam = function getUrlParam(name) {
@@ -242,9 +295,9 @@ Core.prototype.getAppName = function getAppName() {
 
 Core.prototype.getView = function getView(el, appName) {
     if (appName === void 0) appName = this.getAppName();
-    el = el instanceof window.$ ? el : window.$(el);
-    if (el.length && this.views[appName].has(el[0])) {
-        return this.views[appName].get(el[0]);
+    var _el = el instanceof window.$ ? el[0] : document.querySelector(el);
+    if (this.views[appName].has(_el)) {
+        return this.views[appName].get(_el);
     }
     return null;
 };
@@ -279,36 +332,48 @@ var LegoCore$1 = window.Lego;
 
 window.hx = hyperx(vdom.h);
 
+window.delegateEventSplitter = /^(\S+)\s*(.*)$/;
+
 var View = function View(opts) {
     if (opts === void 0) opts = {};
     var that = this;
+    this.eventNameSpace = new Map();
     this.options = {
         events: null,
         listen: null,
+        context: opts.context || document,
         components: []
     };
     Object.assign(this.options, opts);
-    this.Eventer = Lego.Eventer;
+    this.isLoaded = false;
     this.server = null;
     this._renderRootNode();
     this.setElement(this.options.el);
-    this.setEvent(this.options.el);
-    this.options.data = this.options.data || {};
+    this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data || {};
     this._observe();
     this.fetch();
+    this.setEvent();
 };
 
-View.prototype.fetch = function fetch() {
+View.prototype.fetch = function fetch(opts) {
     var this$1 = this;
+    if (opts === void 0) opts = {};
     if (this.options.dataSource) {
         var dataSource = this.options.dataSource;
+        dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
+        dataSource.api.forEach(function(apiName) {
+            dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
+        });
         if (dataSource.server) {
+            var server = null;
             if (typeof dataSource.server == "function") {
-                this.server = new dataSource.server();
+                server = new dataSource.server();
             } else {
-                this.server = dataSource.server;
+                server = dataSource.server;
             }
-            this.server.fetch(dataSource.api, function(resp) {
+            server.fetch(dataSource.api, {
+                view: this
+            }, function(resp) {
                 this$1.options.data = resp;
                 this$1.refresh();
             });
@@ -319,48 +384,59 @@ View.prototype.fetch = function fetch() {
 };
 
 View.prototype._renderRootNode = function _renderRootNode() {
+    var this$1 = this;
     this.renderBefore();
     var content = this.render();
     if (content) {
         this.oldNode = content;
         this.rootNode = vdom.create(content);
-        this.$el = $(this.rootNode);
+        this.el = this.rootNode;
     } else {
-        this.$el = $("<div></div>");
+        this.el = document.createElement("<div></div>");
     }
     if (this.options.id || this.options.el) {
         if (this.options.id) {
-            this.$el.attr("id", this.options.id);
+            this.el.setAttribute("id", this.options.id);
         } else {
             if (new RegExp(/#/).test(this.options.el)) {
                 var theId = this.options.el.replace(/#/, "");
-                this.$el.attr("id", theId);
+                this.el.setAttribute("id", theId);
                 this.options.id = theId;
             }
         }
     }
-    this.$el.attr("view-id", this.options.vid);
+    this.el.setAttribute("view-id", this.options.vid);
     if (this.options.style) {
-        this.$el.css(this.options.style);
+        for (var key in this.options.style) {
+            if (typeof this$1.options.style[key] == "number") {
+                this$1.options.style[key] += "px";
+            }
+            this$1.el.style[key] = this$1.options.style[key];
+        }
     }
     if (this.options.attr) {
-        this.$el.attr(this.options.attr);
+        for (var key$1 in this.options.attr) {
+            this$1.el.setAttribute(key$1, this$1.options.attr[key$1]);
+        }
     }
     if (this.options.className) {
-        this.$el.addClass(this.options.className);
+        this.el.className += this.options.className;
     }
-    this.el = this.$el[0];
+    this.$el = window.$ ? window.$(this.el) : {};
     this.renderAfter();
 };
 
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
-    if (this.options.components.length) {
-        this.options.components.forEach(function(item, i) {
-            if ($(item.el).length) {
-                var tagName = item.el ? $(item.el)[0].tagName : "";
+    var components = this.options.components;
+    components = typeof components == "function" ? components(this.options) : Array.isArray(components) ? components : [ components ];
+    if (components.length) {
+        components.forEach(function(item, i) {
+            if (that.find(item.el).length) {
+                var tagName = item.el ? that.find(item.el)[0].tagName.toLowerCase() : "";
                 if (tagName) {
-                    Lego.create(Lego.UI[tagName.toLowerCase()], item);
+                    item.context = that;
+                    Lego.create(Lego.UI[tagName], item);
                 }
             }
         });
@@ -383,31 +459,33 @@ View.prototype._observe = function _observe() {
     }
 };
 
-View.prototype.setEvent = function setEvent(el) {
-    this.unEvents();
+View.prototype.setEvent = function setEvent() {
+    this.unBindEvents();
     this.delegateEvents();
     return this;
 };
 
 View.prototype.setElement = function setElement(el) {
     if (el) {
-        this._$el = el instanceof window.$ ? el : window.$(el);
+        var pEl = this.options.context.el || document, _el = typeof el == "string" ? pEl.querySelector(el) : el;
         if (el == "body") {
-            this._$el.html(this.$el);
+            var childs = _el.childNodes;
+            for (var i = childs.length - 1; i >= 0; i--) {
+                _el.removeChild(childs.item(i));
+            }
+            _el.appendChild(this.el);
         } else {
-            this._$el.replaceWith(this.$el);
+            _el.parentNode.replaceChild(this.el, _el);
         }
     }
 };
 
-View.prototype.delegateEvents = function delegateEvents() {
+View.prototype.delegateEvents = function delegateEvents(isUnbind) {
     var this$1 = this;
     var events = this.options.events;
-    var delegateEventSplitter = /^(\S+)\s*(.*)$/;
     if (!events) {
         return this;
     }
-    this.unEvents();
     for (var key in events) {
         var method = events[key];
         if (typeof method !== "function") {
@@ -417,30 +495,77 @@ View.prototype.delegateEvents = function delegateEvents() {
             continue;
         }
         var match = key.match(delegateEventSplitter);
-        this$1.delegate(match[1], match[2], method.bind(this$1));
+        this$1.bindEvents(match[1], match[2], method.bind(this$1), isUnbind);
     }
     return this;
 };
 
-View.prototype.delegate = function delegate(eventName, selector, listener) {
-    this.$el.on(eventName + ".delegateEvents" + this.options.vid, selector, listener);
-    return this;
+View.prototype.handler = function handler(event) {
+    var this$1 = this;
+    var target = event.target, eventName = event.type, path = event.path, that = this, targetIndex = path.indexOf(target);
+    if (this.eventNameSpace.has(eventName)) {
+        var selectorMap = this.eventNameSpace.get(eventName), resultArr = [];
+        selectorMap.forEach(function(listener, selector) {
+            var els = selector ? this$1.el.querySelectorAll(selector) : [ this$1.el ];
+            for (var i = 0; i < els.length; i++) {
+                var elIndex = path.indexOf(els[i]);
+                if (elIndex >= targetIndex) {
+                    resultArr.push({
+                        order: elIndex,
+                        listener: listener,
+                        target: els[i]
+                    });
+                }
+            }
+        });
+        if (resultArr.length) {
+            resultArr.sort(function(a, b) {
+                return a.order - b.order;
+            });
+            resultArr.forEach(function(value, index) {
+                var listener = resultArr[index].listener;
+                if (typeof listener == "function") {
+                    listener(event, resultArr[index].target);
+                }
+            });
+        }
+    }
 };
 
-View.prototype.unEvents = function unEvents() {
-    if (this.$el) {
-        this.$el.off(".delegateEvents" + this.options.vid);
+View.prototype.bindEvents = function bindEvents(eventName, selector, listener, isUnbind) {
+    if (isUnbind === void 0) isUnbind = false;
+    if (!eventName || !listener) {
+        return;
+    }
+    if (!isUnbind) {
+        if (this.eventNameSpace.has(eventName)) {
+            this.eventNameSpace.get(eventName).set(selector, listener);
+        } else {
+            var subEvent = new Map();
+            subEvent.set(selector, listener);
+            this.eventNameSpace.set(eventName, subEvent);
+            this.el.removeEventListener(eventName, this.handler.bind(this));
+            this.el.addEventListener(eventName, this.handler.bind(this), false);
+        }
+    } else {
+        if (this.eventNameSpace.has(eventName)) {
+            this.eventNameSpace.get(eventName).delete(selector);
+        }
     }
     return this;
 };
 
-View.prototype.undelegate = function undelegate(eventName, selector, listener) {
-    this.$el.off(eventName + ".delegateEvents" + this.options.vid, selector, listener);
+View.prototype.unBindEvents = function unBindEvents() {
+    this.delegateEvents(true);
     return this;
+};
+
+View.prototype.find = function find(selector) {
+    return this.el.querySelectorAll(selector);
 };
 
 View.prototype.$ = function $(selector) {
-    return this.$el.find(selector);
+    return window.$ ? this.$el.find(selector) : null;
 };
 
 View.prototype.render = function render() {
@@ -460,9 +585,7 @@ View.prototype.refresh = function refresh() {
 };
 
 View.prototype.remove = function remove() {
-    this.unEvents();
-    Lego.views[Lego.getAppName()].delete(this.el);
-    this.$el.remove();
+    this.unBindEvents();
 };
 
 function __async(g) {
@@ -487,44 +610,44 @@ var Data = function Data(opts) {
     var this$1 = this;
     if (opts === void 0) opts = {};
     this.datas = new Map();
-    this.Eventer = Lego.Eventer;
     for (var key in opts) {
         this$1.datas.set(key, {});
     }
     this.options = opts;
 };
 
-Data.prototype.fetch = function fetch(apiNameArr, callback) {
-    var that = this;
-    apiNameArr = Array.isArray(apiNameArr) ? apiNameArr : [ apiNameArr ];
-    this.__fetch(apiNameArr).then(function(datas) {
-        apiNameArr.forEach(function(apiName, index) {
-            that.datas.set(apiName, datas[index]);
+Data.prototype.fetch = function fetch(apis, opts, callback) {
+    var that = this, apiArr = Array.isArray(apis) ? apis : [ apis ];
+    this.__fetch(apis, opts).then(function(result) {
+        apiArr.forEach(function(apiName, index) {
+            that.datas.set(apiName, result[index]);
         });
         if (typeof callback == "function") {
-            callback(that.parse(datas, apiNameArr.join("_")));
+            callback(that.parse(result, apiArr.join("_"), opts.view));
         }
     });
 };
 
-Data.prototype.__fetch = function __fetch(apiNameArr) {
+Data.prototype.__fetch = function __fetch(apis, opts) {
     return __async(regeneratorRuntime.mark(function callee$1$0() {
-        var that, results, promisesArr, promise, t$2$0, t$2$1, res;
+        var that, results, apiArr, view, promisesArr, promise, t$2$0, t$2$1, res;
         return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
             var this$1 = this;
             while (1) {
                 switch (context$2$0.prev = context$2$0.next) {
                   case 0:
-                    that = this$1, results = [];
+                    that = this$1, results = [], apiArr = Array.isArray(apis) ? apis : [ apis ], view = !Lego.isEmptyObject(opts) ? opts.view : null;
                     context$2$0.prev = 1;
-                    promisesArr = apiNameArr.map(function(apiName) {
+                    promisesArr = apiArr.map(function(apiName) {
                         return __async(regeneratorRuntime.mark(function callee$3$0() {
                             var data, option, headers, theBody, key, req, response;
                             return regeneratorRuntime.wrap(function callee$3$0$(context$4$0) {
                                 while (1) {
                                     switch (context$4$0.prev = context$4$0.next) {
                                       case 0:
-                                        data = that.datas.get(apiName) || {}, option = that.options[apiName];
+                                        data = that.datas.get(apiName) || {}, option = Lego.extend({
+                                            reset: true
+                                        }, that.options[apiName] || {}, view ? view.options.dataSource[apiName] || {} : {}, opts || {});
                                         if (!(!Lego.isEmptyObject(data) && !option.reset)) {
                                             context$4$0.next = 7;
                                             break;
@@ -551,7 +674,7 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
                                                         theBody[key] = JSON.stringify(theBody[key]);
                                                     }
                                                 }
-                                                theBody = $.param(theBody);
+                                                theBody = Lego.param(theBody);
                                             }
                                         }
                                         req = new Request(option.url, {
@@ -616,7 +739,10 @@ Data.prototype.__fetch = function __fetch(apiNameArr) {
     }).call(this));
 };
 
-Data.prototype.parse = function parse(datas, apiName) {
+Data.prototype.parse = function parse(datas, apiName, view) {
+    if (typeof this[apiName] == "function") {
+        return this[apiName](datas, view);
+    }
     return datas;
 };
 
@@ -625,6 +751,88 @@ Data.prototype.getData = function getData(apiName) {
         return this.datas.get(apiName) ? this.datas.get(apiName) : {};
     } else {
         return this.datas;
+    }
+};
+
+var Event = function Event(opts) {
+    if (opts === void 0) opts = {};
+    var that = this;
+    this.listener = new Map();
+};
+
+Event.prototype.on = function on(eventName, callback) {
+    if (typeof callback !== "function") {
+        return;
+    }
+    var eventFunName = Symbol(callback.name).toString();
+    if (eventName.indexOf(".") >= 0) {
+        var eventsArr = eventName.split(".");
+        eventName = eventsArr.shift();
+        eventFunName = eventsArr.join(".");
+    }
+    if (this.listener.has(eventName)) {
+        var listenerMap = this.listener.get(eventName);
+        if (listenerMap.has(eventFunName)) {
+            var listenerArr = listenerMap.get(eventFunName);
+            listenerArr.push(callback);
+        } else {
+            listenerMap.set(eventFunName, [ callback ]);
+        }
+    } else {
+        var listenerMap$1 = new Map();
+        listenerMap$1.set(eventFunName, [ callback ]);
+        this.listener.set(eventName, listenerMap$1);
+    }
+};
+
+Event.prototype.off = function off(eventName) {
+    if (eventName.indexOf(".") >= 0) {
+        var eventsArr = eventName.split(".");
+        eventName = eventsArr.shift();
+        eventFunName = eventsArr.join(".");
+        if (this.listener.has(eventName)) {
+            var listenerMap = this.listener.get(eventName);
+            if (listenerMap.has(eventFunName)) {
+                listenerMap.delete(eventFunName);
+            }
+        }
+    } else {
+        if (this.listener.has(eventName)) {
+            this.listener.delete(eventName);
+        }
+    }
+};
+
+Event.prototype.trigger = function trigger() {
+    var this$1 = this;
+    var args = [], len = arguments.length;
+    while (len--) args[len] = arguments[len];
+    if (args.length) {
+        var eventName = args.shift(), eventFunName = "";
+        if (eventName.indexOf(".") >= 0) {
+            var eventsArr = eventName.split(".");
+            eventName = eventsArr.shift();
+            eventFunName = eventsArr.join(".");
+        }
+        if (this.listener.has(eventName)) {
+            var listenerMap = this.listener.get(eventName);
+            if (eventFunName) {
+                var listenerArr = listenerMap.get(eventFunName);
+                listenerArr.forEach(function(listener) {
+                    if (typeof listener == "function") {
+                        listener.apply(this$1, args);
+                    }
+                });
+            } else {
+                listenerMap.forEach(function(listenerArr, key) {
+                    listenerArr.forEach(function(listener) {
+                        if (typeof listener == "function") {
+                            listener.apply(this$1, args);
+                        }
+                    });
+                });
+            }
+        }
     }
 };
 
@@ -1067,6 +1275,10 @@ LegoCore$1.View = View;
 
 LegoCore$1.Data = Data;
 
+LegoCore$1.Event = Event;
+
 LegoCore$1.Ux = {};
+
+LegoCore$1.Eventer = new Event();
 
 module.exports = LegoCore$1;

@@ -1,7 +1,4 @@
-import Events from "events";
 import { Router } from 'director';
-// import jQuery from 'jquery';
-// window.$ = window.jQuery = jQuery;
 
 class Core {
     constructor(opts = {}) {
@@ -24,9 +21,8 @@ class Core {
         this._debugger();
 
         this.prevApp = ''; //上一个应用名称
-        this.currentApp = 'index'; //当前应用名称
+        this.currentApp = ''; //当前应用名称
         // 基类
-        this.Event = Events;
         this.Router = Router;
 
         this.idCounter = 0;
@@ -37,8 +33,52 @@ class Core {
         this.timer = {};   //计时器对象
         this.UI = {};
         this.routers = new Map();
-        this.Eventer = new Events(); //全局事件对象
         return this;
+    }
+    /**
+     * [isJson 判断是否是json]
+     * @param  {[type]}  obj [description]
+     * @return {Boolean}     [description]
+     */
+    isJson(obj){
+        let isjson = typeof(obj) == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
+        return isjson;
+    }
+    /**
+     * [extend 深拷贝对象]
+     * @param  {...[type]} opts [description]
+     * @return {[type]}         [description]
+     */
+    extend(...opts){
+        let that = this;
+        function assign(target = {}, source = {}){
+            for (let key in source) {
+                if (source.hasOwnProperty(key)) {
+                    if(!that.isJson(source[key])){
+                        target[key] = source[key];
+                    }else{
+                        if(Array.isArray(source[key])){
+                            target[key] = Array.from(source[key]);
+                        }else{
+                            target[key] = assign(target[key], source[key]);
+                        }
+                    }
+                }
+            }
+            return target;
+        }
+        if(opts.length > 0){
+            let result = opts[0];
+            if(typeof result == 'object' && !Array.isArray(result)){
+                for(let i = 1; i < opts.length; i++){
+                    if(typeof opts[i] == 'object' && !Array.isArray(opts[i])){
+                        result = assign(result, opts[i]);
+                    }
+                }
+            }
+            return result;
+        }
+        return {};
     }
     /**
      * [create 实例化视图]
@@ -67,14 +107,6 @@ class Core {
 
         const viewObj = new view(opts);
         this.views[this.currentApp].set(viewObj.el, viewObj);
-        if(opts.listen){
-            if(!this.isEmptyObject(opts.listen)){
-                for(let key in opts.listen) {
-                    this.Eventer.removeListener(key);
-                    this.Eventer.on(key, opts.listen[key]);
-                }
-            }
-        }
 
         typeof opts.onAfter === 'function' && opts.onAfter(viewObj);
         return viewObj;
@@ -87,6 +119,7 @@ class Core {
     init(opts = {}){
         if(!this.isEmptyObject(opts)) Object.assign(this.config, opts);
         window[this.config.alias] = window.Lego = this;
+        this.startApp();
         return this;
     }
     /**
@@ -103,6 +136,21 @@ class Core {
                 this.UI = comName;
             }
         }
+    }
+    /**
+     * [param 序列化普通对象]
+     * @param  {Object} obj [description]
+     * @return {[type]}     [description]
+     */
+    param(obj = {}){
+        let result = [];
+        for(let key in obj){
+            if(typeof obj[key] === 'object'){
+                obj[key] = JSON.stringify(obj[key]);
+            }
+            result.push(key + '=' + obj[key]);
+        }
+        return result.join('&');
     }
     /**
      * [randomKey 随机字符串]
@@ -183,46 +231,62 @@ class Core {
         }
     }
     /**
+     * [loadScript 加载js]
+     * @param  {[type]}   url      [description]
+     * @param  {Function} callback [description]
+     * @param  {[type]}   appName  [description]
+     * @return {[type]}            [description]
+     */
+    loadScript(url, callback, appName) {
+        let script = document.createElement("script");
+        script.setAttribute('id', appName);
+        script.type = "text/javascript";
+        if (script.readyState) { // IE
+            script.onreadystatechange = function() {
+                if (script.readyState == "loaded" || script.readyState == "complete") {
+                    script.onreadystatechange = null;
+                    callback();
+                }
+            };
+        } else { // FF, Chrome, Opera, ...
+            script.onload = function() {
+                callback();
+            };
+        }
+        script.src = url;
+        if(document.getElementById(appName)) document.getElementsByTagName("head")[0].removeChild(document.getElementById(appName));
+        document.getElementsByTagName("head")[0].appendChild(script);
+    }
+    /**
      * startApp 应用加载器
      * @param  {object} opts 参数
      * @return {[type]}        [description]
      */
     startApp(appPath, opts = {}) {
-        if(!window.$){
-            debug.error('$ is undefined!');
-            return;
-        }
         let options = {
             onBefore() {},
             onAfter() {}
         }, that = this, appName, index;
         Object.assign(options, opts);
-          const hash = window.location.hash.replace(/#/, '');
+        const hash = window.location.hash.replace(/#/, '');
         let newHash = hash.indexOf('/') == 0 ? hash.replace(/\//, '') : '';
         newHash = newHash !== 'index' ? newHash : '';
         appPath = appPath || newHash || this.config.defaultApp;
-        appName = appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath;
+        appName = !this.currentApp ? 'index' : (appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath);
         this.prevApp = this.currentApp;
-        this.currentApp = appName;
+        this.currentApp = !this.currentApp ? 'index' : appName;
         this._initObj(appName);
         if (typeof options.onBefore == 'function') options.onBefore();
-        $.ajax({
-            type: "GET",
-            url: this.config.rootUri + appName + '/app.js?' + this.config.version,
-            dataType: "script",
-            crossDomain: true,
-            cache: true,
-            success: function(e) {
-                if(appPath && appName !== 'index'){
-                    that.routers.get(appName).setRoute(appPath);
+        this.loadScript(this.config.rootUri + appName + '/app.js?' + this.config.version, function() {
+            if(appPath && appName !== 'index'){
+                that.routers.get(appName).setRoute(appPath);
+                if(document.getElementById(that.prevApp)){
+                    document.getElementsByTagName("head")[0].removeChild(document.getElementById(that.prevApp));
                 }
                 that._clearObj(that.prevApp);
-                if (typeof options.onAfter == 'function') options.onAfter(e);
-            },
-            error: function(e) {
-                debug.error('Failed to load application module!');
             }
-        });
+            if (typeof options.onAfter == 'function') options.onAfter();
+        }, appName);
     }
     /**
      * getUrlParam 获取网址参数
@@ -270,9 +334,9 @@ class Core {
      * @return {[type]}         [description]
      */
     getView(el, appName = this.getAppName()){
-        el = el instanceof window.$ ? el : window.$(el);
-        if(el.length && this.views[appName].has(el[0])){
-            return this.views[appName].get(el[0]);
+        let _el = el instanceof window.$ ? el[0] : document.querySelector(el);
+        if(this.views[appName].has(_el)){
+            return this.views[appName].get(_el);
         }
         return null;
     }
