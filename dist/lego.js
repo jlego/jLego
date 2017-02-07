@@ -1,5 +1,5 @@
 /**
- * lego.js v1.3.0
+ * lego.js v1.3.2
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -66,7 +66,7 @@ Core.prototype.extend = function extend() {
                     target[key] = source[key];
                 } else {
                     if (Array.isArray(source[key])) {
-                        target[key] = Array.from(assign(source[key]));
+                        target[key] = Array.from(source[key]);
                     } else {
                         target[key] = assign(target[key], source[key]);
                     }

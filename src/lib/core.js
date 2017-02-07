@@ -58,7 +58,7 @@ class Core {
                         target[key] = source[key];
                     }else{
                         if(Array.isArray(source[key])){
-                            target[key] = Array.from(assign(source[key]));
+                            target[key] = Array.from(source[key]);
                         }else{
                             target[key] = assign(target[key], source[key]);
                         }
