@@ -66,7 +66,7 @@ class Data {
                         }
                     }
                     // 取新数据
-                    let req = new Request( option.url, {
+                    let req = new Request( option.url.indexOf('http') ? option.url : (Lego.config.serviceUri + option.url), {
                         method: option.method || "GET",
                         headers: headers,
                         mode: 'same-origin', // same-origin|no-cors（默认）|cors

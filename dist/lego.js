@@ -1,5 +1,5 @@
 /**
- * lego.js v1.3.2
+ * lego.js v1.3.9
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -358,25 +358,44 @@ var View = function View(opts) {
 View.prototype.fetch = function fetch(opts) {
     var this$1 = this;
     if (opts === void 0) opts = {};
+    var that = this;
     if (this.options.dataSource) {
         var dataSource = this.options.dataSource;
-        dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
-        dataSource.api.forEach(function(apiName) {
-            dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
-        });
-        if (dataSource.server) {
-            var server = null;
-            if (typeof dataSource.server == "function") {
-                server = new dataSource.server();
-            } else {
-                server = dataSource.server;
-            }
-            server.fetch(dataSource.api, {
-                view: this
-            }, function(resp) {
-                this$1.options.data = resp;
-                this$1.refresh();
+        if (dataSource.url && window.$) {
+            $.ajax(Lego.extend(dataSource, {
+                success: function(resp) {
+                    if (resp.resultCode == 200 && resp.data) {
+                        if (typeof dataSource.filter == "function") {
+                            that.options.data = dataSource.filter(resp.data);
+                        } else {
+                            that.options.data = resp.data;
+                        }
+                        that.refresh();
+                    }
+                },
+                error: function(xhr) {
+                    debug.warn("login error: ", xhr);
+                }
+            }));
+        } else {
+            dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
+            dataSource.api.forEach(function(apiName) {
+                dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
             });
+            if (dataSource.server) {
+                var server = null;
+                if (typeof dataSource.server == "function") {
+                    server = new dataSource.server();
+                } else {
+                    server = dataSource.server;
+                }
+                server.fetch(dataSource.api, {
+                    view: this
+                }, function(resp) {
+                    this$1.options.data = resp;
+                    this$1.refresh();
+                });
+            }
         }
     } else {
         this._renderComponents();
@@ -468,10 +487,12 @@ View.prototype.setEvent = function setEvent() {
 View.prototype.setElement = function setElement(el) {
     if (el) {
         var pEl = this.options.context.el || document, _el = typeof el == "string" ? pEl.querySelector(el) : el;
-        if (el == "body") {
-            var childs = _el.childNodes;
-            for (var i = childs.length - 1; i >= 0; i--) {
-                _el.removeChild(childs.item(i));
+        if (el == "body" || this.options.insert == "append" || this.options.insert == "html") {
+            if (this.options.insert !== "append" || this.options.insert == "html") {
+                var childs = _el.childNodes;
+                for (var i = childs.length - 1; i >= 0; i--) {
+                    _el.removeChild(childs.item(i));
+                }
             }
             _el.appendChild(this.el);
         } else {
@@ -677,7 +698,7 @@ Data.prototype.__fetch = function __fetch(apis, opts) {
                                                 theBody = Lego.param(theBody);
                                             }
                                         }
-                                        req = new Request(option.url, {
+                                        req = new Request(option.url.indexOf("http") ? option.url : Lego.config.serviceUri + option.url, {
                                             method: option.method || "GET",
                                             headers: headers,
                                             mode: "same-origin",

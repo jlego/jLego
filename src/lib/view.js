@@ -34,25 +34,44 @@ class View {
      * @return {[type]} [description]
      */
     fetch(opts = {}){
+        let that = this;
         if(this.options.dataSource){
             const dataSource = this.options.dataSource;
-            dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [dataSource.api];
-            dataSource.api.forEach(apiName => {
-                dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
-            });
-            if(dataSource.server){
-                let server = null;
-                if(typeof dataSource.server == 'function'){
-                    server = new dataSource.server();
-                }else{
-                    server = dataSource.server;
-                }
-                server.fetch(dataSource.api, {
-                    view: this
-                }, (resp) => {
-                    this.options.data = resp;
-                    this.refresh();
+            if(dataSource.url && window.$){
+                $.ajax(Lego.extend(dataSource, {
+                    success: function(resp) {
+                        if (resp.resultCode == 200 && resp.data) {
+                            if(typeof dataSource.filter == 'function'){
+                                that.options.data = dataSource.filter(resp.data);
+                            }else{
+                                that.options.data = resp.data;
+                            }
+                            that.refresh();
+                        }
+                    },
+                    error: function(xhr) {
+                        debug.warn("login error: ", xhr);
+                    }
+                }));
+            }else{
+                dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [dataSource.api];
+                dataSource.api.forEach(apiName => {
+                    dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
                 });
+                if(dataSource.server){
+                    let server = null;
+                    if(typeof dataSource.server == 'function'){
+                        server = new dataSource.server();
+                    }else{
+                        server = dataSource.server;
+                    }
+                    server.fetch(dataSource.api, {
+                        view: this
+                    }, (resp) => {
+                        this.options.data = resp;
+                        this.refresh();
+                    });
+                }
             }
         }else{
             this._renderComponents();
@@ -158,10 +177,12 @@ class View {
         if(el) {
             let pEl = this.options.context.el || document,
                 _el = typeof el == 'string' ? pEl.querySelector(el) : el;
-            if(el == 'body'){
-                let childs = _el.childNodes;
-                for(let i = childs.length - 1; i >= 0; i--){
-                    _el.removeChild(childs.item(i));
+            if(el == 'body' || this.options.insert == 'append' || this.options.insert == 'html'){
+                if(this.options.insert !== 'append' || this.options.insert == 'html'){
+                    let childs = _el.childNodes;
+                    for(let i = childs.length - 1; i >= 0; i--){
+                        _el.removeChild(childs.item(i));
+                    }
                 }
                 _el.appendChild(this.el);
             }else{
