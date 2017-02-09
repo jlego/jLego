@@ -1,5 +1,5 @@
 /**
- * lego.js v1.3.9
+ * lego.js v1.4.6
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -210,6 +210,38 @@ Core.prototype._clearObj = function _clearObj(appName) {
     }
 };
 
+Core.prototype.ns = function ns(nameSpaceStr, obj) {
+    if (obj === void 0) obj = {};
+    if (typeof nameSpaceStr !== "string" && Array.isArray(obj) || typeof obj !== "object") {
+        debug.error("namespace error", obj);
+        return;
+    }
+    if (nameSpaceStr.substring(0, 5) !== "Lego.") {
+        nameSpaceStr = "Lego." + nameSpaceStr;
+    }
+    var nameSpaceArr = nameSpaceStr.split("."), tempArr = [ "Lego" ], that = this;
+    function getNameSpace(nameSpaceObj, num) {
+        if (num < nameSpaceArr.length) {
+            var itemStr = nameSpaceArr[num];
+            tempArr.push(itemStr);
+            var allStr = tempArr.join(".");
+            var subObj = eval(allStr);
+            nameSpaceObj[itemStr] = typeof subObj == "object" && !Array.isArray(subObj) ? subObj : {};
+            if (num == nameSpaceArr.length - 1) {
+                if (that.isEmptyObject(nameSpaceObj[itemStr])) {
+                    nameSpaceObj[itemStr] = obj;
+                } else {
+                    debug.warn("namespace can not be repeated", nameSpaceStr);
+                }
+            }
+            return getNameSpace(nameSpaceObj[itemStr], num + 1);
+        } else {
+            return nameSpaceObj;
+        }
+    }
+    return getNameSpace(this, 1);
+};
+
 Core.prototype.loadScript = function loadScript(url, callback, appName) {
     var script = document.createElement("script");
     script.setAttribute("id", appName);
@@ -283,10 +315,6 @@ Core.prototype.getUrlParam = function getUrlParam(name) {
     }
 };
 
-Core.prototype.trigger = function trigger(event, data) {
-    this.Eventer.emit(event, data);
-};
-
 Core.prototype.getAppName = function getAppName() {
     var hash = window.location.hash.replace(/#/, "");
     hash = hash.indexOf("/") == 0 ? hash.replace(/\//, "") : "";
@@ -349,7 +377,6 @@ var View = function View(opts) {
     this.server = null;
     this._renderRootNode();
     this.setElement(this.options.el);
-    this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data || {};
     this._observe();
     this.fetch();
     this.setEvent();
@@ -398,6 +425,7 @@ View.prototype.fetch = function fetch(opts) {
             }
         }
     } else {
+        this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data;
         this._renderComponents();
     }
 };

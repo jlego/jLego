@@ -231,6 +231,43 @@ class Core {
         }
     }
     /**
+     * [ns 命名空间]
+     * @param  {[type]} nameSpaceStr [description]
+     * @param  {[type]} obj          [description]
+     * @return {[type]}              [description]
+     */
+    ns(nameSpaceStr, obj = {}) {
+        if (typeof nameSpaceStr !== 'string' && Array.isArray(obj) || typeof obj !== 'object') {
+            debug.error('namespace error', obj);
+            return;
+        }
+        if (nameSpaceStr.substring(0, 5) !== 'Lego.') nameSpaceStr = 'Lego.' + nameSpaceStr;
+        let nameSpaceArr = nameSpaceStr.split('.'),
+            tempArr = ['Lego'],
+            that = this;
+        function getNameSpace(nameSpaceObj, num) {
+            if (num < nameSpaceArr.length) {
+                let itemStr = nameSpaceArr[num];
+                tempArr.push(itemStr);
+                let allStr = tempArr.join('.');
+                let subObj = eval(allStr);
+                if (num == nameSpaceArr.length - 1) {
+                    if(that.isEmptyObject(nameSpaceObj[itemStr])){
+                        nameSpaceObj[itemStr] = obj;
+                    }else{
+                        debug.warn('namespace can not be repeated', nameSpaceStr);
+                    }
+                }else{
+                    nameSpaceObj[itemStr] = typeof subObj == 'object' && !Array.isArray(subObj) ? subObj : {};
+                }
+                return getNameSpace(nameSpaceObj[itemStr], num + 1);
+            } else {
+                return nameSpaceObj;
+            }
+        }
+        return getNameSpace(this, 1);
+    }
+    /**
      * [loadScript 加载js]
      * @param  {[type]}   url      [description]
      * @param  {Function} callback [description]
@@ -308,15 +345,6 @@ class Core {
         } else {
             return '';
         }
-    }
-    /**
-     * [trigger 触发事件]
-     * @param  {[type]} event [description]
-     * @param  {[type]} data  [description]
-     * @return {[type]}       [description]
-     */
-    trigger(event, data){
-        this.Eventer.emit(event, data);
     }
     /**
      * getAppName 当前模块名称

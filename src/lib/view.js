@@ -24,7 +24,6 @@ class View {
         this.server = null;
         this._renderRootNode();
         this.setElement(this.options.el);
-        this.options.data = typeof this.options.data == 'function' ? this.options.data() : (this.options.data || {});
         this._observe();
         this.fetch();
         this.setEvent();
@@ -74,6 +73,7 @@ class View {
                 }
             }
         }else{
+            this.options.data = typeof this.options.data == 'function' ? this.options.data() : this.options.data;
             this._renderComponents();
         }
     }
