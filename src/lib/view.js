@@ -82,7 +82,7 @@ class View {
      * @return {[type]} [description]
      */
     _renderRootNode(){
-        this.renderBefore();
+        if(!this.options.dataSource) this.renderBefore();
         const content = this.render();
         if(content){
             this.oldNode = content;
@@ -120,7 +120,7 @@ class View {
             this.el.className += this.options.className;
         }
         this.$el = window.$ ? window.$(this.el) : {};
-        this.renderAfter();
+        if(!this.options.dataSource) this.renderAfter();
     }
     /**
      * [_renderComponents 渲染组件]
@@ -129,7 +129,7 @@ class View {
     _renderComponents(){
         const that = this;
         let components = this.options.components;
-        components = typeof components == 'function' ? components(this.options) : (Array.isArray(components) ? components : [components]);
+        components = typeof components == 'function' ? components(this.options, this) : (Array.isArray(components) ? components : [components]);
         if(components.length) {
             components.forEach(function(item, i){
                 if(that.find(item.el).length){

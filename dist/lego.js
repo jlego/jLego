@@ -1,5 +1,5 @@
 /**
- * lego.js v1.4.8
+ * lego.js v1.4.11
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -434,7 +434,9 @@ View.prototype.fetch = function fetch(opts) {
 
 View.prototype._renderRootNode = function _renderRootNode() {
     var this$1 = this;
-    this.renderBefore();
+    if (!this.options.dataSource) {
+        this.renderBefore();
+    }
     var content = this.render();
     if (content) {
         this.oldNode = content;
@@ -472,13 +474,15 @@ View.prototype._renderRootNode = function _renderRootNode() {
         this.el.className += this.options.className;
     }
     this.$el = window.$ ? window.$(this.el) : {};
-    this.renderAfter();
+    if (!this.options.dataSource) {
+        this.renderAfter();
+    }
 };
 
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
     var components = this.options.components;
-    components = typeof components == "function" ? components(this.options) : Array.isArray(components) ? components : [ components ];
+    components = typeof components == "function" ? components(this.options, this) : Array.isArray(components) ? components : [ components ];
     if (components.length) {
         components.forEach(function(item, i) {
             if (that.find(item.el).length) {
