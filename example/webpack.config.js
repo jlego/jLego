@@ -13,7 +13,6 @@ module.exports = {
         path: path.join(__dirname, 'dist'), //打包输出的路径
         publicPath: "./dist/", //发布地址。
         filename: '[name].js', //打包多个
-        // chunkFilename: "[name].js"
     },
     module: {
         loaders: [{
@@ -26,10 +25,10 @@ module.exports = {
             }
         }, {
             test: /\.scss$/,
-            loader: ExtractTextPlugin.extract('style', 'css!sass')
+            loader: "style!css!sass",
         }, {
             test: /\.css$/,
-            loader: ExtractTextPlugin.extract('', "css")
+            loader: "style!css",
         }, {
             test: /\.(png|jpe?g)$/,
             loader: 'url?prefix=img&limit=10240&name=img/[name].[hash].[ext]'
@@ -42,33 +41,17 @@ module.exports = {
         }]
     },
     resolve: {
-        root: ['./src'],
-        alias: {
-            // jquery: "jquery/dist/jquery"
-        },
         extensions: ["", ".js"]
     },
     plugins: [
-        // new webpack.ProvidePlugin({
-        //     $: "jquery",
-        //     jQuery: "jquery"
-        // }),
         new webpack.optimize.UglifyJsPlugin({
             mangle: false,
             compress: false,
             output: {
                 beautify: false,
-                comments: function(node, comment) {
-                    var text = comment.value;
-                    var type = comment.type;
-                    return /@preserve|@license|@cc_on/i.test(text);
-                }
+                comments: false
             },
-        }),
-        // new webpack.HotModuleReplacementPlugin(),
-        new ExtractTextPlugin("style.css", {
-            allChunks: true
-        }),
+        })
     ],
     // devtool: "#source-map",
     devServer: {

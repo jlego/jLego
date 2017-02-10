@@ -2,12 +2,11 @@
 import mainView from './main';
 import menuView from './menu';
 
-HBY.components('menu', menuView);
-HBY.create(mainView, {
+Lego.create(mainView, {
     el: 'body',
     components: [{
     	el: '#sidebar',
         scrollbar: true
     }]
 });
-HBY.startApp();
+Lego.startApp();

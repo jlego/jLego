@@ -3,7 +3,7 @@ class People{
 		this.name = name;
 	}
     sayhi(id) {
-            const tmpl = addrs => `
+        const tmpl = addrs => `
           <table>
           ${addrs.map(addr => `
             <tr><td><a href="#/home/read/3">${addr.first}</a></td></tr>

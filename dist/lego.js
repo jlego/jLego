@@ -1,5 +1,5 @@
 /**
- * lego.js v1.3.2
+ * lego.js v1.4.8
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -210,9 +210,42 @@ Core.prototype._clearObj = function _clearObj(appName) {
     }
 };
 
+Core.prototype.ns = function ns(nameSpaceStr, obj) {
+    if (obj === void 0) obj = {};
+    if (typeof nameSpaceStr !== "string" && Array.isArray(obj) || typeof obj !== "object") {
+        debug.error("namespace error", obj);
+        return;
+    }
+    if (nameSpaceStr.substring(0, 5) !== "Lego.") {
+        nameSpaceStr = "Lego." + nameSpaceStr;
+    }
+    var nameSpaceArr = nameSpaceStr.split("."), tempArr = [ "Lego" ], that = this;
+    function getNameSpace(nameSpaceObj, num) {
+        if (num < nameSpaceArr.length) {
+            var itemStr = nameSpaceArr[num];
+            tempArr.push(itemStr);
+            var allStr = tempArr.join(".");
+            var subObj = eval(allStr);
+            if (num == nameSpaceArr.length - 1) {
+                if (that.isEmptyObject(nameSpaceObj[itemStr])) {
+                    nameSpaceObj[itemStr] = obj;
+                } else {
+                    debug.warn("namespace can not be repeated", nameSpaceStr);
+                }
+            } else {
+                nameSpaceObj[itemStr] = typeof subObj == "object" && !Array.isArray(subObj) ? subObj : {};
+            }
+            return getNameSpace(nameSpaceObj[itemStr], num + 1);
+        } else {
+            return nameSpaceObj;
+        }
+    }
+    return getNameSpace(this, 1);
+};
+
 Core.prototype.loadScript = function loadScript(url, callback, appName) {
-    var script = document.createElement("script");
-    script.setAttribute("id", appName);
+    var script = document.createElement("script"), theId = "Lego-js-" + appName;
+    script.setAttribute("id", theId);
     script.type = "text/javascript";
     if (script.readyState) {
         script.onreadystatechange = function() {
@@ -227,8 +260,8 @@ Core.prototype.loadScript = function loadScript(url, callback, appName) {
         };
     }
     script.src = url;
-    if (document.getElementById(appName)) {
-        document.getElementsByTagName("head")[0].removeChild(document.getElementById(appName));
+    if (document.getElementById(theId)) {
+        document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
     }
     document.getElementsByTagName("head")[0].appendChild(script);
 };
@@ -254,8 +287,9 @@ Core.prototype.startApp = function startApp(appPath, opts) {
     this.loadScript(this.config.rootUri + appName + "/app.js?" + this.config.version, function() {
         if (appPath && appName !== "index") {
             that.routers.get(appName).setRoute(appPath);
-            if (document.getElementById(that.prevApp)) {
-                document.getElementsByTagName("head")[0].removeChild(document.getElementById(that.prevApp));
+            var prevId = "Lego-js-" + that.prevApp;
+            if (document.getElementById(prevId)) {
+                document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
             }
             that._clearObj(that.prevApp);
         }
@@ -281,10 +315,6 @@ Core.prototype.getUrlParam = function getUrlParam(name) {
     } else {
         return "";
     }
-};
-
-Core.prototype.trigger = function trigger(event, data) {
-    this.Eventer.emit(event, data);
 };
 
 Core.prototype.getAppName = function getAppName() {
@@ -349,7 +379,6 @@ var View = function View(opts) {
     this.server = null;
     this._renderRootNode();
     this.setElement(this.options.el);
-    this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data || {};
     this._observe();
     this.fetch();
     this.setEvent();
@@ -358,27 +387,47 @@ var View = function View(opts) {
 View.prototype.fetch = function fetch(opts) {
     var this$1 = this;
     if (opts === void 0) opts = {};
+    var that = this;
     if (this.options.dataSource) {
         var dataSource = this.options.dataSource;
-        dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
-        dataSource.api.forEach(function(apiName) {
-            dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
-        });
-        if (dataSource.server) {
-            var server = null;
-            if (typeof dataSource.server == "function") {
-                server = new dataSource.server();
-            } else {
-                server = dataSource.server;
-            }
-            server.fetch(dataSource.api, {
-                view: this
-            }, function(resp) {
-                this$1.options.data = resp;
-                this$1.refresh();
+        if (dataSource.url && window.$) {
+            $.ajax(Lego.extend(dataSource, {
+                success: function(resp) {
+                    if (resp.resultCode == 200 && resp.data) {
+                        if (typeof dataSource.filter == "function") {
+                            that.options.data = dataSource.filter(resp.data);
+                        } else {
+                            that.options.data = resp.data;
+                        }
+                        that.refresh();
+                    }
+                },
+                error: function(xhr) {
+                    debug.warn("login error: ", xhr);
+                }
+            }));
+        } else {
+            dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
+            dataSource.api.forEach(function(apiName) {
+                dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
             });
+            if (dataSource.server) {
+                var server = null;
+                if (typeof dataSource.server == "function") {
+                    server = new dataSource.server();
+                } else {
+                    server = dataSource.server;
+                }
+                server.fetch(dataSource.api, {
+                    view: this
+                }, function(resp) {
+                    this$1.options.data = resp;
+                    this$1.refresh();
+                });
+            }
         }
     } else {
+        this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data;
         this._renderComponents();
     }
 };
@@ -468,10 +517,12 @@ View.prototype.setEvent = function setEvent() {
 View.prototype.setElement = function setElement(el) {
     if (el) {
         var pEl = this.options.context.el || document, _el = typeof el == "string" ? pEl.querySelector(el) : el;
-        if (el == "body") {
-            var childs = _el.childNodes;
-            for (var i = childs.length - 1; i >= 0; i--) {
-                _el.removeChild(childs.item(i));
+        if (el == "body" || this.options.insert == "append" || this.options.insert == "html") {
+            if (this.options.insert !== "append" || this.options.insert == "html") {
+                var childs = _el.childNodes;
+                for (var i = childs.length - 1; i >= 0; i--) {
+                    _el.removeChild(childs.item(i));
+                }
             }
             _el.appendChild(this.el);
         } else {
@@ -677,7 +728,7 @@ Data.prototype.__fetch = function __fetch(apis, opts) {
                                                 theBody = Lego.param(theBody);
                                             }
                                         }
-                                        req = new Request(option.url, {
+                                        req = new Request(option.url.indexOf("http") ? option.url : Lego.config.serviceUri + option.url, {
                                             method: option.method || "GET",
                                             headers: headers,
                                             mode: "same-origin",

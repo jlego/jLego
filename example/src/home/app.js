@@ -2,19 +2,24 @@ import homeView from './view/home';
 import listView from './view/list';
 import listData from './data/list';
 
-HBY.components('home', homeView);
-HBY.router({
-    '/home' () {
+class Router {
+    constructor() {
+        return {
+            '/home': this.index,
+            '/home/list': this.tabs
+        };
+    }
+    index(){
         console.warn('ppppppppppppppppp');
-        const theview = HBY.create(listView, {
-            // el: HBY.config.pageEl,
+        Lego.create(listView, {
+            el: Lego.config.pageEl,
             dataSource: {
                 api: ['test', 'ok'],
                 server: listData
             },
             onAfter(self) {
                 let i = 0;
-                HBY.setTimer('theTime', setInterval(() => {
+                Lego.setTimer('theTime', setInterval(() => {
                     self.options.data[0].last = i;
                     self.refresh();
                     i++;
@@ -34,11 +39,10 @@ HBY.router({
                 // }
             }]
         });
-        $(HBY.config.pageEl).html(theview.el);
-    },
-    '/home/list' () {
-        HBY.create(listView, {
-            el: HBY.config.pageEl,
+    }
+    tabs(){
+        Lego.create(listView, {
+            el: Lego.config.pageEl,
             data: {
                 list: [
                     { first: 'home', last: 'Bond' },
@@ -59,8 +63,6 @@ HBY.router({
                 ]
             }]
         });
-    },
-    '/home/detail/:id' (id) {
-        console.warn('pppppppppp');
     }
-});
+}
+Lego.router(new Router());

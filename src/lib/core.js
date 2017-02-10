@@ -231,6 +231,43 @@ class Core {
         }
     }
     /**
+     * [ns 命名空间]
+     * @param  {[type]} nameSpaceStr [description]
+     * @param  {[type]} obj          [description]
+     * @return {[type]}              [description]
+     */
+    ns(nameSpaceStr, obj = {}) {
+        if (typeof nameSpaceStr !== 'string' && Array.isArray(obj) || typeof obj !== 'object') {
+            debug.error('namespace error', obj);
+            return;
+        }
+        if (nameSpaceStr.substring(0, 5) !== 'Lego.') nameSpaceStr = 'Lego.' + nameSpaceStr;
+        let nameSpaceArr = nameSpaceStr.split('.'),
+            tempArr = ['Lego'],
+            that = this;
+        function getNameSpace(nameSpaceObj, num) {
+            if (num < nameSpaceArr.length) {
+                let itemStr = nameSpaceArr[num];
+                tempArr.push(itemStr);
+                let allStr = tempArr.join('.');
+                let subObj = eval(allStr);
+                if (num == nameSpaceArr.length - 1) {
+                    if(that.isEmptyObject(nameSpaceObj[itemStr])){
+                        nameSpaceObj[itemStr] = obj;
+                    }else{
+                        debug.warn('namespace can not be repeated', nameSpaceStr);
+                    }
+                }else{
+                    nameSpaceObj[itemStr] = typeof subObj == 'object' && !Array.isArray(subObj) ? subObj : {};
+                }
+                return getNameSpace(nameSpaceObj[itemStr], num + 1);
+            } else {
+                return nameSpaceObj;
+            }
+        }
+        return getNameSpace(this, 1);
+    }
+    /**
      * [loadScript 加载js]
      * @param  {[type]}   url      [description]
      * @param  {Function} callback [description]
@@ -238,8 +275,9 @@ class Core {
      * @return {[type]}            [description]
      */
     loadScript(url, callback, appName) {
-        let script = document.createElement("script");
-        script.setAttribute('id', appName);
+        let script = document.createElement("script"),
+            theId = 'Lego-js-' + appName;
+        script.setAttribute('id', theId);
         script.type = "text/javascript";
         if (script.readyState) { // IE
             script.onreadystatechange = function() {
@@ -254,7 +292,7 @@ class Core {
             };
         }
         script.src = url;
-        if(document.getElementById(appName)) document.getElementsByTagName("head")[0].removeChild(document.getElementById(appName));
+        if(document.getElementById(theId)) document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
         document.getElementsByTagName("head")[0].appendChild(script);
     }
     /**
@@ -280,8 +318,9 @@ class Core {
         this.loadScript(this.config.rootUri + appName + '/app.js?' + this.config.version, function() {
             if(appPath && appName !== 'index'){
                 that.routers.get(appName).setRoute(appPath);
-                if(document.getElementById(that.prevApp)){
-                    document.getElementsByTagName("head")[0].removeChild(document.getElementById(that.prevApp));
+                let prevId = 'Lego-js-' + that.prevApp;
+                if(document.getElementById(prevId)){
+                    document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
                 }
                 that._clearObj(that.prevApp);
             }
@@ -308,15 +347,6 @@ class Core {
         } else {
             return '';
         }
-    }
-    /**
-     * [trigger 触发事件]
-     * @param  {[type]} event [description]
-     * @param  {[type]} data  [description]
-     * @return {[type]}       [description]
-     */
-    trigger(event, data){
-        this.Eventer.emit(event, data);
     }
     /**
      * getAppName 当前模块名称

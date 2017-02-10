@@ -1,4 +1,4 @@
-class ListData extends HBY.Data {
+class ListData extends Lego.Data {
     constructor(opts = {}) {
         const options = {
             'gg': {
@@ -15,7 +15,7 @@ class ListData extends HBY.Data {
                 url: './content2.json'
             }
         };
-        $.extend(true, options, opts);
+        Lego.extend(options, opts);
         super(options);
     }
     parse(datas) {
