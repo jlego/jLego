@@ -1,11 +1,11 @@
-class MainView extends HBY.View {
+class MainView extends Lego.View {
     constructor(opts = {}) {
         const options = {
             events: {
                 // 'click nav a': 'clickNav'
             }
         };
-        $.extend(true, options, opts);
+        Object.assign(options, opts);
         super(options);
     }
     render() {
@@ -57,13 +57,14 @@ class MainView extends HBY.View {
                 </header>
                 <div class="main-content">
                     <div class="wrap-content container-fluid" id="container">
+                        <div id="page-container"></div>
                     </div>
                 </div>
             </div>
             <footer>
                 <div class="footer-inner">
                     <div class="pull-left">
-                        &copy; <span class="current-year"></span><span class="text-bold text-uppercase">HBY</span>. <span>All rights reserved</span>
+                        &copy; <span class="current-year"></span><span class="text-bold text-uppercase">Lego</span>. <span>All rights reserved</span>
                     </div>
                     <div class="pull-right">
                         <span class="go-top"><i class="ti-angle-up"></i></span>
@@ -75,9 +76,9 @@ class MainView extends HBY.View {
         return tmpl;
     }
     clickNav(event){
-        const target = HBY.$(event.currentTarget),
+        const target = Lego.$(event.currentTarget),
             app = target.data('app');
-        HBY.startApp(app);
+        Lego.startApp(app);
     }
 }
 export default MainView;

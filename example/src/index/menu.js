@@ -1,11 +1,11 @@
-class MenuView extends HBY.View {
+class MenuView extends Lego.View {
     constructor(opts = {}) {
         const options = {
             events: {
                 // 'click nav a': 'clickNav'
             }
         };
-        $.extend(true, options, opts);
+        Object.assign(options, opts);
         super(options);
     }
     render() {
@@ -15,7 +15,7 @@ class MenuView extends HBY.View {
             <nav>
                 <ul class="main-navigation-menu">
                     <li data-permis='{"module":"Home", "operate":"Query", "hide":1}' id="nav_home">
-                        <a href="javascript:HBY.startApp('home');">
+                        <a href="javascript:Lego.startApp('home');">
                             <div class="item-content">
                                 <div class="item-media">
                                     <i class="hby-home"></i>
@@ -27,7 +27,7 @@ class MenuView extends HBY.View {
                         </a>
                     </li>
                     <li data-permis='{"module":"Register", "operate":"Query", "hide":1}' id="nav_register">
-                        <a href="javascript:HBY.startApp('test');">
+                        <a href="javascript:Lego.startApp('test');">
                             <div class="item-content">
                                 <div class="item-media">
                                     <i class="glyphicon glyphicon-list-alt"></i>
@@ -39,7 +39,7 @@ class MenuView extends HBY.View {
                         </a>
                     </li>
                     <li data-permis='{"module":"Customer", "operate":"Query", "hide":1}' id="nav_customer">
-                        <a href="#customer/">
+                        <a href="javascript:Lego.startApp('test');">
                             <div class="item-content">
                                 <div class="item-media">
                                     <i class="hby-customer"></i>
@@ -51,7 +51,7 @@ class MenuView extends HBY.View {
                         </a>
                     </li>
                     <li data-permis='{"module":"Order", "operate":"Query", "hide":1}' id="nav_order">
-                        <a href="#order/">
+                        <a href="javascript:Lego.startApp('test');">
                             <div class="item-content">
                                 <div class="item-media">
                                     <i class="hby-order"></i>
@@ -63,7 +63,7 @@ class MenuView extends HBY.View {
                         </a>
                     </li>
                     <li data-permis='{"module":"Channel", "operate":"Query", "hide":1}' id="nav_channel">
-                        <a href="#channel/">
+                        <a href="javascript:Lego.startApp('test');">
                             <div class="item-content">
                                 <div class="item-media">
                                     <i class="hby-channel"></i>
@@ -75,7 +75,7 @@ class MenuView extends HBY.View {
                         </a>
                     </li>
                     <li data-permis='{"module":"Finance", "operate":"Query", "hide":1}' id="nav_finance">
-                        <a href="#finance/">
+                        <a href="javascript:Lego.startApp('test');">
                             <div class="item-content">
                                 <div class="item-media">
                                     <i class="hby-finance"></i>
@@ -87,7 +87,7 @@ class MenuView extends HBY.View {
                         </a>
                     </li>
                     <li data-permis='{"module":"Consumption", "operate":"Query", "hide":1}' id="nav_expenses">
-                        <a href="#expenses/">
+                        <a href="javascript:Lego.startApp('test');">
                             <div class="item-content">
                                 <div class="item-media">
                                     <i class="glyphicon glyphicon-usd"></i>
@@ -99,7 +99,7 @@ class MenuView extends HBY.View {
                         </a>
                     </li>
                     <li data-permis='{"module":"Product", "operate":"Query", "hide":1}' id="nav_product">
-                        <a href="#product/">
+                        <a href="javascript:Lego.startApp('test');">
                             <div class="item-content">
                                 <div class="item-media">
                                     <i class="hby-product"></i>
@@ -111,7 +111,7 @@ class MenuView extends HBY.View {
                         </a>
                     </li>
                     <li data-permis='{"module":"Operation", "operate":"Query", "hide":1}' id="nav_operation">
-                        <a href="#operation/">
+                        <a href="javascript:Lego.startApp('test');">
                             <div class="item-content">
                                 <div class="item-media">
                                     <i class="glyphicon glyphicon-dashboard"></i>
@@ -123,7 +123,7 @@ class MenuView extends HBY.View {
                         </a>
                     </li>
                     <li data-permis='{"module":"Organization", "operate":"Query", "hide":1}' id="nav_organization">
-                        <a href="#admin/">
+                        <a href="javascript:Lego.startApp('test');">
                             <div class="item-content">
                                 <div class="item-media">
                                     <i class="hby-admin"></i>
@@ -142,9 +142,10 @@ class MenuView extends HBY.View {
         return tmpl;
     }
     // clickNav(event){
-    //     const target = HBY.$(event.currentTarget),
+    //     const target = Lego.$(event.currentTarget),
     //         app = target.data('app');
-    //     HBY.startApp(app);
+    //     Lego.startApp(app);
     // }
 }
+Lego.components('menu', MenuView);
 export default MenuView;

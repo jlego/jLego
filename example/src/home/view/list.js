@@ -1,4 +1,4 @@
-class ListView extends HBY.View {
+class ListView extends Lego.View {
     constructor(opts = {}) {
         const options = {
             events: {
@@ -16,7 +16,8 @@ class ListView extends HBY.View {
     render() {
         let data = this.options.data || [];
         debug.warn('更新了视图', data);
-        let vDom = hx`<div>
+        let vDom = hx`
+        <div class="page-container" id="page-container">
           <h1>hello world!</h1>
           ${data.map((model, i) => {
             return hx`<a href="javascript:;" style="display:block;">${model.last}</a>\n`
@@ -27,8 +28,8 @@ class ListView extends HBY.View {
     }
     theClick(event){
         event.stopPropagation();
-        // this.remove();
         debug.warn('66666666666');
     }
 }
+Lego.components('list', ListView);
 export default ListView;

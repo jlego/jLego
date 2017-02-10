@@ -1,7 +1,6 @@
-class HomeView extends HBY.View {
+class HomeView extends Lego.View {
     constructor(opts = {}) {
         const options = {
-            // el: 'div#uuu88',
             events: {
                 'click #400': 'theClick'
             }
@@ -12,7 +11,8 @@ class HomeView extends HBY.View {
     render() {
         let data = this.options.data || [];
         console.warn('uuuuuuuuuuuuu', data);
-        let vDom = hx`<div>
+        let vDom = hx`
+        <div>
           ${data.map((model, i) => {
             return hx`<a href="#/home" style="display:block;">${model.first}</a>\n`
           })}
@@ -21,7 +21,8 @@ class HomeView extends HBY.View {
     }
     theClick(event){
         event.stopPropagation();
-        HBY.trigger('data_update', {aa: 1});
+        // Lego.trigger('data_update', {aa: 1});
     }
 }
+Lego.components('home', HomeView);
 export default HomeView;

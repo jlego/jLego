@@ -2,28 +2,26 @@ import homeView from './view/home';
 import listView from './view/list';
 import listData from './data/list';
 
-HBY.router({
-    '/test' () {
+class Router {
+    constructor() {
+        return {
+            '/test': this.index,
+            '/test/list': this.tabs
+        };
+    }
+    index(){
         console.warn('7777777777777');
-        HBY.create(listView, {
-            el: HBY.config.pageEl,
+        Lego.create(listView, {
+            el: Lego.config.pageEl,
             dataSource: {
                 api: ['gg', 'ff'],
                 server: listData
-            },
-            onAfter(self) {
-                // let i = 0;
-                // HBY.setTimer('theTime2', setInterval(function(){
-                //     self.data.list[0].last = i;
-                //     self.refresh();
-                //     i++;
-                // }, 3000));
             }
         });
-    },
-    '/test/list' () {
-        HBY.create(listView, {
-            el: HBY.config.pageEl,
+    }
+    tabs(){
+        Lego.create(listView, {
+            el: Lego.config.pageEl,
             data: {
                 list: [
                     { first: 'home', last: '99999' },
@@ -44,8 +42,6 @@ HBY.router({
                 ]
             }]
         });
-    },
-    '/test/detail/:id' (id) {
-        console.warn('pppppppppp');
     }
-});
+}
+Lego.router(new Router());

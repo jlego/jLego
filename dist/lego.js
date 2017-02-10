@@ -1,5 +1,5 @@
 /**
- * lego.js v1.4.6
+ * lego.js v1.4.8
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -226,13 +226,14 @@ Core.prototype.ns = function ns(nameSpaceStr, obj) {
             tempArr.push(itemStr);
             var allStr = tempArr.join(".");
             var subObj = eval(allStr);
-            nameSpaceObj[itemStr] = typeof subObj == "object" && !Array.isArray(subObj) ? subObj : {};
             if (num == nameSpaceArr.length - 1) {
                 if (that.isEmptyObject(nameSpaceObj[itemStr])) {
                     nameSpaceObj[itemStr] = obj;
                 } else {
                     debug.warn("namespace can not be repeated", nameSpaceStr);
                 }
+            } else {
+                nameSpaceObj[itemStr] = typeof subObj == "object" && !Array.isArray(subObj) ? subObj : {};
             }
             return getNameSpace(nameSpaceObj[itemStr], num + 1);
         } else {
@@ -243,8 +244,8 @@ Core.prototype.ns = function ns(nameSpaceStr, obj) {
 };
 
 Core.prototype.loadScript = function loadScript(url, callback, appName) {
-    var script = document.createElement("script");
-    script.setAttribute("id", appName);
+    var script = document.createElement("script"), theId = "Lego-js-" + appName;
+    script.setAttribute("id", theId);
     script.type = "text/javascript";
     if (script.readyState) {
         script.onreadystatechange = function() {
@@ -259,8 +260,8 @@ Core.prototype.loadScript = function loadScript(url, callback, appName) {
         };
     }
     script.src = url;
-    if (document.getElementById(appName)) {
-        document.getElementsByTagName("head")[0].removeChild(document.getElementById(appName));
+    if (document.getElementById(theId)) {
+        document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
     }
     document.getElementsByTagName("head")[0].appendChild(script);
 };
@@ -286,8 +287,9 @@ Core.prototype.startApp = function startApp(appPath, opts) {
     this.loadScript(this.config.rootUri + appName + "/app.js?" + this.config.version, function() {
         if (appPath && appName !== "index") {
             that.routers.get(appName).setRoute(appPath);
-            if (document.getElementById(that.prevApp)) {
-                document.getElementsByTagName("head")[0].removeChild(document.getElementById(that.prevApp));
+            var prevId = "Lego-js-" + that.prevApp;
+            if (document.getElementById(prevId)) {
+                document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
             }
             that._clearObj(that.prevApp);
         }

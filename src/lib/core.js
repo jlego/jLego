@@ -275,8 +275,9 @@ class Core {
      * @return {[type]}            [description]
      */
     loadScript(url, callback, appName) {
-        let script = document.createElement("script");
-        script.setAttribute('id', appName);
+        let script = document.createElement("script"),
+            theId = 'Lego-js-' + appName;
+        script.setAttribute('id', theId);
         script.type = "text/javascript";
         if (script.readyState) { // IE
             script.onreadystatechange = function() {
@@ -291,7 +292,7 @@ class Core {
             };
         }
         script.src = url;
-        if(document.getElementById(appName)) document.getElementsByTagName("head")[0].removeChild(document.getElementById(appName));
+        if(document.getElementById(theId)) document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
         document.getElementsByTagName("head")[0].appendChild(script);
     }
     /**
@@ -317,8 +318,9 @@ class Core {
         this.loadScript(this.config.rootUri + appName + '/app.js?' + this.config.version, function() {
             if(appPath && appName !== 'index'){
                 that.routers.get(appName).setRoute(appPath);
-                if(document.getElementById(that.prevApp)){
-                    document.getElementsByTagName("head")[0].removeChild(document.getElementById(that.prevApp));
+                let prevId = 'Lego-js-' + that.prevApp;
+                if(document.getElementById(prevId)){
+                    document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
                 }
                 that._clearObj(that.prevApp);
             }

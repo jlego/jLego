@@ -1,13 +1,8 @@
-class ListView extends HBY.View {
+class ListView extends Lego.View {
     constructor(opts = {}) {
         const options = {
             events: {
                 'click #test': 'theClick'
-            },
-            listen: {
-                'data_update': (data) => {
-                    debug.warn('pppppppppp', data);
-                }
             }
         };
         Object.assign(options, opts);
@@ -15,7 +10,8 @@ class ListView extends HBY.View {
     }
     render() {
         let data = this.options.data || [];
-        let vDom = hx`<div>
+        let vDom = hx`
+        <div class="page-container" id="page-container">
           ${data.map((model, i) => {
             return hx`<a id="${model.first}" href="#/home/list" style="display:block;">${model.last}</a>\n`
           })}
@@ -26,4 +22,5 @@ class ListView extends HBY.View {
         debug.warn('66666666666');
     }
 }
+Lego.components('list2', ListView);
 export default ListView;
