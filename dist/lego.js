@@ -1,5 +1,5 @@
 /**
- * lego.js v1.4.8
+ * lego.js v1.4.13
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -229,8 +229,6 @@ Core.prototype.ns = function ns(nameSpaceStr, obj) {
             if (num == nameSpaceArr.length - 1) {
                 if (that.isEmptyObject(nameSpaceObj[itemStr])) {
                     nameSpaceObj[itemStr] = obj;
-                } else {
-                    debug.warn("namespace can not be repeated", nameSpaceStr);
                 }
             } else {
                 nameSpaceObj[itemStr] = typeof subObj == "object" && !Array.isArray(subObj) ? subObj : {};
@@ -372,6 +370,7 @@ var View = function View(opts) {
         events: null,
         listen: null,
         context: opts.context || document,
+        data: [],
         components: []
     };
     Object.assign(this.options, opts);
@@ -427,7 +426,6 @@ View.prototype.fetch = function fetch(opts) {
             }
         }
     } else {
-        this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data;
         this._renderComponents();
     }
 };
@@ -435,6 +433,7 @@ View.prototype.fetch = function fetch(opts) {
 View.prototype._renderRootNode = function _renderRootNode() {
     var this$1 = this;
     this.renderBefore();
+    this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data;
     var content = this.render();
     if (content) {
         this.oldNode = content;
@@ -497,13 +496,14 @@ View.prototype._observe = function _observe() {
     var that = this;
     if (this.options && typeof this.options === "object") {
         Object.observe(this.options, function(changes) {
-            that.renderBefore();
+            this$1.renderBefore();
+            this$1.options.data = typeof this$1.options.data == "function" ? this$1.options.data() : this$1.options.data;
             var newNode = this$1.render();
-            var patches = vdom.diff(that.oldNode, newNode);
-            that.rootNode = vdom.patch(that.rootNode, patches);
-            that.oldNode = newNode;
-            that._renderComponents();
-            that.renderAfter();
+            var patches = vdom.diff(this$1.oldNode, newNode);
+            this$1.rootNode = vdom.patch(this$1.rootNode, patches);
+            this$1.oldNode = newNode;
+            this$1._renderComponents();
+            this$1.renderAfter();
         });
     }
 };
@@ -722,7 +722,7 @@ Data.prototype.__fetch = function __fetch(apis, opts) {
                                             if (theBody && typeof theBody === "object") {
                                                 for (key in theBody) {
                                                     if (typeof theBody[key] === "object") {
-                                                        theBody[key] = JSON.stringify(theBody[key]);
+                                                        theBody[key] = encodeURI(JSON.stringify(theBody[key]));
                                                     }
                                                 }
                                                 theBody = Lego.param(theBody);

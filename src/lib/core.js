@@ -254,8 +254,6 @@ class Core {
                 if (num == nameSpaceArr.length - 1) {
                     if(that.isEmptyObject(nameSpaceObj[itemStr])){
                         nameSpaceObj[itemStr] = obj;
-                    }else{
-                        debug.warn('namespace can not be repeated', nameSpaceStr);
                     }
                 }else{
                     nameSpaceObj[itemStr] = typeof subObj == 'object' && !Array.isArray(subObj) ? subObj : {};

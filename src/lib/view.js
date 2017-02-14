@@ -17,6 +17,7 @@ class View {
             events: null,
             listen: null,
             context: opts.context || document,
+            data: [],
             components: []
         };
         Object.assign(this.options, opts);
@@ -73,7 +74,6 @@ class View {
                 }
             }
         }else{
-            this.options.data = typeof this.options.data == 'function' ? this.options.data() : this.options.data;
             this._renderComponents();
         }
     }
@@ -83,6 +83,7 @@ class View {
      */
     _renderRootNode(){
         this.renderBefore();
+        this.options.data = typeof this.options.data == 'function' ? this.options.data() : this.options.data;
         const content = this.render();
         if(content){
             this.oldNode = content;
@@ -150,13 +151,14 @@ class View {
         const that = this;
         if(this.options && typeof this.options === 'object'){
             Object.observe(this.options, (changes) =>{
-                that.renderBefore();
+                this.renderBefore();
+                this.options.data = typeof this.options.data == 'function' ? this.options.data() : this.options.data;
                 const newNode = this.render();
-                let patches = vdom.diff(that.oldNode, newNode);
-                that.rootNode = vdom.patch(that.rootNode, patches);
-                that.oldNode = newNode;
-                that._renderComponents();
-                that.renderAfter();
+                let patches = vdom.diff(this.oldNode, newNode);
+                this.rootNode = vdom.patch(this.rootNode, patches);
+                this.oldNode = newNode;
+                this._renderComponents();
+                this.renderAfter();
             });
         }
     }
