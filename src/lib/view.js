@@ -42,7 +42,7 @@ class View {
                     success: function(resp) {
                         if (resp.resultCode == 200 && resp.data) {
                             if(typeof dataSource.filter == 'function'){
-                                that.options.data = dataSource.filter(resp.data);
+                                that.options.data = dataSource.filter(resp.data, that);
                             }else{
                                 that.options.data = resp.data;
                             }

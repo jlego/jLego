@@ -1,5 +1,5 @@
 /**
- * lego.js v1.4.13
+ * lego.js v1.4.14
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -394,7 +394,7 @@ View.prototype.fetch = function fetch(opts) {
                 success: function(resp) {
                     if (resp.resultCode == 200 && resp.data) {
                         if (typeof dataSource.filter == "function") {
-                            that.options.data = dataSource.filter(resp.data);
+                            that.options.data = dataSource.filter(resp.data, that);
                         } else {
                             that.options.data = resp.data;
                         }
