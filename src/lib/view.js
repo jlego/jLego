@@ -37,40 +37,27 @@ class View {
         let that = this;
         if(this.options.dataSource){
             const dataSource = this.options.dataSource;
-            if(dataSource.url && window.$){
-                $.ajax(Lego.extend(dataSource, {
-                    success: function(resp) {
-                        if (resp.resultCode == 200 && resp.data) {
-                            if(typeof dataSource.filter == 'function'){
-                                that.options.data = dataSource.filter(resp.data, that);
-                            }else{
-                                that.options.data = resp.data;
-                            }
-                            that.refresh();
-                        }
-                    },
-                    error: function(xhr) {
-                        debug.warn("login error: ", xhr);
-                    }
-                }));
-            }else{
-                dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [dataSource.api];
-                dataSource.api.forEach(apiName => {
-                    dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
-                });
-                if(dataSource.server){
-                    let server = null;
-                    if(typeof dataSource.server == 'function'){
-                        server = new dataSource.server();
-                    }else{
-                        server = dataSource.server;
-                    }
-                    server.fetch(dataSource.api, {
-                        view: this
-                    }, (resp) => {
+            dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [dataSource.api];
+            dataSource.api.forEach(apiName => {
+                dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
+            });
+            if(dataSource.server){
+                let server = null;
+                if(typeof dataSource.server == 'function'){
+                    server = new dataSource.server();
+                }else{
+                    server = dataSource.server;
+                }
+                if(dataSource.isAjax && window.$){
+                    server.fetch(dataSource.api, dataSource, (resp) => {
                         this.options.data = resp;
                         this.refresh();
-                    });
+                    }, this);
+                }else{
+                    server.fetch(dataSource.api, {}, (resp) => {
+                        this.options.data = resp;
+                        this.refresh();
+                    }, this);
                 }
             }
         }else{

@@ -36,15 +36,6 @@ class Core {
         return this;
     }
     /**
-     * [isJson 判断是否是json]
-     * @param  {[type]}  obj [description]
-     * @return {Boolean}     [description]
-     */
-    isJson(obj){
-        let isjson = typeof(obj) == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
-        return isjson;
-    }
-    /**
      * [extend 深拷贝对象]
      * @param  {...[type]} opts [description]
      * @return {[type]}         [description]
@@ -54,7 +45,7 @@ class Core {
         function assign(target = {}, source = {}){
             for (let key in source) {
                 if (source.hasOwnProperty(key)) {
-                    if(!that.isJson(source[key])){
+                    if(typeof source[key] !== 'object'){
                         target[key] = source[key];
                     }else{
                         if(Array.isArray(source[key])){

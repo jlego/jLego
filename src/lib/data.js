@@ -24,26 +24,47 @@ class Data {
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    fetch(apis, opts, callback){
+    fetch(apis, opts, callback, view){
         let that = this,
             apiArr = Array.isArray(apis) ? apis : [apis];
-        this.__fetch(apis, opts).then((result) => {
-            apiArr.forEach((apiName, index)=> {
-                that.datas.set(apiName, result[index]);
+        if(opts.isAjax){
+            let apiName = Array.isArray(apis) ? apis[0] : apis;
+            let option = Lego.extend({reset: true}, that.options[apiName] || {}, view ? (view.options.dataSource[apiName] || {}) : {}, opts || {});
+            if(window.$ || window.jQuery){
+                if(option.reset){
+                    $.ajax(Lego.extend(option, {
+                        success: function(result) {
+                            if (result) {
+                                that.datas.set(apiName, result);
+                                if(typeof callback == 'function') callback(that.parse(result, apiName, view));
+                            }
+                        },
+                        error: function(xhr) {
+                            debug.warn("login error: ", xhr);
+                        }
+                    }));
+                }else{
+                    if(typeof callback == 'function') callback(this.parse(this.datas.get(apiName), apiName, view));
+                }
+            }
+        }else{
+            this.__fetch(apis, opts, view).then((result) => {
+                apiArr.forEach((apiName, index)=> {
+                    that.datas.set(apiName, result[index]);
+                });
+                if(typeof callback == 'function') callback(that.parse(result.length == 1 ? result[0] : result, apiArr.join('_'), view));
             });
-            if(typeof callback == 'function') callback(that.parse(result, apiArr.join('_'), opts.view));
-        });
+        }
     }
     /**
      * [fetchData 异步请求数据]
      * @param  {Object} options [description]
      * @return {[type]}         [description]
      */
-    async __fetch(apis, opts){
+    async __fetch(apis, opts, view){
         let that = this,
             results = [],
-            apiArr = Array.isArray(apis) ? apis : [apis],
-            view = !Lego.isEmptyObject(opts) ? opts.view : null;
+            apiArr = Array.isArray(apis) ? apis : [apis];
         try {
             // 并发读取远程URL
             let promisesArr = apiArr.map(async apiName => {

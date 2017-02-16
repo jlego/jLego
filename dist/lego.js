@@ -1,5 +1,5 @@
 /**
- * lego.js v1.4.14
+ * lego.js v1.5.3
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -48,11 +48,6 @@ var Core = function Core(opts) {
     return this;
 };
 
-Core.prototype.isJson = function isJson(obj) {
-    var isjson = typeof obj == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
-    return isjson;
-};
-
 Core.prototype.extend = function extend() {
     var opts = [], len = arguments.length;
     while (len--) opts[len] = arguments[len];
@@ -62,7 +57,7 @@ Core.prototype.extend = function extend() {
         if (source === void 0) source = {};
         for (var key in source) {
             if (source.hasOwnProperty(key)) {
-                if (!that.isJson(source[key])) {
+                if (typeof source[key] !== "object") {
                     target[key] = source[key];
                 } else {
                     if (Array.isArray(source[key])) {
@@ -389,40 +384,27 @@ View.prototype.fetch = function fetch(opts) {
     var that = this;
     if (this.options.dataSource) {
         var dataSource = this.options.dataSource;
-        if (dataSource.url && window.$) {
-            $.ajax(Lego.extend(dataSource, {
-                success: function(resp) {
-                    if (resp.resultCode == 200 && resp.data) {
-                        if (typeof dataSource.filter == "function") {
-                            that.options.data = dataSource.filter(resp.data, that);
-                        } else {
-                            that.options.data = resp.data;
-                        }
-                        that.refresh();
-                    }
-                },
-                error: function(xhr) {
-                    debug.warn("login error: ", xhr);
-                }
-            }));
-        } else {
-            dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
-            dataSource.api.forEach(function(apiName) {
-                dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
-            });
-            if (dataSource.server) {
-                var server = null;
-                if (typeof dataSource.server == "function") {
-                    server = new dataSource.server();
-                } else {
-                    server = dataSource.server;
-                }
-                server.fetch(dataSource.api, {
-                    view: this
-                }, function(resp) {
+        dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
+        dataSource.api.forEach(function(apiName) {
+            dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
+        });
+        if (dataSource.server) {
+            var server = null;
+            if (typeof dataSource.server == "function") {
+                server = new dataSource.server();
+            } else {
+                server = dataSource.server;
+            }
+            if (dataSource.isAjax && window.$) {
+                server.fetch(dataSource.api, dataSource, function(resp) {
                     this$1.options.data = resp;
                     this$1.refresh();
-                });
+                }, this);
+            } else {
+                server.fetch(dataSource.api, {}, function(resp) {
+                    this$1.options.data = resp;
+                    this$1.refresh();
+                }, this);
             }
         }
     } else {
@@ -667,27 +649,55 @@ var Data = function Data(opts) {
     this.options = opts;
 };
 
-Data.prototype.fetch = function fetch(apis, opts, callback) {
+Data.prototype.fetch = function fetch(apis, opts, callback, view) {
     var that = this, apiArr = Array.isArray(apis) ? apis : [ apis ];
-    this.__fetch(apis, opts).then(function(result) {
-        apiArr.forEach(function(apiName, index) {
-            that.datas.set(apiName, result[index]);
-        });
-        if (typeof callback == "function") {
-            callback(that.parse(result, apiArr.join("_"), opts.view));
+    if (opts.isAjax) {
+        var apiName$0 = Array.isArray(apis) ? apis[0] : apis;
+        var option = Lego.extend({
+            reset: true
+        }, that.options[apiName$0] || {}, view ? view.options.dataSource[apiName$0] || {} : {}, opts || {});
+        if (window.$ || window.jQuery) {
+            if (option.reset) {
+                $.ajax(Lego.extend(option, {
+                    success: function(result) {
+                        if (result) {
+                            that.datas.set(apiName$0, result);
+                            if (typeof callback == "function") {
+                                callback(that.parse(result, apiName$0, view));
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        debug.warn("login error: ", xhr);
+                    }
+                }));
+            } else {
+                if (typeof callback == "function") {
+                    callback(this.parse(this.datas.get(apiName$0), apiName$0, view));
+                }
+            }
         }
-    });
+    } else {
+        this.__fetch(apis, opts, view).then(function(result) {
+            apiArr.forEach(function(apiName, index) {
+                that.datas.set(apiName, result[index]);
+            });
+            if (typeof callback == "function") {
+                callback(that.parse(result.length == 1 ? result[0] : result, apiArr.join("_"), view));
+            }
+        });
+    }
 };
 
-Data.prototype.__fetch = function __fetch(apis, opts) {
+Data.prototype.__fetch = function __fetch(apis, opts, view) {
     return __async(regeneratorRuntime.mark(function callee$1$0() {
-        var that, results, apiArr, view, promisesArr, promise, t$2$0, t$2$1, res;
+        var that, results, apiArr, promisesArr, promise, t$2$0, t$2$1, res;
         return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
             var this$1 = this;
             while (1) {
                 switch (context$2$0.prev = context$2$0.next) {
                   case 0:
-                    that = this$1, results = [], apiArr = Array.isArray(apis) ? apis : [ apis ], view = !Lego.isEmptyObject(opts) ? opts.view : null;
+                    that = this$1, results = [], apiArr = Array.isArray(apis) ? apis : [ apis ];
                     context$2$0.prev = 1;
                     promisesArr = apiArr.map(function(apiName) {
                         return __async(regeneratorRuntime.mark(function callee$3$0() {
