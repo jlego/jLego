@@ -1,5 +1,5 @@
 /**
- * lego.js v1.5.3
+ * lego.js v1.5.7
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -362,20 +362,15 @@ var View = function View(opts) {
     var that = this;
     this.eventNameSpace = new Map();
     this.options = {
-        events: null,
-        listen: null,
         context: opts.context || document,
         data: [],
         components: []
     };
     Object.assign(this.options, opts);
-    this.isLoaded = false;
-    this.server = null;
     this._renderRootNode();
     this.setElement(this.options.el);
     this._observe();
     this.fetch();
-    this.setEvent();
 };
 
 View.prototype.fetch = function fetch(opts) {
@@ -395,17 +390,10 @@ View.prototype.fetch = function fetch(opts) {
             } else {
                 server = dataSource.server;
             }
-            if (dataSource.isAjax && window.$) {
-                server.fetch(dataSource.api, dataSource, function(resp) {
-                    this$1.options.data = resp;
-                    this$1.refresh();
-                }, this);
-            } else {
-                server.fetch(dataSource.api, {}, function(resp) {
-                    this$1.options.data = resp;
-                    this$1.refresh();
-                }, this);
-            }
+            server.fetch(dataSource.api, dataSource.isAjax && window.$ ? dataSource : {}, function(resp) {
+                this$1.options.data = resp;
+                this$1.refresh();
+            }, this);
         }
     } else {
         this._renderComponents();
@@ -414,8 +402,8 @@ View.prototype.fetch = function fetch(opts) {
 
 View.prototype._renderRootNode = function _renderRootNode() {
     var this$1 = this;
-    this.renderBefore();
     this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data;
+    this.renderBefore();
     var content = this.render();
     if (content) {
         this.oldNode = content;
@@ -452,7 +440,9 @@ View.prototype._renderRootNode = function _renderRootNode() {
     if (this.options.className) {
         this.el.className += this.options.className;
     }
-    this.$el = window.$ ? window.$(this.el) : {};
+    if (window.$) {
+        this.$el = window.$(this.el);
+    }
     this.renderAfter();
 };
 
@@ -490,12 +480,6 @@ View.prototype._observe = function _observe() {
     }
 };
 
-View.prototype.setEvent = function setEvent() {
-    this.unBindEvents();
-    this.delegateEvents();
-    return this;
-};
-
 View.prototype.setElement = function setElement(el) {
     if (el) {
         var pEl = this.options.context.el || document, _el = typeof el == "string" ? pEl.querySelector(el) : el;
@@ -513,92 +497,8 @@ View.prototype.setElement = function setElement(el) {
     }
 };
 
-View.prototype.delegateEvents = function delegateEvents(isUnbind) {
-    var this$1 = this;
-    var events = this.options.events;
-    if (!events) {
-        return this;
-    }
-    for (var key in events) {
-        var method = events[key];
-        if (typeof method !== "function") {
-            method = this$1[method];
-        }
-        if (!method) {
-            continue;
-        }
-        var match = key.match(delegateEventSplitter);
-        this$1.bindEvents(match[1], match[2], method.bind(this$1), isUnbind);
-    }
-    return this;
-};
-
-View.prototype.handler = function handler(event) {
-    var this$1 = this;
-    var target = event.target, eventName = event.type, path = event.path, that = this, targetIndex = path.indexOf(target);
-    if (this.eventNameSpace.has(eventName)) {
-        var selectorMap = this.eventNameSpace.get(eventName), resultArr = [];
-        selectorMap.forEach(function(listener, selector) {
-            var els = selector ? this$1.el.querySelectorAll(selector) : [ this$1.el ];
-            for (var i = 0; i < els.length; i++) {
-                var elIndex = path.indexOf(els[i]);
-                if (elIndex >= targetIndex) {
-                    resultArr.push({
-                        order: elIndex,
-                        listener: listener,
-                        target: els[i]
-                    });
-                }
-            }
-        });
-        if (resultArr.length) {
-            resultArr.sort(function(a, b) {
-                return a.order - b.order;
-            });
-            resultArr.forEach(function(value, index) {
-                var listener = resultArr[index].listener;
-                if (typeof listener == "function") {
-                    listener(event, resultArr[index].target);
-                }
-            });
-        }
-    }
-};
-
-View.prototype.bindEvents = function bindEvents(eventName, selector, listener, isUnbind) {
-    if (isUnbind === void 0) isUnbind = false;
-    if (!eventName || !listener) {
-        return;
-    }
-    if (!isUnbind) {
-        if (this.eventNameSpace.has(eventName)) {
-            this.eventNameSpace.get(eventName).set(selector, listener);
-        } else {
-            var subEvent = new Map();
-            subEvent.set(selector, listener);
-            this.eventNameSpace.set(eventName, subEvent);
-            this.el.removeEventListener(eventName, this.handler.bind(this));
-            this.el.addEventListener(eventName, this.handler.bind(this), false);
-        }
-    } else {
-        if (this.eventNameSpace.has(eventName)) {
-            this.eventNameSpace.get(eventName).delete(selector);
-        }
-    }
-    return this;
-};
-
-View.prototype.unBindEvents = function unBindEvents() {
-    this.delegateEvents(true);
-    return this;
-};
-
 View.prototype.find = function find(selector) {
     return this.el.querySelectorAll(selector);
-};
-
-View.prototype.$ = function $(selector) {
-    return window.$ ? this.$el.find(selector) : null;
 };
 
 View.prototype.render = function render() {
@@ -618,7 +518,9 @@ View.prototype.refresh = function refresh() {
 };
 
 View.prototype.remove = function remove() {
-    this.unBindEvents();
+    if (this.el) {
+        this.el.parentNode.removeChild(this.el);
+    }
 };
 
 function __async(g) {
@@ -727,7 +629,7 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
                                         headers = option.headers || {
                                             "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
                                         };
-                                        theBody = Object.assign({}, option.body ? option.body : {});
+                                        theBody = option.body ? option.body : {};
                                         if (headers["Content-type"] == "application/x-www-form-urlencoded; charset=UTF-8") {
                                             if (theBody && typeof theBody === "object") {
                                                 for (key in theBody) {
