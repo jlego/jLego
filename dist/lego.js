@@ -1,5 +1,5 @@
 /**
- * lego.js v1.5.9
+ * lego.js v1.5.11
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -447,7 +447,7 @@ View.prototype._renderRootNode = function _renderRootNode() {
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
     var components = this.options.components;
-    components = typeof components == "function" ? components(this) : Array.isArray(components) ? components : [ components ];
+    components = Array.isArray(components) ? components : [ components ];
     if (components.length) {
         components.forEach(function(item, i) {
             if (that.find(item.el).length) {
@@ -458,6 +458,20 @@ View.prototype._renderComponents = function _renderComponents() {
                 }
             }
         });
+    }
+};
+
+View.prototype.addCom = function addCom(comObj) {
+    if (!comObj.el) {
+        return;
+    }
+    var hasOne = this.options.components.find(function(item) {
+        return item.el == comObj.el;
+    });
+    if (hasOne) {
+        Lego.extend(hasOne, comObj);
+    } else {
+        this.options.components.push(comObj);
     }
 };
 

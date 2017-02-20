@@ -105,7 +105,7 @@ class View {
     _renderComponents(){
         const that = this;
         let components = this.options.components;
-        components = typeof components == 'function' ? components(this) : (Array.isArray(components) ? components : [components]);
+        components = Array.isArray(components) ? components : [components];
         if(components.length) {
             components.forEach(function(item, i){
                 if(that.find(item.el).length){
@@ -116,6 +116,19 @@ class View {
                     }
                 }
             });
+        }
+    }
+    /**
+     * [addCom 添加视图子组件]
+     * @param {[type]} comObj [description]
+     */
+    addCom(comObj){
+        if(!comObj.el) return;
+        let hasOne = this.options.components.find(item => item.el == comObj.el);
+        if(hasOne){
+            Lego.extend(hasOne, comObj);
+        }else{
+            this.options.components.push(comObj);
         }
     }
     /**
