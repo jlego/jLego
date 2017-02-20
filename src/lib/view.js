@@ -117,7 +117,7 @@ class View {
     _renderComponents(){
         const that = this;
         let components = this.options.components;
-        components = typeof components == 'function' ? components(this.options) : (Array.isArray(components) ? components : [components]);
+        components = typeof components == 'function' ? components(this) : (Array.isArray(components) ? components : [components]);
         if(components.length) {
             components.forEach(function(item, i){
                 if(that.find(item.el).length){

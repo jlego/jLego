@@ -1,5 +1,5 @@
 /**
- * lego.js v1.5.3
+ * lego.js v1.5.8
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -459,7 +459,7 @@ View.prototype._renderRootNode = function _renderRootNode() {
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
     var components = this.options.components;
-    components = typeof components == "function" ? components(this.options) : Array.isArray(components) ? components : [ components ];
+    components = typeof components == "function" ? components(this) : Array.isArray(components) ? components : [ components ];
     if (components.length) {
         components.forEach(function(item, i) {
             if (that.find(item.el).length) {
