@@ -75,7 +75,7 @@ class Data {
                     return await data;
                 }else if(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(data) || option.reset)){
                     let headers = option.headers || { "Content-type": "application/x-www-form-urlencoded; charset=UTF-8" };
-                    let theBody = Object.assign({}, option.body ? option.body : {});
+                    let theBody = option.body ? option.body : {};
                     if(headers["Content-type"] == "application/x-www-form-urlencoded; charset=UTF-8"){
                         if(theBody && typeof theBody === 'object'){
                             for(let key in theBody){
