@@ -83,15 +83,12 @@ class Core {
         opts.onAfter = opts.onAfter && opts.onAfter.bind(this);
         if(!view) return;
         // 操作权限
-        if (opts.permis) {
+        if (opts.permis && this.permis) {
             const module = opts.permis.module,
                 operate = opts.permis.operate,
-                hide = opts.permis.hide,
-                userId = opts.permis.userid || 0;
-            if (hide) {
-                if (!this.permis.check(module, operate, userId)) {
-                    return;
-                }
+                userId = opts.permis.userid || this.permis.options.userId;
+            if (!this.permis.check(module, operate, userId)) {
+                return;
             }
         }
         typeof opts.onBefore === 'function' && opts.onBefore();
