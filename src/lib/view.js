@@ -22,6 +22,7 @@ class View {
         this._renderRootNode();
         this.setElement(this.options.el);
         this._observe();
+        this.components();
         this.fetch();
     }
     /**
@@ -45,6 +46,8 @@ class View {
                 }
                 server.fetch(dataSource.api, dataSource.isAjax && window.$ ? dataSource : {}, (resp) => {
                     this.options.data = resp;
+                    this.dataReady();
+                    this.components();
                     this.refresh();
                 }, this);
             }
@@ -122,14 +125,21 @@ class View {
      * [addCom 添加视图子组件]
      * @param {[type]} comObj [description]
      */
-    addCom(comObj){
-        if(!comObj.el) return;
-        let hasOne = this.options.components.find(item => item.el == comObj.el);
-        if(hasOne){
-            Lego.extend(hasOne, comObj);
-        }else{
-            this.options.components.push(comObj);
+    addCom(comObjs){
+        let that = this;
+        comObjs = Array.isArray(comObjs) ? comObjs : [comObjs];
+        if(comObjs.length){
+            comObjs.forEach(com => {
+                if(!com.el) return;
+                let hasOne = that.options.components.find(item => item.el == com.el);
+                if(hasOne){
+                    Lego.extend(hasOne, com);
+                }else{
+                    that.options.components.push(com);
+                }
+            });
         }
+        return that.options.components;
     }
     /**
      * [_observe 监听数据变化并刷新视图]
@@ -139,8 +149,8 @@ class View {
         const that = this;
         if(this.options && typeof this.options === 'object'){
             Object.observe(this.options, (changes) =>{
-                this.renderBefore();
                 this.options.data = typeof this.options.data == 'function' ? this.options.data() : this.options.data;
+                this.renderBefore();
                 const newNode = this.render();
                 let patches = vdom.diff(this.oldNode, newNode);
                 this.rootNode = vdom.patch(this.rootNode, patches);
@@ -178,6 +188,20 @@ class View {
      */
     find(selector) {
         return this.el.querySelectorAll(selector);
+    }
+    /**
+     * [components description]
+     * @return {[type]} [description]
+     */
+    components(){
+        return this;
+    }
+    /**
+     * [dataReady 数据已加载完回调]
+     * @return {[type]} [description]
+     */
+    dataReady(){
+        return this;
     }
     /**
      * render 渲染视图

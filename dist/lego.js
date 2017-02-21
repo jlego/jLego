@@ -1,5 +1,5 @@
 /**
- * lego.js v1.5.11
+ * lego.js v1.6.1
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -368,6 +368,7 @@ var View = function View(opts) {
     this._renderRootNode();
     this.setElement(this.options.el);
     this._observe();
+    this.components();
     this.fetch();
 };
 
@@ -390,6 +391,8 @@ View.prototype.fetch = function fetch(opts) {
             }
             server.fetch(dataSource.api, dataSource.isAjax && window.$ ? dataSource : {}, function(resp) {
                 this$1.options.data = resp;
+                this$1.dataReady();
+                this$1.components();
                 this$1.refresh();
             }, this);
         }
@@ -461,18 +464,25 @@ View.prototype._renderComponents = function _renderComponents() {
     }
 };
 
-View.prototype.addCom = function addCom(comObj) {
-    if (!comObj.el) {
-        return;
+View.prototype.addCom = function addCom(comObjs) {
+    var that = this;
+    comObjs = Array.isArray(comObjs) ? comObjs : [ comObjs ];
+    if (comObjs.length) {
+        comObjs.forEach(function(com) {
+            if (!com.el) {
+                return;
+            }
+            var hasOne = that.options.components.find(function(item) {
+                return item.el == com.el;
+            });
+            if (hasOne) {
+                Lego.extend(hasOne, com);
+            } else {
+                that.options.components.push(com);
+            }
+        });
     }
-    var hasOne = this.options.components.find(function(item) {
-        return item.el == comObj.el;
-    });
-    if (hasOne) {
-        Lego.extend(hasOne, comObj);
-    } else {
-        this.options.components.push(comObj);
-    }
+    return that.options.components;
 };
 
 View.prototype._observe = function _observe() {
@@ -480,8 +490,8 @@ View.prototype._observe = function _observe() {
     var that = this;
     if (this.options && typeof this.options === "object") {
         Object.observe(this.options, function(changes) {
-            this$1.renderBefore();
             this$1.options.data = typeof this$1.options.data == "function" ? this$1.options.data() : this$1.options.data;
+            this$1.renderBefore();
             var newNode = this$1.render();
             var patches = vdom.diff(this$1.oldNode, newNode);
             this$1.rootNode = vdom.patch(this$1.rootNode, patches);
@@ -511,6 +521,14 @@ View.prototype.setElement = function setElement(el) {
 
 View.prototype.find = function find(selector) {
     return this.el.querySelectorAll(selector);
+};
+
+View.prototype.components = function components() {
+    return this;
+};
+
+View.prototype.dataReady = function dataReady() {
+    return this;
 };
 
 View.prototype.render = function render() {
