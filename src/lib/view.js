@@ -19,6 +19,12 @@ class View {
             components: []
         };
         Object.assign(this.options, opts);
+        // 监听器
+        if(this.options.listener && Lego.Eventer){
+            for(let key in this.options.listener){
+                Lego.Eventer.on(key, this.options.listener[key]);
+            }
+        }
         this._renderRootNode();
         this.setElement(this.options.el);
         this._observe();

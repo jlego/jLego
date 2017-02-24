@@ -80,7 +80,7 @@ class Data {
                         if(theBody && typeof theBody === 'object'){
                             for(let key in theBody){
                                 if(typeof theBody[key] === 'object'){
-                                    theBody[key] = encodeURI(JSON.stringify(theBody[key]));
+                                    theBody[key] = encodeURIComponent(JSON.stringify(theBody[key]));
                                 }
                             }
                             theBody = Lego.param(theBody);

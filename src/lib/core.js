@@ -79,8 +79,8 @@ class Core {
     create(view, opts = {}){
         const that = this;
         opts.vid = this.uniqueId('v');
-        opts.onBefore = opts.onBefore && opts.onBefore.bind(this);
-        opts.onAfter = opts.onAfter && opts.onAfter.bind(this);
+        opts.createBefore = opts.createBefore && opts.createBefore.bind(this);
+        opts.createAfter = opts.createAfter && opts.createAfter.bind(this);
         if(!view) return;
         // 操作权限
         if (opts.permis && this.permis) {
@@ -91,12 +91,12 @@ class Core {
                 return;
             }
         }
-        typeof opts.onBefore === 'function' && opts.onBefore();
+        typeof opts.createBefore === 'function' && opts.createBefore();
 
         const viewObj = new view(opts);
         this.views[this.currentApp].set(viewObj.el, viewObj);
 
-        typeof opts.onAfter === 'function' && opts.onAfter(viewObj);
+        typeof opts.createAfter === 'function' && opts.createAfter(viewObj);
         return viewObj;
     }
     /**

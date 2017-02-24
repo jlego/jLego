@@ -1,5 +1,5 @@
 /**
- * lego.js v1.6.1
+ * lego.js v1.6.7
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -88,8 +88,8 @@ Core.prototype.create = function create(view, opts) {
     if (opts === void 0) opts = {};
     var that = this;
     opts.vid = this.uniqueId("v");
-    opts.onBefore = opts.onBefore && opts.onBefore.bind(this);
-    opts.onAfter = opts.onAfter && opts.onAfter.bind(this);
+    opts.createBefore = opts.createBefore && opts.createBefore.bind(this);
+    opts.createAfter = opts.createAfter && opts.createAfter.bind(this);
     if (!view) {
         return;
     }
@@ -99,10 +99,10 @@ Core.prototype.create = function create(view, opts) {
             return;
         }
     }
-    typeof opts.onBefore === "function" && opts.onBefore();
+    typeof opts.createBefore === "function" && opts.createBefore();
     var viewObj = new view(opts);
     this.views[this.currentApp].set(viewObj.el, viewObj);
-    typeof opts.onAfter === "function" && opts.onAfter(viewObj);
+    typeof opts.createAfter === "function" && opts.createAfter(viewObj);
     return viewObj;
 };
 
@@ -356,6 +356,7 @@ window.hx = hyperx(vdom.h);
 window.delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
 var View = function View(opts) {
+    var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this;
     this.eventNameSpace = new Map();
@@ -365,6 +366,11 @@ var View = function View(opts) {
         components: []
     };
     Object.assign(this.options, opts);
+    if (this.options.listener && Lego.Eventer) {
+        for (var key in this.options.listener) {
+            Lego.Eventer.on(key, this$1.options.listener[key]);
+        }
+    }
     this._renderRootNode();
     this.setElement(this.options.el);
     this._observe();
@@ -664,7 +670,7 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
                                             if (theBody && typeof theBody === "object") {
                                                 for (key in theBody) {
                                                     if (typeof theBody[key] === "object") {
-                                                        theBody[key] = encodeURI(JSON.stringify(theBody[key]));
+                                                        theBody[key] = encodeURIComponent(JSON.stringify(theBody[key]));
                                                     }
                                                 }
                                                 theBody = Lego.param(theBody);
@@ -754,45 +760,51 @@ var Event = function Event(opts) {
 };
 
 Event.prototype.on = function on(eventName, callback) {
-    if (typeof callback !== "function") {
-        return;
-    }
-    var eventFunName = Symbol(callback.name).toString();
-    if (eventName.indexOf(".") >= 0) {
-        var eventsArr = eventName.split(".");
-        eventName = eventsArr.shift();
-        eventFunName = eventsArr.join(".");
-    }
-    if (this.listener.has(eventName)) {
-        var listenerMap = this.listener.get(eventName);
-        if (listenerMap.has(eventFunName)) {
-            var listenerArr = listenerMap.get(eventFunName);
-            listenerArr.push(callback);
-        } else {
-            listenerMap.set(eventFunName, [ callback ]);
+    if (eventName) {
+        if (typeof callback !== "function") {
+            return;
         }
-    } else {
-        var listenerMap$1 = new Map();
-        listenerMap$1.set(eventFunName, [ callback ]);
-        this.listener.set(eventName, listenerMap$1);
+        var eventFunName = Symbol(callback.name).toString();
+        if (eventName.indexOf(".") >= 0) {
+            var eventsArr = eventName.split(".");
+            eventName = eventsArr.shift();
+            eventFunName = eventsArr.join(".");
+        }
+        if (this.listener.has(eventName)) {
+            var listenerMap = this.listener.get(eventName);
+            if (listenerMap.has(eventFunName)) {
+                var listenerArr = listenerMap.get(eventFunName);
+                listenerArr.push(callback);
+            } else {
+                listenerMap.set(eventFunName, [ callback ]);
+            }
+        } else {
+            var listenerMap$1 = new Map();
+            listenerMap$1.set(eventFunName, [ callback ]);
+            this.listener.set(eventName, listenerMap$1);
+        }
     }
 };
 
 Event.prototype.off = function off(eventName) {
-    if (eventName.indexOf(".") >= 0) {
-        var eventsArr = eventName.split(".");
-        eventName = eventsArr.shift();
-        eventFunName = eventsArr.join(".");
-        if (this.listener.has(eventName)) {
-            var listenerMap = this.listener.get(eventName);
-            if (listenerMap.has(eventFunName)) {
-                listenerMap.delete(eventFunName);
+    if (eventName) {
+        if (eventName.indexOf(".") >= 0) {
+            var eventsArr = eventName.split(".");
+            eventName = eventsArr.shift();
+            eventFunName = eventsArr.join(".");
+            if (this.listener.has(eventName)) {
+                var listenerMap = this.listener.get(eventName);
+                if (listenerMap.has(eventFunName)) {
+                    listenerMap.delete(eventFunName);
+                }
+            }
+        } else {
+            if (this.listener.has(eventName)) {
+                this.listener.delete(eventName);
             }
         }
     } else {
-        if (this.listener.has(eventName)) {
-            this.listener.delete(eventName);
-        }
+        this.listener.clear();
     }
 };
 
