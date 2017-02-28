@@ -1,5 +1,5 @@
 /**
- * lego.js v1.6.7
+ * lego.js v1.6.9
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -101,7 +101,9 @@ Core.prototype.create = function create(view, opts) {
     }
     typeof opts.createBefore === "function" && opts.createBefore();
     var viewObj = new view(opts);
-    this.views[this.currentApp].set(viewObj.el, viewObj);
+    if (this.currentApp && viewObj.el) {
+        this.views[this.currentApp].set(viewObj.el, viewObj);
+    }
     typeof opts.createAfter === "function" && opts.createAfter(viewObj);
     return viewObj;
 };

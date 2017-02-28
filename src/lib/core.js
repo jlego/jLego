@@ -94,7 +94,7 @@ class Core {
         typeof opts.createBefore === 'function' && opts.createBefore();
 
         const viewObj = new view(opts);
-        this.views[this.currentApp].set(viewObj.el, viewObj);
+        if(this.currentApp && viewObj.el) this.views[this.currentApp].set(viewObj.el, viewObj);
 
         typeof opts.createAfter === 'function' && opts.createAfter(viewObj);
         return viewObj;
