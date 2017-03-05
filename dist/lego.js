@@ -1,5 +1,5 @@
 /**
- * lego.js v1.4.11
+ * lego.js v1.6.12
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -48,11 +48,6 @@ var Core = function Core(opts) {
     return this;
 };
 
-Core.prototype.isJson = function isJson(obj) {
-    var isjson = typeof obj == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
-    return isjson;
-};
-
 Core.prototype.extend = function extend() {
     var opts = [], len = arguments.length;
     while (len--) opts[len] = arguments[len];
@@ -62,7 +57,7 @@ Core.prototype.extend = function extend() {
         if (source === void 0) source = {};
         for (var key in source) {
             if (source.hasOwnProperty(key)) {
-                if (!that.isJson(source[key])) {
+                if (typeof source[key] !== "object") {
                     target[key] = source[key];
                 } else {
                     if (Array.isArray(source[key])) {
@@ -93,23 +88,26 @@ Core.prototype.create = function create(view, opts) {
     if (opts === void 0) opts = {};
     var that = this;
     opts.vid = this.uniqueId("v");
-    opts.onBefore = opts.onBefore && opts.onBefore.bind(this);
-    opts.onAfter = opts.onAfter && opts.onAfter.bind(this);
+    opts.createBefore = opts.createBefore && opts.createBefore.bind(this);
+    opts.createAfter = opts.createAfter && opts.createAfter.bind(this);
     if (!view) {
         return;
     }
-    if (opts.permis) {
-        var module = opts.permis.module, operate = opts.permis.operate, hide = opts.permis.hide, userId = opts.permis.userid || 0;
-        if (hide) {
-            if (!this.permis.check(module, operate, userId)) {
-                return;
-            }
+    if (opts.permis && this.permis) {
+        var module = opts.permis.module, operate = opts.permis.operate, userId = opts.permis.userid || this.permis.options.userId;
+        if (!this.permis.check(module, operate, userId)) {
+            return;
         }
     }
-    typeof opts.onBefore === "function" && opts.onBefore();
+    typeof opts.createBefore === "function" && opts.createBefore();
     var viewObj = new view(opts);
-    this.views[this.currentApp].set(viewObj.el, viewObj);
-    typeof opts.onAfter === "function" && opts.onAfter(viewObj);
+    if (this.currentApp && viewObj.el) {
+        this.views[this.currentApp].set(viewObj.el, viewObj);
+    } else {
+        this.views["global"] = this.views["global"] || new WeakMap();
+        this.views["global"].set(viewObj.el, viewObj);
+    }
+    typeof opts.createAfter === "function" && opts.createAfter(viewObj);
     return viewObj;
 };
 
@@ -229,8 +227,6 @@ Core.prototype.ns = function ns(nameSpaceStr, obj) {
             if (num == nameSpaceArr.length - 1) {
                 if (that.isEmptyObject(nameSpaceObj[itemStr])) {
                     nameSpaceObj[itemStr] = obj;
-                } else {
-                    debug.warn("namespace can not be repeated", nameSpaceStr);
                 }
             } else {
                 nameSpaceObj[itemStr] = typeof subObj == "object" && !Array.isArray(subObj) ? subObj : {};
@@ -325,6 +321,7 @@ Core.prototype.getAppName = function getAppName() {
 
 Core.prototype.getView = function getView(el, appName) {
     if (appName === void 0) appName = this.getAppName();
+    appName = appName || "global";
     var _el = el instanceof window.$ ? el[0] : document.querySelector(el);
     if (this.views[appName].has(_el)) {
         return this.views[appName].get(_el);
@@ -356,7 +353,7 @@ Core.prototype.router = function router(routerOption) {
     return this.routers.get(appName);
 };
 
-window.Lego = new Core();
+window.Lego = window.Lego || new Core();
 
 var LegoCore$1 = window.Lego;
 
@@ -365,23 +362,26 @@ window.hx = hyperx(vdom.h);
 window.delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
 var View = function View(opts) {
+    var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this;
     this.eventNameSpace = new Map();
     this.options = {
-        events: null,
-        listen: null,
         context: opts.context || document,
+        data: [],
         components: []
     };
     Object.assign(this.options, opts);
-    this.isLoaded = false;
-    this.server = null;
+    if (this.options.listener && Lego.Eventer) {
+        for (var key in this.options.listener) {
+            Lego.Eventer.on(key, this$1.options.listener[key]);
+        }
+    }
     this._renderRootNode();
     this.setElement(this.options.el);
     this._observe();
+    this.components();
     this.fetch();
-    this.setEvent();
 };
 
 View.prototype.fetch = function fetch(opts) {
@@ -390,53 +390,33 @@ View.prototype.fetch = function fetch(opts) {
     var that = this;
     if (this.options.dataSource) {
         var dataSource = this.options.dataSource;
-        if (dataSource.url && window.$) {
-            $.ajax(Lego.extend(dataSource, {
-                success: function(resp) {
-                    if (resp.resultCode == 200 && resp.data) {
-                        if (typeof dataSource.filter == "function") {
-                            that.options.data = dataSource.filter(resp.data);
-                        } else {
-                            that.options.data = resp.data;
-                        }
-                        that.refresh();
-                    }
-                },
-                error: function(xhr) {
-                    debug.warn("login error: ", xhr);
-                }
-            }));
-        } else {
-            dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
-            dataSource.api.forEach(function(apiName) {
-                dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
-            });
-            if (dataSource.server) {
-                var server = null;
-                if (typeof dataSource.server == "function") {
-                    server = new dataSource.server();
-                } else {
-                    server = dataSource.server;
-                }
-                server.fetch(dataSource.api, {
-                    view: this
-                }, function(resp) {
-                    this$1.options.data = resp;
-                    this$1.refresh();
-                });
+        dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
+        dataSource.api.forEach(function(apiName) {
+            dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
+        });
+        if (dataSource.server) {
+            var server = null;
+            if (typeof dataSource.server == "function") {
+                server = new dataSource.server();
+            } else {
+                server = dataSource.server;
             }
+            server.fetch(dataSource.api, dataSource.isAjax && window.$ ? dataSource : {}, function(resp) {
+                this$1.options.data = resp;
+                this$1.dataReady();
+                this$1.components();
+                this$1.refresh();
+            }, this);
         }
     } else {
-        this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data;
         this._renderComponents();
     }
 };
 
 View.prototype._renderRootNode = function _renderRootNode() {
     var this$1 = this;
-    if (!this.options.dataSource) {
-        this.renderBefore();
-    }
+    this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data;
+    this.renderBefore();
     var content = this.render();
     if (content) {
         this.oldNode = content;
@@ -473,16 +453,16 @@ View.prototype._renderRootNode = function _renderRootNode() {
     if (this.options.className) {
         this.el.className += this.options.className;
     }
-    this.$el = window.$ ? window.$(this.el) : {};
-    if (!this.options.dataSource) {
-        this.renderAfter();
+    if (window.$) {
+        this.$el = window.$(this.el);
     }
+    this.renderAfter();
 };
 
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
     var components = this.options.components;
-    components = typeof components == "function" ? components(this.options, this) : Array.isArray(components) ? components : [ components ];
+    components = Array.isArray(components) ? components : [ components ];
     if (components.length) {
         components.forEach(function(item, i) {
             if (that.find(item.el).length) {
@@ -496,26 +476,42 @@ View.prototype._renderComponents = function _renderComponents() {
     }
 };
 
+View.prototype.addCom = function addCom(comObjs) {
+    var that = this;
+    comObjs = Array.isArray(comObjs) ? comObjs : [ comObjs ];
+    if (comObjs.length) {
+        comObjs.forEach(function(com) {
+            if (!com.el) {
+                return;
+            }
+            var hasOne = that.options.components.find(function(item) {
+                return item.el == com.el;
+            });
+            if (hasOne) {
+                Lego.extend(hasOne, com);
+            } else {
+                that.options.components.push(com);
+            }
+        });
+    }
+    return that.options.components;
+};
+
 View.prototype._observe = function _observe() {
     var this$1 = this;
     var that = this;
     if (this.options && typeof this.options === "object") {
         Object.observe(this.options, function(changes) {
-            that.renderBefore();
+            this$1.options.data = typeof this$1.options.data == "function" ? this$1.options.data() : this$1.options.data;
+            this$1.renderBefore();
             var newNode = this$1.render();
-            var patches = vdom.diff(that.oldNode, newNode);
-            that.rootNode = vdom.patch(that.rootNode, patches);
-            that.oldNode = newNode;
-            that._renderComponents();
-            that.renderAfter();
+            var patches = vdom.diff(this$1.oldNode, newNode);
+            this$1.rootNode = vdom.patch(this$1.rootNode, patches);
+            this$1.oldNode = newNode;
+            this$1._renderComponents();
+            this$1.renderAfter();
         });
     }
-};
-
-View.prototype.setEvent = function setEvent() {
-    this.unBindEvents();
-    this.delegateEvents();
-    return this;
 };
 
 View.prototype.setElement = function setElement(el) {
@@ -535,92 +531,16 @@ View.prototype.setElement = function setElement(el) {
     }
 };
 
-View.prototype.delegateEvents = function delegateEvents(isUnbind) {
-    var this$1 = this;
-    var events = this.options.events;
-    if (!events) {
-        return this;
-    }
-    for (var key in events) {
-        var method = events[key];
-        if (typeof method !== "function") {
-            method = this$1[method];
-        }
-        if (!method) {
-            continue;
-        }
-        var match = key.match(delegateEventSplitter);
-        this$1.bindEvents(match[1], match[2], method.bind(this$1), isUnbind);
-    }
-    return this;
-};
-
-View.prototype.handler = function handler(event) {
-    var this$1 = this;
-    var target = event.target, eventName = event.type, path = event.path, that = this, targetIndex = path.indexOf(target);
-    if (this.eventNameSpace.has(eventName)) {
-        var selectorMap = this.eventNameSpace.get(eventName), resultArr = [];
-        selectorMap.forEach(function(listener, selector) {
-            var els = selector ? this$1.el.querySelectorAll(selector) : [ this$1.el ];
-            for (var i = 0; i < els.length; i++) {
-                var elIndex = path.indexOf(els[i]);
-                if (elIndex >= targetIndex) {
-                    resultArr.push({
-                        order: elIndex,
-                        listener: listener,
-                        target: els[i]
-                    });
-                }
-            }
-        });
-        if (resultArr.length) {
-            resultArr.sort(function(a, b) {
-                return a.order - b.order;
-            });
-            resultArr.forEach(function(value, index) {
-                var listener = resultArr[index].listener;
-                if (typeof listener == "function") {
-                    listener(event, resultArr[index].target);
-                }
-            });
-        }
-    }
-};
-
-View.prototype.bindEvents = function bindEvents(eventName, selector, listener, isUnbind) {
-    if (isUnbind === void 0) isUnbind = false;
-    if (!eventName || !listener) {
-        return;
-    }
-    if (!isUnbind) {
-        if (this.eventNameSpace.has(eventName)) {
-            this.eventNameSpace.get(eventName).set(selector, listener);
-        } else {
-            var subEvent = new Map();
-            subEvent.set(selector, listener);
-            this.eventNameSpace.set(eventName, subEvent);
-            this.el.removeEventListener(eventName, this.handler.bind(this));
-            this.el.addEventListener(eventName, this.handler.bind(this), false);
-        }
-    } else {
-        if (this.eventNameSpace.has(eventName)) {
-            this.eventNameSpace.get(eventName).delete(selector);
-        }
-    }
-    return this;
-};
-
-View.prototype.unBindEvents = function unBindEvents() {
-    this.delegateEvents(true);
-    return this;
-};
-
 View.prototype.find = function find(selector) {
     return this.el.querySelectorAll(selector);
 };
 
-View.prototype.$ = function $(selector) {
-    return window.$ ? this.$el.find(selector) : null;
+View.prototype.components = function components() {
+    return this;
+};
+
+View.prototype.dataReady = function dataReady() {
+    return this;
 };
 
 View.prototype.render = function render() {
@@ -640,7 +560,9 @@ View.prototype.refresh = function refresh() {
 };
 
 View.prototype.remove = function remove() {
-    this.unBindEvents();
+    if (this.el) {
+        this.el.remove();
+    }
 };
 
 function __async(g) {
@@ -671,27 +593,55 @@ var Data = function Data(opts) {
     this.options = opts;
 };
 
-Data.prototype.fetch = function fetch(apis, opts, callback) {
+Data.prototype.fetch = function fetch(apis, opts, callback, view) {
     var that = this, apiArr = Array.isArray(apis) ? apis : [ apis ];
-    this.__fetch(apis, opts).then(function(result) {
-        apiArr.forEach(function(apiName, index) {
-            that.datas.set(apiName, result[index]);
-        });
-        if (typeof callback == "function") {
-            callback(that.parse(result, apiArr.join("_"), opts.view));
+    if (opts.isAjax) {
+        var apiName$0 = Array.isArray(apis) ? apis[0] : apis;
+        var option = Lego.extend({
+            reset: true
+        }, that.options[apiName$0] || {}, view ? view.options.dataSource[apiName$0] || {} : {}, opts || {});
+        if (window.$ || window.jQuery) {
+            if (option.reset) {
+                $.ajax(Lego.extend(option, {
+                    success: function(result) {
+                        if (result) {
+                            that.datas.set(apiName$0, result);
+                            if (typeof callback == "function") {
+                                callback(that.parse(result, apiName$0, view));
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        debug.warn("login error: ", xhr);
+                    }
+                }));
+            } else {
+                if (typeof callback == "function") {
+                    callback(this.parse(this.datas.get(apiName$0), apiName$0, view));
+                }
+            }
         }
-    });
+    } else {
+        this.__fetch(apis, opts, view).then(function(result) {
+            apiArr.forEach(function(apiName, index) {
+                that.datas.set(apiName, result[index]);
+            });
+            if (typeof callback == "function") {
+                callback(that.parse(result.length == 1 ? result[0] : result, apiArr.join("_"), view));
+            }
+        });
+    }
 };
 
-Data.prototype.__fetch = function __fetch(apis, opts) {
+Data.prototype.__fetch = function __fetch(apis, opts, view) {
     return __async(regeneratorRuntime.mark(function callee$1$0() {
-        var that, results, apiArr, view, promisesArr, promise, t$2$0, t$2$1, res;
+        var that, results, apiArr, promisesArr, promise, t$2$0, t$2$1, res;
         return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
             var this$1 = this;
             while (1) {
                 switch (context$2$0.prev = context$2$0.next) {
                   case 0:
-                    that = this$1, results = [], apiArr = Array.isArray(apis) ? apis : [ apis ], view = !Lego.isEmptyObject(opts) ? opts.view : null;
+                    that = this$1, results = [], apiArr = Array.isArray(apis) ? apis : [ apis ];
                     context$2$0.prev = 1;
                     promisesArr = apiArr.map(function(apiName) {
                         return __async(regeneratorRuntime.mark(function callee$3$0() {
@@ -721,12 +671,12 @@ Data.prototype.__fetch = function __fetch(apis, opts) {
                                         headers = option.headers || {
                                             "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
                                         };
-                                        theBody = Object.assign({}, option.body ? option.body : {});
+                                        theBody = option.body ? option.body : {};
                                         if (headers["Content-type"] == "application/x-www-form-urlencoded; charset=UTF-8") {
                                             if (theBody && typeof theBody === "object") {
                                                 for (key in theBody) {
                                                     if (typeof theBody[key] === "object") {
-                                                        theBody[key] = JSON.stringify(theBody[key]);
+                                                        theBody[key] = encodeURIComponent(JSON.stringify(theBody[key]));
                                                     }
                                                 }
                                                 theBody = Lego.param(theBody);
@@ -816,45 +766,51 @@ var Event = function Event(opts) {
 };
 
 Event.prototype.on = function on(eventName, callback) {
-    if (typeof callback !== "function") {
-        return;
-    }
-    var eventFunName = Symbol(callback.name).toString();
-    if (eventName.indexOf(".") >= 0) {
-        var eventsArr = eventName.split(".");
-        eventName = eventsArr.shift();
-        eventFunName = eventsArr.join(".");
-    }
-    if (this.listener.has(eventName)) {
-        var listenerMap = this.listener.get(eventName);
-        if (listenerMap.has(eventFunName)) {
-            var listenerArr = listenerMap.get(eventFunName);
-            listenerArr.push(callback);
-        } else {
-            listenerMap.set(eventFunName, [ callback ]);
+    if (eventName) {
+        if (typeof callback !== "function") {
+            return;
         }
-    } else {
-        var listenerMap$1 = new Map();
-        listenerMap$1.set(eventFunName, [ callback ]);
-        this.listener.set(eventName, listenerMap$1);
+        var eventFunName = Symbol(callback.name).toString();
+        if (eventName.indexOf(".") >= 0) {
+            var eventsArr = eventName.split(".");
+            eventName = eventsArr.shift();
+            eventFunName = eventsArr.join(".");
+        }
+        if (this.listener.has(eventName)) {
+            var listenerMap = this.listener.get(eventName);
+            if (listenerMap.has(eventFunName)) {
+                var listenerArr = listenerMap.get(eventFunName);
+                listenerArr.push(callback);
+            } else {
+                listenerMap.set(eventFunName, [ callback ]);
+            }
+        } else {
+            var listenerMap$1 = new Map();
+            listenerMap$1.set(eventFunName, [ callback ]);
+            this.listener.set(eventName, listenerMap$1);
+        }
     }
 };
 
 Event.prototype.off = function off(eventName) {
-    if (eventName.indexOf(".") >= 0) {
-        var eventsArr = eventName.split(".");
-        eventName = eventsArr.shift();
-        eventFunName = eventsArr.join(".");
-        if (this.listener.has(eventName)) {
-            var listenerMap = this.listener.get(eventName);
-            if (listenerMap.has(eventFunName)) {
-                listenerMap.delete(eventFunName);
+    if (eventName) {
+        if (eventName.indexOf(".") >= 0) {
+            var eventsArr = eventName.split(".");
+            eventName = eventsArr.shift();
+            eventFunName = eventsArr.join(".");
+            if (this.listener.has(eventName)) {
+                var listenerMap = this.listener.get(eventName);
+                if (listenerMap.has(eventFunName)) {
+                    listenerMap.delete(eventFunName);
+                }
+            }
+        } else {
+            if (this.listener.has(eventName)) {
+                this.listener.delete(eventName);
             }
         }
     } else {
-        if (this.listener.has(eventName)) {
-            this.listener.delete(eventName);
-        }
+        this.listener.clear();
     }
 };
 

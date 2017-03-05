@@ -36,15 +36,6 @@ class Core {
         return this;
     }
     /**
-     * [isJson 判断是否是json]
-     * @param  {[type]}  obj [description]
-     * @return {Boolean}     [description]
-     */
-    isJson(obj){
-        let isjson = typeof(obj) == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
-        return isjson;
-    }
-    /**
      * [extend 深拷贝对象]
      * @param  {...[type]} opts [description]
      * @return {[type]}         [description]
@@ -54,7 +45,7 @@ class Core {
         function assign(target = {}, source = {}){
             for (let key in source) {
                 if (source.hasOwnProperty(key)) {
-                    if(!that.isJson(source[key])){
+                    if(typeof source[key] !== 'object'){
                         target[key] = source[key];
                     }else{
                         if(Array.isArray(source[key])){
@@ -88,27 +79,29 @@ class Core {
     create(view, opts = {}){
         const that = this;
         opts.vid = this.uniqueId('v');
-        opts.onBefore = opts.onBefore && opts.onBefore.bind(this);
-        opts.onAfter = opts.onAfter && opts.onAfter.bind(this);
+        opts.createBefore = opts.createBefore && opts.createBefore.bind(this);
+        opts.createAfter = opts.createAfter && opts.createAfter.bind(this);
         if(!view) return;
         // 操作权限
-        if (opts.permis) {
+        if (opts.permis && this.permis) {
             const module = opts.permis.module,
                 operate = opts.permis.operate,
-                hide = opts.permis.hide,
-                userId = opts.permis.userid || 0;
-            if (hide) {
-                if (!this.permis.check(module, operate, userId)) {
-                    return;
-                }
+                userId = opts.permis.userid || this.permis.options.userId;
+            if (!this.permis.check(module, operate, userId)) {
+                return;
             }
         }
-        typeof opts.onBefore === 'function' && opts.onBefore();
+        typeof opts.createBefore === 'function' && opts.createBefore();
 
         const viewObj = new view(opts);
-        this.views[this.currentApp].set(viewObj.el, viewObj);
+        if(this.currentApp && viewObj.el){
+            this.views[this.currentApp].set(viewObj.el, viewObj);
+        }else{
+            this.views['global'] = this.views['global'] || new WeakMap();
+            this.views['global'].set(viewObj.el, viewObj);
+        }
 
-        typeof opts.onAfter === 'function' && opts.onAfter(viewObj);
+        typeof opts.createAfter === 'function' && opts.createAfter(viewObj);
         return viewObj;
     }
     /**
@@ -254,8 +247,6 @@ class Core {
                 if (num == nameSpaceArr.length - 1) {
                     if(that.isEmptyObject(nameSpaceObj[itemStr])){
                         nameSpaceObj[itemStr] = obj;
-                    }else{
-                        debug.warn('namespace can not be repeated', nameSpaceStr);
                     }
                 }else{
                     nameSpaceObj[itemStr] = typeof subObj == 'object' && !Array.isArray(subObj) ? subObj : {};
@@ -364,6 +355,7 @@ class Core {
      * @return {[type]}         [description]
      */
     getView(el, appName = this.getAppName()){
+        appName = appName || 'global';
         let _el = el instanceof window.$ ? el[0] : document.querySelector(el);
         if(this.views[appName].has(_el)){
             return this.views[appName].get(_el);
@@ -402,5 +394,5 @@ class Core {
         return this.routers.get(appName);
     }
 }
-window.Lego = new Core();
+window.Lego = window.Lego || new Core();
 export default window.Lego;
