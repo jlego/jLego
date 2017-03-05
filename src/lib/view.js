@@ -242,7 +242,7 @@ class View {
      * @return {[type]} [description]
      */
     remove(){
-        if(this.el) this.el.parentNode.removeChild(this.el);
+        if(this.el) this.el.remove();
     }
 }
 export default View;

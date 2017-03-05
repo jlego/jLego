@@ -94,7 +94,12 @@ class Core {
         typeof opts.createBefore === 'function' && opts.createBefore();
 
         const viewObj = new view(opts);
-        if(this.currentApp && viewObj.el) this.views[this.currentApp].set(viewObj.el, viewObj);
+        if(this.currentApp && viewObj.el){
+            this.views[this.currentApp].set(viewObj.el, viewObj);
+        }else{
+            this.views['global'] = this.views['global'] || new WeakMap();
+            this.views['global'].set(viewObj.el, viewObj);
+        }
 
         typeof opts.createAfter === 'function' && opts.createAfter(viewObj);
         return viewObj;
@@ -350,6 +355,7 @@ class Core {
      * @return {[type]}         [description]
      */
     getView(el, appName = this.getAppName()){
+        appName = appName || 'global';
         let _el = el instanceof window.$ ? el[0] : document.querySelector(el);
         if(this.views[appName].has(_el)){
             return this.views[appName].get(_el);
@@ -388,5 +394,5 @@ class Core {
         return this.routers.get(appName);
     }
 }
-window.Lego = new Core();
+window.Lego = window.Lego || new Core();
 export default window.Lego;

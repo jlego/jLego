@@ -1,5 +1,5 @@
 /**
- * lego.js v1.6.9
+ * lego.js v1.6.12
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -103,6 +103,9 @@ Core.prototype.create = function create(view, opts) {
     var viewObj = new view(opts);
     if (this.currentApp && viewObj.el) {
         this.views[this.currentApp].set(viewObj.el, viewObj);
+    } else {
+        this.views["global"] = this.views["global"] || new WeakMap();
+        this.views["global"].set(viewObj.el, viewObj);
     }
     typeof opts.createAfter === "function" && opts.createAfter(viewObj);
     return viewObj;
@@ -318,6 +321,7 @@ Core.prototype.getAppName = function getAppName() {
 
 Core.prototype.getView = function getView(el, appName) {
     if (appName === void 0) appName = this.getAppName();
+    appName = appName || "global";
     var _el = el instanceof window.$ ? el[0] : document.querySelector(el);
     if (this.views[appName].has(_el)) {
         return this.views[appName].get(_el);
@@ -349,7 +353,7 @@ Core.prototype.router = function router(routerOption) {
     return this.routers.get(appName);
 };
 
-window.Lego = new Core();
+window.Lego = window.Lego || new Core();
 
 var LegoCore$1 = window.Lego;
 
@@ -557,7 +561,7 @@ View.prototype.refresh = function refresh() {
 
 View.prototype.remove = function remove() {
     if (this.el) {
-        this.el.parentNode.removeChild(this.el);
+        this.el.remove();
     }
 };
 
