@@ -117,8 +117,8 @@ class View {
         components = Array.isArray(components) ? components : [components];
         if(components.length) {
             components.forEach(function(item, i){
-                if(that.find(item.el).length){
-                    const tagName = item.el ? that.find(item.el)[0].tagName.toLowerCase() : '';
+                if(that.$(item.el).length){
+                    const tagName = item.el ? that.$(item.el)[0].tagName.toLowerCase() : '';
                     if(tagName){
                         item.context = that;
                         Lego.create(Lego.UI[tagName], item);
@@ -188,12 +188,12 @@ class View {
         }
     }
     /**
-     * [find 选择当前视图某节点]
+     * [$ 选择当前视图某节点]
      * @param  {[type]} selector [description]
      * @return {[type]}          [description]
      */
-    find(selector) {
-        return this.el.querySelectorAll(selector);
+    $(selector) {
+        return this.$el ? this.$el.find(selector) : this.el.querySelectorAll(selector);
     }
     /**
      * [components description]
