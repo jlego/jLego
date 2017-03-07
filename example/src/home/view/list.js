@@ -4,9 +4,9 @@ class ListView extends Lego.View {
             events: {
                 'click a': 'theClick'
             },
-            listen: {
-                'data_update': (data) => {
-                    debug.warn('ttttttttttt', data);
+            listener: {
+                'data_update': (data, data2) => {
+                    debug.warn('ttttttttttt', data, data2);
                 }
             }
         };
