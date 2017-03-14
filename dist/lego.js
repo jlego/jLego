@@ -1,5 +1,5 @@
 /**
- * lego.js v1.6.14
+ * lego.js v1.6.15
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -262,7 +262,8 @@ Core.prototype.loadScript = function loadScript(url, callback, appName) {
     document.getElementsByTagName("head")[0].appendChild(script);
 };
 
-Core.prototype.startApp = function startApp(appPath, opts) {
+Core.prototype.startApp = function startApp(appPath, fileName, opts) {
+    if (fileName === void 0) fileName = "app";
     if (opts === void 0) opts = {};
     var options = {
         onBefore: function onBefore() {},
@@ -280,7 +281,7 @@ Core.prototype.startApp = function startApp(appPath, opts) {
     if (typeof options.onBefore == "function") {
         options.onBefore();
     }
-    this.loadScript(this.config.rootUri + appName + "/app.js?" + this.config.version, function() {
+    this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js?" + this.config.version, function() {
         if (appPath && appName !== "index") {
             that.routers.get(appName).setRoute(appPath);
             var prevId = "Lego-js-" + that.prevApp;

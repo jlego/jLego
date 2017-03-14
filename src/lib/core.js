@@ -291,7 +291,7 @@ class Core {
      * @param  {object} opts 参数
      * @return {[type]}        [description]
      */
-    startApp(appPath, opts = {}) {
+    startApp(appPath, fileName = 'app', opts = {}) {
         let options = {
             onBefore() {},
             onAfter() {}
@@ -306,7 +306,7 @@ class Core {
         this.currentApp = !this.currentApp ? 'index' : appName;
         this._initObj(appName);
         if (typeof options.onBefore == 'function') options.onBefore();
-        this.loadScript(this.config.rootUri + appName + '/app.js?' + this.config.version, function() {
+        this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js?' + this.config.version, function() {
             if(appPath && appName !== 'index'){
                 that.routers.get(appName).setRoute(appPath);
                 let prevId = 'Lego-js-' + that.prevApp;
