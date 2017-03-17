@@ -1,5 +1,5 @@
 /**
- * lego.js v1.6.15
+ * lego.js v1.7.0
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -39,10 +39,10 @@ var Core = function Core(opts) {
     this.currentApp = "";
     this.Router = director.Router;
     this.idCounter = 0;
-    this.views = {};
+    this.views = new WeakMap();
     this.datas = {};
     this.permis = {};
-    this.timer = {};
+    this.timer = new Map();
     this.UI = {};
     this.routers = new Map();
     return this;
@@ -101,12 +101,7 @@ Core.prototype.create = function create(view, opts) {
     }
     typeof opts.createBefore === "function" && opts.createBefore();
     var viewObj = new view(opts);
-    if (this.currentApp && viewObj.el) {
-        this.views[this.currentApp].set(viewObj.el, viewObj);
-    } else {
-        this.views["global"] = this.views["global"] || new WeakMap();
-        this.views["global"].set(viewObj.el, viewObj);
-    }
+    this.views.set(viewObj.el, viewObj);
     typeof opts.createAfter === "function" && opts.createAfter(viewObj);
     return viewObj;
 };
@@ -192,18 +187,13 @@ Core.prototype._debugger = function _debugger() {
     }
 };
 
-Core.prototype._initObj = function _initObj(appName) {
-    this.views[appName] = this.views[appName] || new WeakMap();
-    this.timer[appName] = this.timer[appName] || new Map();
-};
-
 Core.prototype._clearObj = function _clearObj(appName) {
     var that = this;
     if (this.prevApp !== this.currentApp) {
-        this.timer[appName].forEach(function(value, key) {
+        this.timer.forEach(function(value, key) {
             clearTimeout(value);
             clearInterval(value);
-            that.timer[appName].delete(key);
+            that.timer.delete(key);
         });
     }
 };
@@ -277,7 +267,6 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     appName = !this.currentApp ? "index" : appPath.indexOf("/") > 0 ? appPath.split("/")[0] : appPath;
     this.prevApp = this.currentApp;
     this.currentApp = !this.currentApp ? "index" : appName;
-    this._initObj(appName);
     if (typeof options.onBefore == "function") {
         options.onBefore();
     }
@@ -324,15 +313,15 @@ Core.prototype.getView = function getView(el, appName) {
     if (appName === void 0) appName = this.getAppName();
     appName = appName || "global";
     var _el = el instanceof window.$ ? el[0] : document.querySelector(el);
-    if (this.views[appName].has(_el)) {
-        return this.views[appName].get(_el);
+    if (this.views.has(_el)) {
+        return this.views.get(_el);
     }
     return null;
 };
 
 Core.prototype.setTimer = function setTimer(name, timer) {
     if (name && timer) {
-        var oldTimerMap = this.timer[this.getAppName()], oldTimer = oldTimerMap.get(name);
+        var oldTimerMap = this.timer, oldTimer = oldTimerMap.get(name);
         if (oldTimer) {
             clearTimeout(oldTimer);
             clearInterval(oldTimer);

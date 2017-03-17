@@ -27,10 +27,10 @@ class Core {
 
         this.idCounter = 0;
         // 实例容器
-        this.views = {}; //视图容器
+        this.views = new WeakMap(); //视图容器
         this.datas = {};    //数据容器
         this.permis = {};   //权限对象
-        this.timer = {};   //计时器对象
+        this.timer = new Map();   //计时器对象
         this.UI = {};
         this.routers = new Map();
         return this;
@@ -94,12 +94,7 @@ class Core {
         typeof opts.createBefore === 'function' && opts.createBefore();
 
         const viewObj = new view(opts);
-        if(this.currentApp && viewObj.el){
-            this.views[this.currentApp].set(viewObj.el, viewObj);
-        }else{
-            this.views['global'] = this.views['global'] || new WeakMap();
-            this.views['global'].set(viewObj.el, viewObj);
-        }
+        this.views.set(viewObj.el, viewObj);
 
         typeof opts.createAfter === 'function' && opts.createAfter(viewObj);
         return viewObj;
@@ -200,15 +195,6 @@ class Core {
         }
     }
     /**
-     * [_initObj 初始化应用对象]
-     * @param  {[type]} appName [description]
-     * @return {[type]}         [description]
-     */
-    _initObj(appName){
-        this.views[appName] = this.views[appName] || new WeakMap();
-        this.timer[appName] = this.timer[appName] || new Map();
-    }
-    /**
      * [_clearObj 清理旧应用对象]
      * @param  {[type]} appName [description]
      * @return {[type]}         [description]
@@ -216,10 +202,10 @@ class Core {
     _clearObj(appName){
         const that = this;
         if(this.prevApp !== this.currentApp){
-            this.timer[appName].forEach(function(value, key){
+            this.timer.forEach(function(value, key){
                 clearTimeout(value);
                 clearInterval(value);
-                that.timer[appName].delete(key);
+                that.timer.delete(key);
             });
         }
     }
@@ -304,7 +290,7 @@ class Core {
         appName = !this.currentApp ? 'index' : (appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath);
         this.prevApp = this.currentApp;
         this.currentApp = !this.currentApp ? 'index' : appName;
-        this._initObj(appName);
+        // this._initObj(appName);
         if (typeof options.onBefore == 'function') options.onBefore();
         this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js?' + this.config.version, function() {
             if(appPath && appName !== 'index'){
@@ -357,8 +343,8 @@ class Core {
     getView(el, appName = this.getAppName()){
         appName = appName || 'global';
         let _el = el instanceof window.$ ? el[0] : document.querySelector(el);
-        if(this.views[appName].has(_el)){
-            return this.views[appName].get(_el);
+        if(this.views.has(_el)){
+            return this.views.get(_el);
         }
         return null;
     }
@@ -369,7 +355,7 @@ class Core {
      */
     setTimer(name, timer){
         if(name && timer){
-            let oldTimerMap = this.timer[this.getAppName()],
+            let oldTimerMap = this.timer,
                 oldTimer = oldTimerMap.get(name);
             if(oldTimer){
                 clearTimeout(oldTimer);
