@@ -340,8 +340,7 @@ class Core {
      * @param  {[type]} appName [description]
      * @return {[type]}         [description]
      */
-    getView(el, appName = this.getAppName()){
-        appName = appName || 'global';
+    getView(el){
         let _el = el instanceof window.$ ? el[0] : document.querySelector(el);
         if(this.views.has(_el)){
             return this.views.get(_el);
