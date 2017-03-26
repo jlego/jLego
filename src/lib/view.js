@@ -3,7 +3,6 @@ import hyperx from 'hyperx';
 import vdom from 'virtual-dom';
 window.hx = hyperx(vdom.h);
 
-window.delegateEventSplitter = /^(\S+)\s*(.*)$/;
 class View {
 	/**
 	 * [constructor 构造函数]
