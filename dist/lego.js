@@ -1,5 +1,5 @@
 /**
- * lego.js v1.7.5
+ * lego.js v1.7.6
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -320,7 +320,10 @@ Core.prototype.getAppName = function getAppName() {
 };
 
 Core.prototype.getView = function getView(el) {
-    var _el = el instanceof window.$ ? el[0] : document.querySelector(el);
+    var _el = typeof el == "string" ? document.querySelector(el) : el;
+    if (window.$ && typeof el == "object") {
+        _el = el instanceof window.$ ? el[0] : _el;
+    }
     if (this.views.has(_el)) {
         return this.views.get(_el);
     }

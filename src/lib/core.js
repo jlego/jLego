@@ -346,7 +346,10 @@ class Core {
      * @return {[type]}         [description]
      */
     getView(el){
-        let _el = el instanceof window.$ ? el[0] : document.querySelector(el);
+        let _el = typeof el == 'string' ? document.querySelector(el) : el;
+        if(window.$ && typeof el == 'object'){
+            _el = el instanceof window.$ ? el[0] : _el;
+        }
         if(this.views.has(_el)){
             return this.views.get(_el);
         }
