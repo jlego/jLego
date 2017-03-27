@@ -1,14 +1,13 @@
 import { Router } from 'director';
 
 class Core {
-    constructor(opts = {}) {
-        const that = this;
+    constructor() {
         this.config = {
             alias: 'Lego',
             version: '1.0.0',
             isDebug: true,
             isAnimate: false,  //是否开启动画
-            isPermit: false,  //是否开启操作权限
+            permit(){},  //操作权限
             isMultiWindow: false, //是否多窗口
             pageEl: '',     //页面渲染容器
             defaultApp: '', //默认应用
@@ -16,10 +15,7 @@ class Core {
             routerConfig: {},   //路由配置
             screenWidth: window.innerWidth  //应用窗口宽度
         };
-        Object.assign(this.config, opts);
-
         this._debugger();
-
         this.prevApp = ''; //上一个应用名称
         this.currentApp = ''; //当前应用名称
         // 基类
@@ -29,7 +25,6 @@ class Core {
         // 实例容器
         this.views = new WeakMap(); //视图容器
         this.datas = {};    //数据容器
-        this.permis = {};   //权限对象
         this.timer = new Map();   //计时器对象
         this.UI = {};
         this.routers = new Map();
@@ -51,7 +46,11 @@ class Core {
                         if(Array.isArray(source[key])){
                             target[key] = Array.from(source[key]);
                         }else{
-                            target[key] = assign(target[key], source[key]);
+                            if(!Lego.isEmptyObject(source[key])){
+                                target[key] = assign(target[key], source[key]);
+                            }else{
+                                target[key] = Object.assign({}, source[key]);
+                            }
                         }
                     }
                 }
@@ -83,12 +82,9 @@ class Core {
         opts.createAfter = opts.createAfter && opts.createAfter.bind(this);
         if(!view) return;
         // 操作权限
-        if (opts.permis && this.permis) {
-            const module = opts.permis.module,
-                operate = opts.permis.operate,
-                userId = opts.permis.userid || this.permis.options.userId;
-            if (!this.permis.check(module, operate, userId)) {
-                return;
+        if(this.config.permit){
+            if(typeof this.config.permit == 'function' && opts.permis){
+                if(!this.config.permit(opts.permis)) return;
             }
         }
         typeof opts.createBefore === 'function' && opts.createBefore();
@@ -104,10 +100,17 @@ class Core {
      * @param  {Object} opts [description]
      * @return {[type]}      [description]
      */
-    init(opts = {}){
-        if(!this.isEmptyObject(opts)) Object.assign(this.config, opts);
-        window[this.config.alias] = window.Lego = this;
-        this.startApp();
+    setting(...opts){
+        if(opts.length > 1){
+            if(typeof opts[0] == 'string'){
+                this.config[opts[0]] = opts[1];
+            }
+        }else{
+            if(typeof opts[0] == 'object'){
+                Object.assign(this.config, opts[0]);
+            }
+        }
+        this._debugger();
         return this;
     }
     /**
@@ -201,12 +204,15 @@ class Core {
      */
     _clearObj(appName){
         const that = this;
-        if(this.prevApp !== this.currentApp){
+        if(appName !== this.currentApp){
             this.timer.forEach(function(value, key){
                 clearTimeout(value);
                 clearInterval(value);
                 that.timer.delete(key);
             });
+            if(!this.config.isMultiWindow){
+                this.routers.delete(appName);
+            }
         }
     }
     /**
@@ -279,8 +285,8 @@ class Core {
      */
     startApp(appPath, fileName = 'app', opts = {}) {
         let options = {
-            onBefore() {},
-            onAfter() {}
+            startBefore() {},
+            startAfter() {}
         }, that = this, appName, index;
         Object.assign(options, opts);
         const hash = window.location.hash.replace(/#/, '');
@@ -290,8 +296,7 @@ class Core {
         appName = !this.currentApp ? 'index' : (appPath.indexOf('/') > 0 ? appPath.split('/')[0] : appPath);
         this.prevApp = this.currentApp;
         this.currentApp = !this.currentApp ? 'index' : appName;
-        // this._initObj(appName);
-        if (typeof options.onBefore == 'function') options.onBefore();
+        if (typeof options.startBefore == 'function') options.startBefore();
         this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js?' + this.config.version, function() {
             if(appPath && appName !== 'index'){
                 that.routers.get(appName).setRoute(appPath);
@@ -301,7 +306,7 @@ class Core {
                 }
                 that._clearObj(that.prevApp);
             }
-            if (typeof options.onAfter == 'function') options.onAfter();
+            if (typeof options.startAfter == 'function') options.startAfter();
         }, appName);
     }
     /**
@@ -340,8 +345,7 @@ class Core {
      * @param  {[type]} appName [description]
      * @return {[type]}         [description]
      */
-    getView(el, appName = this.getAppName()){
-        appName = appName || 'global';
+    getView(el){
         let _el = el instanceof window.$ ? el[0] : document.querySelector(el);
         if(this.views.has(_el)){
             return this.views.get(_el);

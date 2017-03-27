@@ -1,5 +1,5 @@
 /**
- * lego.js v1.7.0
+ * lego.js v1.7.5
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -17,15 +17,13 @@ var hyperx = _interopDefault(require("hyperx"));
 
 var vdom = _interopDefault(require("virtual-dom"));
 
-var Core = function Core(opts) {
-    if (opts === void 0) opts = {};
-    var that = this;
+var Core = function Core() {
     this.config = {
         alias: "Lego",
         version: "1.0.0",
         isDebug: true,
         isAnimate: false,
-        isPermit: false,
+        permit: function permit() {},
         isMultiWindow: false,
         pageEl: "",
         defaultApp: "",
@@ -33,7 +31,6 @@ var Core = function Core(opts) {
         routerConfig: {},
         screenWidth: window.innerWidth
     };
-    Object.assign(this.config, opts);
     this._debugger();
     this.prevApp = "";
     this.currentApp = "";
@@ -41,7 +38,6 @@ var Core = function Core(opts) {
     this.idCounter = 0;
     this.views = new WeakMap();
     this.datas = {};
-    this.permis = {};
     this.timer = new Map();
     this.UI = {};
     this.routers = new Map();
@@ -63,7 +59,11 @@ Core.prototype.extend = function extend() {
                     if (Array.isArray(source[key])) {
                         target[key] = Array.from(source[key]);
                     } else {
-                        target[key] = assign(target[key], source[key]);
+                        if (!Lego.isEmptyObject(source[key])) {
+                            target[key] = assign(target[key], source[key]);
+                        } else {
+                            target[key] = Object.assign({}, source[key]);
+                        }
                     }
                 }
             }
@@ -93,10 +93,11 @@ Core.prototype.create = function create(view, opts) {
     if (!view) {
         return;
     }
-    if (opts.permis && this.permis) {
-        var module = opts.permis.module, operate = opts.permis.operate, userId = opts.permis.userid || this.permis.options.userId;
-        if (!this.permis.check(module, operate, userId)) {
-            return;
+    if (this.config.permit) {
+        if (typeof this.config.permit == "function" && opts.permis) {
+            if (!this.config.permit(opts.permis)) {
+                return;
+            }
         }
     }
     typeof opts.createBefore === "function" && opts.createBefore();
@@ -106,13 +107,19 @@ Core.prototype.create = function create(view, opts) {
     return viewObj;
 };
 
-Core.prototype.init = function init(opts) {
-    if (opts === void 0) opts = {};
-    if (!this.isEmptyObject(opts)) {
-        Object.assign(this.config, opts);
+Core.prototype.setting = function setting() {
+    var opts = [], len = arguments.length;
+    while (len--) opts[len] = arguments[len];
+    if (opts.length > 1) {
+        if (typeof opts[0] == "string") {
+            this.config[opts[0]] = opts[1];
+        }
+    } else {
+        if (typeof opts[0] == "object") {
+            Object.assign(this.config, opts[0]);
+        }
     }
-    window[this.config.alias] = window.Lego = this;
-    this.startApp();
+    this._debugger();
     return this;
 };
 
@@ -189,12 +196,15 @@ Core.prototype._debugger = function _debugger() {
 
 Core.prototype._clearObj = function _clearObj(appName) {
     var that = this;
-    if (this.prevApp !== this.currentApp) {
+    if (appName !== this.currentApp) {
         this.timer.forEach(function(value, key) {
             clearTimeout(value);
             clearInterval(value);
             that.timer.delete(key);
         });
+        if (!this.config.isMultiWindow) {
+            this.routers.delete(appName);
+        }
     }
 };
 
@@ -256,8 +266,8 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     if (fileName === void 0) fileName = "app";
     if (opts === void 0) opts = {};
     var options = {
-        onBefore: function onBefore() {},
-        onAfter: function onAfter() {}
+        startBefore: function startBefore() {},
+        startAfter: function startAfter() {}
     }, that = this, appName, index;
     Object.assign(options, opts);
     var hash = window.location.hash.replace(/#/, "");
@@ -267,8 +277,8 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     appName = !this.currentApp ? "index" : appPath.indexOf("/") > 0 ? appPath.split("/")[0] : appPath;
     this.prevApp = this.currentApp;
     this.currentApp = !this.currentApp ? "index" : appName;
-    if (typeof options.onBefore == "function") {
-        options.onBefore();
+    if (typeof options.startBefore == "function") {
+        options.startBefore();
     }
     this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js?" + this.config.version, function() {
         if (appPath && appName !== "index") {
@@ -279,8 +289,8 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
             }
             that._clearObj(that.prevApp);
         }
-        if (typeof options.onAfter == "function") {
-            options.onAfter();
+        if (typeof options.startAfter == "function") {
+            options.startAfter();
         }
     }, appName);
 };
@@ -309,9 +319,7 @@ Core.prototype.getAppName = function getAppName() {
     return hash.split("/")[0] || this.config.defaultApp;
 };
 
-Core.prototype.getView = function getView(el, appName) {
-    if (appName === void 0) appName = this.getAppName();
-    appName = appName || "global";
+Core.prototype.getView = function getView(el) {
     var _el = el instanceof window.$ ? el[0] : document.querySelector(el);
     if (this.views.has(_el)) {
         return this.views.get(_el);
@@ -348,8 +356,6 @@ window.Lego = window.Lego || new Core();
 var LegoCore$1 = window.Lego;
 
 window.hx = hyperx(vdom.h);
-
-window.delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
 var View = function View(opts) {
     var this$1 = this;
