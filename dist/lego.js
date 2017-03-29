@@ -1,5 +1,5 @@
 /**
- * lego.js v1.7.6
+ * lego.js v1.8.1
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -9,7 +9,7 @@ function _interopDefault(ex) {
     return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
 }
 
-var director = require("director");
+var page = _interopDefault(require("page"));
 
 var object_observe = require("object.observe");
 
@@ -17,7 +17,10 @@ var hyperx = _interopDefault(require("hyperx"));
 
 var vdom = _interopDefault(require("virtual-dom"));
 
+window.page = page;
+
 var Core = function Core() {
+    var that = this;
     this.config = {
         alias: "Lego",
         version: "1.0.0",
@@ -28,19 +31,24 @@ var Core = function Core() {
         pageEl: "",
         defaultApp: "",
         rootUri: "",
-        routerConfig: {},
         screenWidth: window.innerWidth
     };
     this._debugger();
     this.prevApp = "";
     this.currentApp = "";
-    this.Router = director.Router;
     this.idCounter = 0;
     this.views = new WeakMap();
     this.datas = {};
     this.timer = new Map();
     this.UI = {};
     this.routers = new Map();
+    window.onhashchange = function() {
+        var hashStr = location.hash.replace("#", "");
+        console.warn(hashStr);
+        if (hashStr) {
+            page(hashStr);
+        }
+    };
     return this;
 };
 
@@ -119,6 +127,7 @@ Core.prototype.setting = function setting() {
             Object.assign(this.config, opts[0]);
         }
     }
+    page.base(this.config.routeRoot);
     this._debugger();
     return this;
 };
@@ -282,7 +291,7 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     }
     this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js?" + this.config.version, function() {
         if (appPath && appName !== "index") {
-            that.routers.get(appName).setRoute(appPath);
+            page(appPath.indexOf("/") !== 0 ? "/" + appPath : appPath);
             var prevId = "Lego-js-" + that.prevApp;
             if (document.getElementById(prevId)) {
                 document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
@@ -343,15 +352,24 @@ Core.prototype.setTimer = function setTimer(name, timer) {
 };
 
 Core.prototype.router = function router(routerOption) {
+    var this$1 = this;
+    if (routerOption === void 0) routerOption = {};
     var appName = this.currentApp;
     if (appName == "index") {
         return;
     }
-    if (!this.routers.has(appName)) {
-        var routerObj = this.Router(routerOption).init();
-        this.routers.set(appName, routerObj);
+    if (!this.isEmptyObject(routerOption)) {
+        for (var key in routerOption) {
+            var value = routerOption[key], routerName = appName + "_" + key;
+            value = Array.isArray(value) ? value : [ value ];
+            value.unshift(key);
+            if (!this$1.routers.get(routerName)) {
+                page.apply(void 0, value);
+                this$1.routers.set(routerName, value);
+            }
+        }
+        page();
     }
-    return this.routers.get(appName);
 };
 
 window.Lego = window.Lego || new Core();

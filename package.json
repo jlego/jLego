@@ -1,6 +1,6 @@
 {
   "name": "lego-core",
-  "version": "1.7.6",
+  "version": "1.8.2",
   "description": "ES6 front end framework",
   "main": "dist/lego.js",
   "directories": {
@@ -56,7 +56,7 @@
     "rollup-plugin-uglify": "^1.0.1",
     "rollup-watch": "^2.5.0",
     "uglify-js": "^2.7.4",
-    "webpack": "^1.13.3",
+    "webpack": "^2.2.1",
     "whatwg-fetch": "^2.0.1"
   },
   "dependencies": {
@@ -65,6 +65,7 @@
     "events": "^1.1.1",
     "hyperx": "^2.0.5",
     "object.observe": "^0.2.6",
+    "page": "^1.7.1",
     "virtual-dom": "^2.1.1"
   }
 }
