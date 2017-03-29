@@ -80,9 +80,9 @@ function genConfig(opts) {
     // }
     if (opts.env) {
         config.plugins.push(
-            // flow(),
+            flow(),
             // node(),
-            // cjs(),
+            cjs(),
             async(),
             regenerator(),
             buble(),

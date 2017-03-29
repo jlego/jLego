@@ -499,11 +499,13 @@
         function _interopDefault(ex) {
             return ex && (typeof ex === "undefined" ? "undefined" : _typeof(ex)) === "object" && "default" in ex ? ex["default"] : ex;
         }
-        var director = __webpack_require__(65);
+        var page = _interopDefault(__webpack_require__(38));
         var object_observe = __webpack_require__(37);
         var hyperx = _interopDefault(__webpack_require__(34));
         var vdom = _interopDefault(__webpack_require__(44));
+        window.page = page;
         var Core = function Core() {
+            var that = this;
             this.config = {
                 alias: "Lego",
                 version: "1.0.0",
@@ -514,19 +516,24 @@
                 pageEl: "",
                 defaultApp: "",
                 rootUri: "",
-                routerConfig: {},
                 screenWidth: window.innerWidth
             };
             this._debugger();
             this.prevApp = "";
             this.currentApp = "";
-            this.Router = director.Router;
             this.idCounter = 0;
             this.views = new WeakMap();
             this.datas = {};
             this.timer = new Map();
             this.UI = {};
             this.routers = new Map();
+            window.onhashchange = function() {
+                var hashStr = location.hash.replace("#", "");
+                console.warn(hashStr);
+                if (hashStr) {
+                    page(hashStr);
+                }
+            };
             return this;
         };
         Core.prototype.extend = function extend() {
@@ -606,6 +613,7 @@
                     Object.assign(this.config, opts[0]);
                 }
             }
+            page.base(this.config.routeRoot);
             this._debugger();
             return this;
         };
@@ -759,7 +767,7 @@
             }
             this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js?" + this.config.version, function() {
                 if (appPath && appName !== "index") {
-                    that.routers.get(appName).setRoute(appPath);
+                    page(appPath.indexOf("/") !== 0 ? "/" + appPath : appPath);
                     var prevId = "Lego-js-" + that.prevApp;
                     if (document.getElementById(prevId)) {
                         document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
@@ -794,7 +802,10 @@
             return hash.split("/")[0] || this.config.defaultApp;
         };
         Core.prototype.getView = function getView(el) {
-            var _el = el instanceof window.$ ? el[0] : document.querySelector(el);
+            var _el = typeof el == "string" ? document.querySelector(el) : el;
+            if (window.$ && (typeof el === "undefined" ? "undefined" : _typeof(el)) == "object") {
+                _el = el instanceof window.$ ? el[0] : _el;
+            }
             if (this.views.has(_el)) {
                 return this.views.get(_el);
             }
@@ -812,15 +823,24 @@
             }
         };
         Core.prototype.router = function router(routerOption) {
+            var this$1 = this;
+            if (routerOption === void 0) routerOption = {};
             var appName = this.currentApp;
             if (appName == "index") {
                 return;
             }
-            if (!this.routers.has(appName)) {
-                var routerObj = this.Router(routerOption).init();
-                this.routers.set(appName, routerObj);
+            if (!this.isEmptyObject(routerOption)) {
+                for (var key in routerOption) {
+                    var value = routerOption[key], routerName = appName + "_" + key;
+                    value = Array.isArray(value) ? value : [ value ];
+                    value.unshift(key);
+                    if (!this$1.routers.get(routerName)) {
+                        page.apply(void 0, value);
+                        this$1.routers.set(routerName, value);
+                    }
+                }
+                page();
             }
-            return this.routers.get(appName);
         };
         window.Lego = window.Lego || new Core();
         var LegoCore$1 = window.Lego;
@@ -1738,12 +1758,14 @@
             default: obj
         };
     }
-    _lego2.default.init({
+    _lego2.default.setting({
         version: "20161202",
         pageEl: "#page-container",
         defaultApp: "home",
-        rootUri: "/example/dist/"
+        rootUri: "/example/dist/",
+        routeRoot: "/example/#"
     });
+    _lego2.default.startApp("index");
 }, , function(module, exports) {
     module.exports = function(module) {
         if (!module.webpackPolyfill) {
@@ -2441,7 +2463,494 @@
             }
         };
     }(Object, Array, this);
-}, , , , function(module, exports, __webpack_require__) {
+}, function(module, exports, __webpack_require__) {
+    "use strict";
+    (function(process) {
+        var pathtoRegexp = __webpack_require__(39);
+        module.exports = page;
+        var clickEvent = "undefined" !== typeof document && document.ontouchstart ? "touchstart" : "click";
+        var location = "undefined" !== typeof window && (window.history.location || window.location);
+        var dispatch = true;
+        var decodeURLComponents = true;
+        var base = "";
+        var running;
+        var hashbang = false;
+        var prevContext;
+        function page(path, fn) {
+            if ("function" === typeof path) {
+                return page("*", path);
+            }
+            if ("function" === typeof fn) {
+                var route = new Route(path);
+                for (var i = 1; i < arguments.length; ++i) {
+                    page.callbacks.push(route.middleware(arguments[i]));
+                }
+            } else if ("string" === typeof path) {
+                page["string" === typeof fn ? "redirect" : "show"](path, fn);
+            } else {
+                page.start(path);
+            }
+        }
+        page.callbacks = [];
+        page.exits = [];
+        page.current = "";
+        page.len = 0;
+        page.base = function(path) {
+            if (0 === arguments.length) return base;
+            base = path;
+        };
+        page.start = function(options) {
+            options = options || {};
+            if (running) return;
+            running = true;
+            if (false === options.dispatch) dispatch = false;
+            if (false === options.decodeURLComponents) decodeURLComponents = false;
+            if (false !== options.popstate) window.addEventListener("popstate", onpopstate, false);
+            if (false !== options.click) {
+                document.addEventListener(clickEvent, onclick, false);
+            }
+            if (true === options.hashbang) hashbang = true;
+            if (!dispatch) return;
+            var url = hashbang && ~location.hash.indexOf("#!") ? location.hash.substr(2) + location.search : location.pathname + location.search + location.hash;
+            page.replace(url, null, true, dispatch);
+        };
+        page.stop = function() {
+            if (!running) return;
+            page.current = "";
+            page.len = 0;
+            running = false;
+            document.removeEventListener(clickEvent, onclick, false);
+            window.removeEventListener("popstate", onpopstate, false);
+        };
+        page.show = function(path, state, dispatch, push) {
+            var ctx = new Context(path, state);
+            page.current = ctx.path;
+            if (false !== dispatch) page.dispatch(ctx);
+            if (false !== ctx.handled && false !== push) ctx.pushState();
+            return ctx;
+        };
+        page.back = function(path, state) {
+            if (page.len > 0) {
+                history.back();
+                page.len--;
+            } else if (path) {
+                setTimeout(function() {
+                    page.show(path, state);
+                });
+            } else {
+                setTimeout(function() {
+                    page.show(base, state);
+                });
+            }
+        };
+        page.redirect = function(from, to) {
+            if ("string" === typeof from && "string" === typeof to) {
+                page(from, function(e) {
+                    setTimeout(function() {
+                        page.replace(to);
+                    }, 0);
+                });
+            }
+            if ("string" === typeof from && "undefined" === typeof to) {
+                setTimeout(function() {
+                    page.replace(from);
+                }, 0);
+            }
+        };
+        page.replace = function(path, state, init, dispatch) {
+            var ctx = new Context(path, state);
+            page.current = ctx.path;
+            ctx.init = init;
+            ctx.save();
+            if (false !== dispatch) page.dispatch(ctx);
+            return ctx;
+        };
+        page.dispatch = function(ctx) {
+            var prev = prevContext, i = 0, j = 0;
+            prevContext = ctx;
+            function nextExit() {
+                var fn = page.exits[j++];
+                if (!fn) return nextEnter();
+                fn(prev, nextExit);
+            }
+            function nextEnter() {
+                var fn = page.callbacks[i++];
+                if (ctx.path !== page.current) {
+                    ctx.handled = false;
+                    return;
+                }
+                if (!fn) return unhandled(ctx);
+                fn(ctx, nextEnter);
+            }
+            if (prev) {
+                nextExit();
+            } else {
+                nextEnter();
+            }
+        };
+        function unhandled(ctx) {
+            if (ctx.handled) return;
+            var current;
+            if (hashbang) {
+                current = base + location.hash.replace("#!", "");
+            } else {
+                current = location.pathname + location.search;
+            }
+            if (current === ctx.canonicalPath) return;
+            page.stop();
+            ctx.handled = false;
+            location.href = ctx.canonicalPath;
+        }
+        page.exit = function(path, fn) {
+            if (typeof path === "function") {
+                return page.exit("*", path);
+            }
+            var route = new Route(path);
+            for (var i = 1; i < arguments.length; ++i) {
+                page.exits.push(route.middleware(arguments[i]));
+            }
+        };
+        function decodeURLEncodedURIComponent(val) {
+            if (typeof val !== "string") {
+                return val;
+            }
+            return decodeURLComponents ? decodeURIComponent(val.replace(/\+/g, " ")) : val;
+        }
+        function Context(path, state) {
+            if ("/" === path[0] && 0 !== path.indexOf(base)) path = base + (hashbang ? "#!" : "") + path;
+            var i = path.indexOf("?");
+            this.canonicalPath = path;
+            this.path = path.replace(base, "") || "/";
+            if (hashbang) this.path = this.path.replace("#!", "") || "/";
+            this.title = document.title;
+            this.state = state || {};
+            this.state.path = path;
+            this.querystring = ~i ? decodeURLEncodedURIComponent(path.slice(i + 1)) : "";
+            this.pathname = decodeURLEncodedURIComponent(~i ? path.slice(0, i) : path);
+            this.params = {};
+            this.hash = "";
+            if (!hashbang) {
+                if (!~this.path.indexOf("#")) return;
+                var parts = this.path.split("#");
+                this.path = parts[0];
+                this.hash = decodeURLEncodedURIComponent(parts[1]) || "";
+                this.querystring = this.querystring.split("#")[0];
+            }
+        }
+        page.Context = Context;
+        Context.prototype.pushState = function() {
+            page.len++;
+            history.pushState(this.state, this.title, hashbang && this.path !== "/" ? "#!" + this.path : this.canonicalPath);
+        };
+        Context.prototype.save = function() {
+            history.replaceState(this.state, this.title, hashbang && this.path !== "/" ? "#!" + this.path : this.canonicalPath);
+        };
+        function Route(path, options) {
+            options = options || {};
+            this.path = path === "*" ? "(.*)" : path;
+            this.method = "GET";
+            this.regexp = pathtoRegexp(this.path, this.keys = [], options);
+        }
+        page.Route = Route;
+        Route.prototype.middleware = function(fn) {
+            var self = this;
+            return function(ctx, next) {
+                if (self.match(ctx.path, ctx.params)) return fn(ctx, next);
+                next();
+            };
+        };
+        Route.prototype.match = function(path, params) {
+            var keys = this.keys, qsIndex = path.indexOf("?"), pathname = ~qsIndex ? path.slice(0, qsIndex) : path, m = this.regexp.exec(decodeURIComponent(pathname));
+            if (!m) return false;
+            for (var i = 1, len = m.length; i < len; ++i) {
+                var key = keys[i - 1];
+                var val = decodeURLEncodedURIComponent(m[i]);
+                if (val !== undefined || !hasOwnProperty.call(params, key.name)) {
+                    params[key.name] = val;
+                }
+            }
+            return true;
+        };
+        var onpopstate = function() {
+            var loaded = false;
+            if ("undefined" === typeof window) {
+                return;
+            }
+            if (document.readyState === "complete") {
+                loaded = true;
+            } else {
+                window.addEventListener("load", function() {
+                    setTimeout(function() {
+                        loaded = true;
+                    }, 0);
+                });
+            }
+            return function onpopstate(e) {
+                if (!loaded) return;
+                if (e.state) {
+                    var path = e.state.path;
+                    page.replace(path, e.state);
+                } else {
+                    page.show(location.pathname + location.hash, undefined, undefined, false);
+                }
+            };
+        }();
+        function onclick(e) {
+            if (1 !== which(e)) return;
+            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+            if (e.defaultPrevented) return;
+            var el = e.path ? e.path[0] : e.target;
+            while (el && "A" !== el.nodeName) el = el.parentNode;
+            if (!el || "A" !== el.nodeName) return;
+            if (el.hasAttribute("download") || el.getAttribute("rel") === "external") return;
+            var link = el.getAttribute("href");
+            if (!hashbang && el.pathname === location.pathname && (el.hash || "#" === link)) return;
+            if (link && link.indexOf("mailto:") > -1) return;
+            if (el.target) return;
+            if (!sameOrigin(el.href)) return;
+            var path = el.pathname + el.search + (el.hash || "");
+            if (typeof process !== "undefined" && path.match(/^\/[a-zA-Z]:\//)) {
+                path = path.replace(/^\/[a-zA-Z]:\//, "/");
+            }
+            var orig = path;
+            if (path.indexOf(base) === 0) {
+                path = path.substr(base.length);
+            }
+            if (hashbang) path = path.replace("#!", "");
+            if (base && orig === path) return;
+            e.preventDefault();
+            page.show(orig);
+        }
+        function which(e) {
+            e = e || window.event;
+            return null === e.which ? e.button : e.which;
+        }
+        function sameOrigin(href) {
+            var origin = location.protocol + "//" + location.hostname;
+            if (location.port) origin += ":" + location.port;
+            return href && 0 === href.indexOf(origin);
+        }
+        page.sameOrigin = sameOrigin;
+    }).call(exports, __webpack_require__(8));
+}, function(module, exports, __webpack_require__) {
+    var isarray = __webpack_require__(40);
+    module.exports = pathToRegexp;
+    module.exports.parse = parse;
+    module.exports.compile = compile;
+    module.exports.tokensToFunction = tokensToFunction;
+    module.exports.tokensToRegExp = tokensToRegExp;
+    var PATH_REGEXP = new RegExp([ "(\\\\.)", "([\\/.])?(?:(?:\\:(\\w+)(?:\\(((?:\\\\.|[^()])+)\\))?|\\(((?:\\\\.|[^()])+)\\))([+*?])?|(\\*))" ].join("|"), "g");
+    function parse(str) {
+        var tokens = [];
+        var key = 0;
+        var index = 0;
+        var path = "";
+        var res;
+        while ((res = PATH_REGEXP.exec(str)) != null) {
+            var m = res[0];
+            var escaped = res[1];
+            var offset = res.index;
+            path += str.slice(index, offset);
+            index = offset + m.length;
+            if (escaped) {
+                path += escaped[1];
+                continue;
+            }
+            if (path) {
+                tokens.push(path);
+                path = "";
+            }
+            var prefix = res[2];
+            var name = res[3];
+            var capture = res[4];
+            var group = res[5];
+            var suffix = res[6];
+            var asterisk = res[7];
+            var repeat = suffix === "+" || suffix === "*";
+            var optional = suffix === "?" || suffix === "*";
+            var delimiter = prefix || "/";
+            var pattern = capture || group || (asterisk ? ".*" : "[^" + delimiter + "]+?");
+            tokens.push({
+                name: name || key++,
+                prefix: prefix || "",
+                delimiter: delimiter,
+                optional: optional,
+                repeat: repeat,
+                pattern: escapeGroup(pattern)
+            });
+        }
+        if (index < str.length) {
+            path += str.substr(index);
+        }
+        if (path) {
+            tokens.push(path);
+        }
+        return tokens;
+    }
+    function compile(str) {
+        return tokensToFunction(parse(str));
+    }
+    function tokensToFunction(tokens) {
+        var matches = new Array(tokens.length);
+        for (var i = 0; i < tokens.length; i++) {
+            if (typeof tokens[i] === "object") {
+                matches[i] = new RegExp("^" + tokens[i].pattern + "$");
+            }
+        }
+        return function(obj) {
+            var path = "";
+            var data = obj || {};
+            for (var i = 0; i < tokens.length; i++) {
+                var token = tokens[i];
+                if (typeof token === "string") {
+                    path += token;
+                    continue;
+                }
+                var value = data[token.name];
+                var segment;
+                if (value == null) {
+                    if (token.optional) {
+                        continue;
+                    } else {
+                        throw new TypeError('Expected "' + token.name + '" to be defined');
+                    }
+                }
+                if (isarray(value)) {
+                    if (!token.repeat) {
+                        throw new TypeError('Expected "' + token.name + '" to not repeat, but received "' + value + '"');
+                    }
+                    if (value.length === 0) {
+                        if (token.optional) {
+                            continue;
+                        } else {
+                            throw new TypeError('Expected "' + token.name + '" to not be empty');
+                        }
+                    }
+                    for (var j = 0; j < value.length; j++) {
+                        segment = encodeURIComponent(value[j]);
+                        if (!matches[i].test(segment)) {
+                            throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"');
+                        }
+                        path += (j === 0 ? token.prefix : token.delimiter) + segment;
+                    }
+                    continue;
+                }
+                segment = encodeURIComponent(value);
+                if (!matches[i].test(segment)) {
+                    throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"');
+                }
+                path += token.prefix + segment;
+            }
+            return path;
+        };
+    }
+    function escapeString(str) {
+        return str.replace(/([.+*?=^!:${}()[\]|\/])/g, "\\$1");
+    }
+    function escapeGroup(group) {
+        return group.replace(/([=!:$\/()])/g, "\\$1");
+    }
+    function attachKeys(re, keys) {
+        re.keys = keys;
+        return re;
+    }
+    function flags(options) {
+        return options.sensitive ? "" : "i";
+    }
+    function regexpToRegexp(path, keys) {
+        var groups = path.source.match(/\((?!\?)/g);
+        if (groups) {
+            for (var i = 0; i < groups.length; i++) {
+                keys.push({
+                    name: i,
+                    prefix: null,
+                    delimiter: null,
+                    optional: false,
+                    repeat: false,
+                    pattern: null
+                });
+            }
+        }
+        return attachKeys(path, keys);
+    }
+    function arrayToRegexp(path, keys, options) {
+        var parts = [];
+        for (var i = 0; i < path.length; i++) {
+            parts.push(pathToRegexp(path[i], keys, options).source);
+        }
+        var regexp = new RegExp("(?:" + parts.join("|") + ")", flags(options));
+        return attachKeys(regexp, keys);
+    }
+    function stringToRegexp(path, keys, options) {
+        var tokens = parse(path);
+        var re = tokensToRegExp(tokens, options);
+        for (var i = 0; i < tokens.length; i++) {
+            if (typeof tokens[i] !== "string") {
+                keys.push(tokens[i]);
+            }
+        }
+        return attachKeys(re, keys);
+    }
+    function tokensToRegExp(tokens, options) {
+        options = options || {};
+        var strict = options.strict;
+        var end = options.end !== false;
+        var route = "";
+        var lastToken = tokens[tokens.length - 1];
+        var endsWithSlash = typeof lastToken === "string" && /\/$/.test(lastToken);
+        for (var i = 0; i < tokens.length; i++) {
+            var token = tokens[i];
+            if (typeof token === "string") {
+                route += escapeString(token);
+            } else {
+                var prefix = escapeString(token.prefix);
+                var capture = token.pattern;
+                if (token.repeat) {
+                    capture += "(?:" + prefix + capture + ")*";
+                }
+                if (token.optional) {
+                    if (prefix) {
+                        capture = "(?:" + prefix + "(" + capture + "))?";
+                    } else {
+                        capture = "(" + capture + ")?";
+                    }
+                } else {
+                    capture = prefix + "(" + capture + ")";
+                }
+                route += capture;
+            }
+        }
+        if (!strict) {
+            route = (endsWithSlash ? route.slice(0, -2) : route) + "(?:\\/(?=$))?";
+        }
+        if (end) {
+            route += "$";
+        } else {
+            route += strict && endsWithSlash ? "" : "(?=\\/|$)";
+        }
+        return new RegExp("^" + route, flags(options));
+    }
+    function pathToRegexp(path, keys, options) {
+        keys = keys || [];
+        if (!isarray(keys)) {
+            options = keys;
+            keys = [];
+        } else if (!options) {
+            options = {};
+        }
+        if (path instanceof RegExp) {
+            return regexpToRegexp(path, keys, options);
+        }
+        if (isarray(path)) {
+            return arrayToRegexp(path, keys, options);
+        }
+        return stringToRegexp(path, keys, options);
+    }
+}, function(module, exports) {
+    module.exports = Array.isArray || function(arr) {
+        return Object.prototype.toString.call(arr) == "[object Array]";
+    };
+}, function(module, exports, __webpack_require__) {
     var createElement = __webpack_require__(12);
     module.exports = createElement;
 }, function(module, exports, __webpack_require__) {
@@ -3265,1408 +3774,4 @@
             return patch;
         }
     }
-}, function(module, exports) {}, function(module, exports, __webpack_require__) {
-    (function(global, process) {
-        var formatRegExp = /%[sdj%]/g;
-        exports.format = function(f) {
-            if (!isString(f)) {
-                var objects = [];
-                for (var i = 0; i < arguments.length; i++) {
-                    objects.push(inspect(arguments[i]));
-                }
-                return objects.join(" ");
-            }
-            var i = 1;
-            var args = arguments;
-            var len = args.length;
-            var str = String(f).replace(formatRegExp, function(x) {
-                if (x === "%%") return "%";
-                if (i >= len) return x;
-                switch (x) {
-                  case "%s":
-                    return String(args[i++]);
-
-                  case "%d":
-                    return Number(args[i++]);
-
-                  case "%j":
-                    try {
-                        return JSON.stringify(args[i++]);
-                    } catch (_) {
-                        return "[Circular]";
-                    }
-
-                  default:
-                    return x;
-                }
-            });
-            for (var x = args[i]; i < len; x = args[++i]) {
-                if (isNull(x) || !isObject(x)) {
-                    str += " " + x;
-                } else {
-                    str += " " + inspect(x);
-                }
-            }
-            return str;
-        };
-        exports.deprecate = function(fn, msg) {
-            if (isUndefined(global.process)) {
-                return function() {
-                    return exports.deprecate(fn, msg).apply(this, arguments);
-                };
-            }
-            if (process.noDeprecation === true) {
-                return fn;
-            }
-            var warned = false;
-            function deprecated() {
-                if (!warned) {
-                    if (process.throwDeprecation) {
-                        throw new Error(msg);
-                    } else if (process.traceDeprecation) {
-                        console.trace(msg);
-                    } else {
-                        console.error(msg);
-                    }
-                    warned = true;
-                }
-                return fn.apply(this, arguments);
-            }
-            return deprecated;
-        };
-        var debugs = {};
-        var debugEnviron;
-        exports.debuglog = function(set) {
-            if (isUndefined(debugEnviron)) debugEnviron = process.env.NODE_DEBUG || "";
-            set = set.toUpperCase();
-            if (!debugs[set]) {
-                if (new RegExp("\\b" + set + "\\b", "i").test(debugEnviron)) {
-                    var pid = process.pid;
-                    debugs[set] = function() {
-                        var msg = exports.format.apply(exports, arguments);
-                        console.error("%s %d: %s", set, pid, msg);
-                    };
-                } else {
-                    debugs[set] = function() {};
-                }
-            }
-            return debugs[set];
-        };
-        function inspect(obj, opts) {
-            var ctx = {
-                seen: [],
-                stylize: stylizeNoColor
-            };
-            if (arguments.length >= 3) ctx.depth = arguments[2];
-            if (arguments.length >= 4) ctx.colors = arguments[3];
-            if (isBoolean(opts)) {
-                ctx.showHidden = opts;
-            } else if (opts) {
-                exports._extend(ctx, opts);
-            }
-            if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
-            if (isUndefined(ctx.depth)) ctx.depth = 2;
-            if (isUndefined(ctx.colors)) ctx.colors = false;
-            if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
-            if (ctx.colors) ctx.stylize = stylizeWithColor;
-            return formatValue(ctx, obj, ctx.depth);
-        }
-        exports.inspect = inspect;
-        inspect.colors = {
-            bold: [ 1, 22 ],
-            italic: [ 3, 23 ],
-            underline: [ 4, 24 ],
-            inverse: [ 7, 27 ],
-            white: [ 37, 39 ],
-            grey: [ 90, 39 ],
-            black: [ 30, 39 ],
-            blue: [ 34, 39 ],
-            cyan: [ 36, 39 ],
-            green: [ 32, 39 ],
-            magenta: [ 35, 39 ],
-            red: [ 31, 39 ],
-            yellow: [ 33, 39 ]
-        };
-        inspect.styles = {
-            special: "cyan",
-            number: "yellow",
-            boolean: "yellow",
-            undefined: "grey",
-            null: "bold",
-            string: "green",
-            date: "magenta",
-            regexp: "red"
-        };
-        function stylizeWithColor(str, styleType) {
-            var style = inspect.styles[styleType];
-            if (style) {
-                return "[" + inspect.colors[style][0] + "m" + str + "[" + inspect.colors[style][1] + "m";
-            } else {
-                return str;
-            }
-        }
-        function stylizeNoColor(str, styleType) {
-            return str;
-        }
-        function arrayToHash(array) {
-            var hash = {};
-            array.forEach(function(val, idx) {
-                hash[val] = true;
-            });
-            return hash;
-        }
-        function formatValue(ctx, value, recurseTimes) {
-            if (ctx.customInspect && value && isFunction(value.inspect) && value.inspect !== exports.inspect && !(value.constructor && value.constructor.prototype === value)) {
-                var ret = value.inspect(recurseTimes, ctx);
-                if (!isString(ret)) {
-                    ret = formatValue(ctx, ret, recurseTimes);
-                }
-                return ret;
-            }
-            var primitive = formatPrimitive(ctx, value);
-            if (primitive) {
-                return primitive;
-            }
-            var keys = Object.keys(value);
-            var visibleKeys = arrayToHash(keys);
-            if (ctx.showHidden) {
-                keys = Object.getOwnPropertyNames(value);
-            }
-            if (isError(value) && (keys.indexOf("message") >= 0 || keys.indexOf("description") >= 0)) {
-                return formatError(value);
-            }
-            if (keys.length === 0) {
-                if (isFunction(value)) {
-                    var name = value.name ? ": " + value.name : "";
-                    return ctx.stylize("[Function" + name + "]", "special");
-                }
-                if (isRegExp(value)) {
-                    return ctx.stylize(RegExp.prototype.toString.call(value), "regexp");
-                }
-                if (isDate(value)) {
-                    return ctx.stylize(Date.prototype.toString.call(value), "date");
-                }
-                if (isError(value)) {
-                    return formatError(value);
-                }
-            }
-            var base = "", array = false, braces = [ "{", "}" ];
-            if (isArray(value)) {
-                array = true;
-                braces = [ "[", "]" ];
-            }
-            if (isFunction(value)) {
-                var n = value.name ? ": " + value.name : "";
-                base = " [Function" + n + "]";
-            }
-            if (isRegExp(value)) {
-                base = " " + RegExp.prototype.toString.call(value);
-            }
-            if (isDate(value)) {
-                base = " " + Date.prototype.toUTCString.call(value);
-            }
-            if (isError(value)) {
-                base = " " + formatError(value);
-            }
-            if (keys.length === 0 && (!array || value.length == 0)) {
-                return braces[0] + base + braces[1];
-            }
-            if (recurseTimes < 0) {
-                if (isRegExp(value)) {
-                    return ctx.stylize(RegExp.prototype.toString.call(value), "regexp");
-                } else {
-                    return ctx.stylize("[Object]", "special");
-                }
-            }
-            ctx.seen.push(value);
-            var output;
-            if (array) {
-                output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
-            } else {
-                output = keys.map(function(key) {
-                    return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
-                });
-            }
-            ctx.seen.pop();
-            return reduceToSingleString(output, base, braces);
-        }
-        function formatPrimitive(ctx, value) {
-            if (isUndefined(value)) return ctx.stylize("undefined", "undefined");
-            if (isString(value)) {
-                var simple = "'" + JSON.stringify(value).replace(/^"|"$/g, "").replace(/'/g, "\\'").replace(/\\"/g, '"') + "'";
-                return ctx.stylize(simple, "string");
-            }
-            if (isNumber(value)) return ctx.stylize("" + value, "number");
-            if (isBoolean(value)) return ctx.stylize("" + value, "boolean");
-            if (isNull(value)) return ctx.stylize("null", "null");
-        }
-        function formatError(value) {
-            return "[" + Error.prototype.toString.call(value) + "]";
-        }
-        function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
-            var output = [];
-            for (var i = 0, l = value.length; i < l; ++i) {
-                if (hasOwnProperty(value, String(i))) {
-                    output.push(formatProperty(ctx, value, recurseTimes, visibleKeys, String(i), true));
-                } else {
-                    output.push("");
-                }
-            }
-            keys.forEach(function(key) {
-                if (!key.match(/^\d+$/)) {
-                    output.push(formatProperty(ctx, value, recurseTimes, visibleKeys, key, true));
-                }
-            });
-            return output;
-        }
-        function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
-            var name, str, desc;
-            desc = Object.getOwnPropertyDescriptor(value, key) || {
-                value: value[key]
-            };
-            if (desc.get) {
-                if (desc.set) {
-                    str = ctx.stylize("[Getter/Setter]", "special");
-                } else {
-                    str = ctx.stylize("[Getter]", "special");
-                }
-            } else {
-                if (desc.set) {
-                    str = ctx.stylize("[Setter]", "special");
-                }
-            }
-            if (!hasOwnProperty(visibleKeys, key)) {
-                name = "[" + key + "]";
-            }
-            if (!str) {
-                if (ctx.seen.indexOf(desc.value) < 0) {
-                    if (isNull(recurseTimes)) {
-                        str = formatValue(ctx, desc.value, null);
-                    } else {
-                        str = formatValue(ctx, desc.value, recurseTimes - 1);
-                    }
-                    if (str.indexOf("\n") > -1) {
-                        if (array) {
-                            str = str.split("\n").map(function(line) {
-                                return "  " + line;
-                            }).join("\n").substr(2);
-                        } else {
-                            str = "\n" + str.split("\n").map(function(line) {
-                                return "   " + line;
-                            }).join("\n");
-                        }
-                    }
-                } else {
-                    str = ctx.stylize("[Circular]", "special");
-                }
-            }
-            if (isUndefined(name)) {
-                if (array && key.match(/^\d+$/)) {
-                    return str;
-                }
-                name = JSON.stringify("" + key);
-                if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
-                    name = name.substr(1, name.length - 2);
-                    name = ctx.stylize(name, "name");
-                } else {
-                    name = name.replace(/'/g, "\\'").replace(/\\"/g, '"').replace(/(^"|"$)/g, "'");
-                    name = ctx.stylize(name, "string");
-                }
-            }
-            return name + ": " + str;
-        }
-        function reduceToSingleString(output, base, braces) {
-            var numLinesEst = 0;
-            var length = output.reduce(function(prev, cur) {
-                numLinesEst++;
-                if (cur.indexOf("\n") >= 0) numLinesEst++;
-                return prev + cur.replace(/\u001b\[\d\d?m/g, "").length + 1;
-            }, 0);
-            if (length > 60) {
-                return braces[0] + (base === "" ? "" : base + "\n ") + " " + output.join(",\n  ") + " " + braces[1];
-            }
-            return braces[0] + base + " " + output.join(", ") + " " + braces[1];
-        }
-        function isArray(ar) {
-            return Array.isArray(ar);
-        }
-        exports.isArray = isArray;
-        function isBoolean(arg) {
-            return typeof arg === "boolean";
-        }
-        exports.isBoolean = isBoolean;
-        function isNull(arg) {
-            return arg === null;
-        }
-        exports.isNull = isNull;
-        function isNullOrUndefined(arg) {
-            return arg == null;
-        }
-        exports.isNullOrUndefined = isNullOrUndefined;
-        function isNumber(arg) {
-            return typeof arg === "number";
-        }
-        exports.isNumber = isNumber;
-        function isString(arg) {
-            return typeof arg === "string";
-        }
-        exports.isString = isString;
-        function isSymbol(arg) {
-            return typeof arg === "symbol";
-        }
-        exports.isSymbol = isSymbol;
-        function isUndefined(arg) {
-            return arg === void 0;
-        }
-        exports.isUndefined = isUndefined;
-        function isRegExp(re) {
-            return isObject(re) && objectToString(re) === "[object RegExp]";
-        }
-        exports.isRegExp = isRegExp;
-        function isObject(arg) {
-            return typeof arg === "object" && arg !== null;
-        }
-        exports.isObject = isObject;
-        function isDate(d) {
-            return isObject(d) && objectToString(d) === "[object Date]";
-        }
-        exports.isDate = isDate;
-        function isError(e) {
-            return isObject(e) && (objectToString(e) === "[object Error]" || e instanceof Error);
-        }
-        exports.isError = isError;
-        function isFunction(arg) {
-            return typeof arg === "function";
-        }
-        exports.isFunction = isFunction;
-        function isPrimitive(arg) {
-            return arg === null || typeof arg === "boolean" || typeof arg === "number" || typeof arg === "string" || typeof arg === "symbol" || typeof arg === "undefined";
-        }
-        exports.isPrimitive = isPrimitive;
-        exports.isBuffer = __webpack_require__(64);
-        function objectToString(o) {
-            return Object.prototype.toString.call(o);
-        }
-        function pad(n) {
-            return n < 10 ? "0" + n.toString(10) : n.toString(10);
-        }
-        var months = [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ];
-        function timestamp() {
-            var d = new Date();
-            var time = [ pad(d.getHours()), pad(d.getMinutes()), pad(d.getSeconds()) ].join(":");
-            return [ d.getDate(), months[d.getMonth()], time ].join(" ");
-        }
-        exports.log = function() {
-            console.log("%s - %s", timestamp(), exports.format.apply(exports, arguments));
-        };
-        exports.inherits = __webpack_require__(63);
-        exports._extend = function(origin, add) {
-            if (!add || !isObject(add)) return origin;
-            var keys = Object.keys(add);
-            var i = keys.length;
-            while (i--) {
-                origin[keys[i]] = add[keys[i]];
-            }
-            return origin;
-        };
-        function hasOwnProperty(obj, prop) {
-            return Object.prototype.hasOwnProperty.call(obj, prop);
-        }
-    }).call(exports, __webpack_require__(6), __webpack_require__(8));
-}, function(module, exports) {
-    var QUERY_SEPARATOR = /\?.*/;
-    function _flatten(arr) {
-        var flat = [];
-        for (var i = 0, n = arr.length; i < n; i++) {
-            flat = flat.concat(arr[i]);
-        }
-        return flat;
-    }
-    function _every(arr, iterator) {
-        for (var i = 0; i < arr.length; i += 1) {
-            if (iterator(arr[i], i, arr) === false) {
-                return;
-            }
-        }
-    }
-    function _asyncEverySeries(arr, iterator, callback) {
-        if (!arr.length) {
-            return callback();
-        }
-        var completed = 0;
-        (function iterate() {
-            iterator(arr[completed], function(err) {
-                if (err || err === false) {
-                    callback(err);
-                    callback = function() {};
-                } else {
-                    completed += 1;
-                    if (completed === arr.length) {
-                        callback();
-                    } else {
-                        iterate();
-                    }
-                }
-            });
-        })();
-    }
-    function paramifyString(str, params, mod) {
-        mod = str;
-        for (var param in params) {
-            if (params.hasOwnProperty(param)) {
-                mod = params[param](str);
-                if (mod !== str) {
-                    break;
-                }
-            }
-        }
-        return mod === str ? "([._a-zA-Z0-9-%()]+)" : mod;
-    }
-    function regifyString(str, params) {
-        var matches, last = 0, out = "";
-        while (matches = str.substr(last).match(/[^\w\d\- %@&]*\*[^\w\d\- %@&]*/)) {
-            last = matches.index + matches[0].length;
-            matches[0] = matches[0].replace(/^\*/, "([_.()!\\ %@&a-zA-Z0-9-]+)");
-            out += str.substr(0, matches.index) + matches[0];
-        }
-        str = out += str.substr(last);
-        var captures = str.match(/:([^\/]+)/gi), capture, length;
-        if (captures) {
-            length = captures.length;
-            for (var i = 0; i < length; i++) {
-                capture = captures[i];
-                if (capture.slice(0, 2) === "::") {
-                    str = capture.slice(1);
-                } else {
-                    str = str.replace(capture, paramifyString(capture, params));
-                }
-            }
-        }
-        return str;
-    }
-    function terminator(routes, delimiter, start, stop) {
-        var last = 0, left = 0, right = 0, start = (start || "(").toString(), stop = (stop || ")").toString(), i;
-        for (i = 0; i < routes.length; i++) {
-            var chunk = routes[i];
-            if (chunk.indexOf(start, last) > chunk.indexOf(stop, last) || ~chunk.indexOf(start, last) && !~chunk.indexOf(stop, last) || !~chunk.indexOf(start, last) && ~chunk.indexOf(stop, last)) {
-                left = chunk.indexOf(start, last);
-                right = chunk.indexOf(stop, last);
-                if (~left && !~right || !~left && ~right) {
-                    var tmp = routes.slice(0, (i || 1) + 1).join(delimiter);
-                    routes = [ tmp ].concat(routes.slice((i || 1) + 1));
-                }
-                last = (right > left ? right : left) + 1;
-                i = 0;
-            } else {
-                last = 0;
-            }
-        }
-        return routes;
-    }
-    var Router = exports.Router = function(routes) {
-        this.params = {};
-        this.routes = {};
-        this.methods = [ "on", "after", "before" ];
-        this.scope = [];
-        this._methods = {};
-        this.configure();
-        this.mount(routes || {});
-    };
-    Router.prototype.configure = function(options) {
-        options = options || {};
-        for (var i = 0; i < this.methods.length; i++) {
-            this._methods[this.methods[i]] = true;
-        }
-        this.recurse = typeof options.recurse === "undefined" ? this.recurse || false : options.recurse;
-        this.async = options.async || false;
-        this.delimiter = options.delimiter || "/";
-        this.strict = typeof options.strict === "undefined" ? true : options.strict;
-        this.notfound = options.notfound;
-        this.resource = options.resource;
-        this.history = options.html5history && this.historySupport || false;
-        this.run_in_init = this.history === true && options.run_handler_in_init !== false;
-        this.convert_hash_in_init = this.history === true && options.convert_hash_in_init !== false;
-        this.every = {
-            after: options.after || null,
-            before: options.before || null,
-            on: options.on || null
-        };
-        return this;
-    };
-    Router.prototype.param = function(token, matcher) {
-        if (token[0] !== ":") {
-            token = ":" + token;
-        }
-        var compiled = new RegExp(token, "g");
-        this.params[token] = function(str) {
-            return str.replace(compiled, matcher.source || matcher);
-        };
-        return this;
-    };
-    Router.prototype.on = Router.prototype.route = function(method, path, route) {
-        var self = this;
-        if (!route && typeof path == "function") {
-            route = path;
-            path = method;
-            method = "on";
-        }
-        if (Array.isArray(path)) {
-            return path.forEach(function(p) {
-                self.on(method, p, route);
-            });
-        }
-        if (path.source) {
-            path = path.source.replace(/\\\//gi, "/");
-        }
-        if (Array.isArray(method)) {
-            return method.forEach(function(m) {
-                self.on(m.toLowerCase(), path, route);
-            });
-        }
-        path = path.split(new RegExp(this.delimiter));
-        path = terminator(path, this.delimiter);
-        this.insert(method, this.scope.concat(path), route);
-    };
-    Router.prototype.path = function(path, routesFn) {
-        var self = this, length = this.scope.length;
-        if (path.source) {
-            path = path.source.replace(/\\\//gi, "/");
-        }
-        path = path.split(new RegExp(this.delimiter));
-        path = terminator(path, this.delimiter);
-        this.scope = this.scope.concat(path);
-        routesFn.call(this, this);
-        this.scope.splice(length, path.length);
-    };
-    Router.prototype.dispatch = function(method, path, callback) {
-        var self = this, fns = this.traverse(method, path.replace(QUERY_SEPARATOR, ""), this.routes, ""), invoked = this._invoked, after;
-        this._invoked = true;
-        if (!fns || fns.length === 0) {
-            this.last = [];
-            if (typeof this.notfound === "function") {
-                this.invoke([ this.notfound ], {
-                    method: method,
-                    path: path
-                }, callback);
-            }
-            return false;
-        }
-        if (this.recurse === "forward") {
-            fns = fns.reverse();
-        }
-        function updateAndInvoke() {
-            self.last = fns.after;
-            self.invoke(self.runlist(fns), self, callback);
-        }
-        after = this.every && this.every.after ? [ this.every.after ].concat(this.last) : [ this.last ];
-        if (after && after.length > 0 && invoked) {
-            if (this.async) {
-                this.invoke(after, this, updateAndInvoke);
-            } else {
-                this.invoke(after, this);
-                updateAndInvoke();
-            }
-            return true;
-        }
-        updateAndInvoke();
-        return true;
-    };
-    Router.prototype.runlist = function(fns) {
-        var runlist = this.every && this.every.before ? [ this.every.before ].concat(_flatten(fns)) : _flatten(fns);
-        if (this.every && this.every.on) {
-            runlist.push(this.every.on);
-        }
-        runlist.captures = fns.captures;
-        runlist.source = fns.source;
-        return runlist;
-    };
-    Router.prototype.invoke = function(fns, thisArg, callback) {
-        var self = this;
-        var apply;
-        if (this.async) {
-            apply = function(fn, next) {
-                if (Array.isArray(fn)) {
-                    return _asyncEverySeries(fn, apply, next);
-                } else if (typeof fn == "function") {
-                    fn.apply(thisArg, (fns.captures || []).concat(next));
-                }
-            };
-            _asyncEverySeries(fns, apply, function() {
-                if (callback) {
-                    callback.apply(thisArg, arguments);
-                }
-            });
-        } else {
-            apply = function(fn) {
-                if (Array.isArray(fn)) {
-                    return _every(fn, apply);
-                } else if (typeof fn === "function") {
-                    return fn.apply(thisArg, fns.captures || []);
-                } else if (typeof fn === "string" && self.resource) {
-                    self.resource[fn].apply(thisArg, fns.captures || []);
-                }
-            };
-            _every(fns, apply);
-        }
-    };
-    Router.prototype.traverse = function(method, path, routes, regexp, filter) {
-        var fns = [], current, exact, match, next, that;
-        function filterRoutes(routes) {
-            if (!filter) {
-                return routes;
-            }
-            function deepCopy(source) {
-                var result = [];
-                for (var i = 0; i < source.length; i++) {
-                    result[i] = Array.isArray(source[i]) ? deepCopy(source[i]) : source[i];
-                }
-                return result;
-            }
-            function applyFilter(fns) {
-                for (var i = fns.length - 1; i >= 0; i--) {
-                    if (Array.isArray(fns[i])) {
-                        applyFilter(fns[i]);
-                        if (fns[i].length === 0) {
-                            fns.splice(i, 1);
-                        }
-                    } else {
-                        if (!filter(fns[i])) {
-                            fns.splice(i, 1);
-                        }
-                    }
-                }
-            }
-            var newRoutes = deepCopy(routes);
-            newRoutes.matched = routes.matched;
-            newRoutes.captures = routes.captures;
-            newRoutes.after = routes.after.filter(filter);
-            applyFilter(newRoutes);
-            return newRoutes;
-        }
-        if (path === this.delimiter && routes[method]) {
-            next = [ [ routes.before, routes[method] ].filter(Boolean) ];
-            next.after = [ routes.after ].filter(Boolean);
-            next.matched = true;
-            next.captures = [];
-            return filterRoutes(next);
-        }
-        for (var r in routes) {
-            if (routes.hasOwnProperty(r) && (!this._methods[r] || this._methods[r] && typeof routes[r] === "object" && !Array.isArray(routes[r]))) {
-                current = exact = regexp + this.delimiter + r;
-                if (!this.strict) {
-                    exact += "[" + this.delimiter + "]?";
-                }
-                match = path.match(new RegExp("^" + exact));
-                if (!match) {
-                    continue;
-                }
-                if (match[0] && match[0] == path && routes[r][method]) {
-                    next = [ [ routes[r].before, routes[r][method] ].filter(Boolean) ];
-                    next.after = [ routes[r].after ].filter(Boolean);
-                    next.matched = true;
-                    next.captures = match.slice(1);
-                    if (this.recurse && routes === this.routes) {
-                        next.push([ routes.before, routes.on ].filter(Boolean));
-                        next.after = next.after.concat([ routes.after ].filter(Boolean));
-                    }
-                    return filterRoutes(next);
-                }
-                next = this.traverse(method, path, routes[r], current);
-                if (next.matched) {
-                    if (next.length > 0) {
-                        fns = fns.concat(next);
-                    }
-                    if (this.recurse) {
-                        fns.push([ routes[r].before, routes[r][method] ].filter(Boolean));
-                        next.after = next.after.concat([ routes[r].after ].filter(Boolean));
-                        if (routes === this.routes) {
-                            fns.push([ routes["before"], routes["on"] ].filter(Boolean));
-                            next.after = next.after.concat([ routes["after"] ].filter(Boolean));
-                        }
-                    }
-                    fns.matched = true;
-                    fns.captures = next.captures;
-                    fns.after = next.after;
-                    return filterRoutes(fns);
-                }
-            }
-        }
-        return false;
-    };
-    Router.prototype.insert = function(method, path, route, parent) {
-        var methodType, parentType, isArray, nested, part;
-        path = path.filter(function(p) {
-            return p && p.length > 0;
-        });
-        parent = parent || this.routes;
-        part = path.shift();
-        if (/\:|\*/.test(part) && !/\\d|\\w/.test(part)) {
-            part = regifyString(part, this.params);
-        }
-        if (path.length > 0) {
-            parent[part] = parent[part] || {};
-            return this.insert(method, path, route, parent[part]);
-        }
-        if (!part && !path.length && parent === this.routes) {
-            methodType = typeof parent[method];
-            switch (methodType) {
-              case "function":
-                parent[method] = [ parent[method], route ];
-                return;
-
-              case "object":
-                parent[method].push(route);
-                return;
-
-              case "undefined":
-                parent[method] = route;
-                return;
-            }
-            return;
-        }
-        parentType = typeof parent[part];
-        isArray = Array.isArray(parent[part]);
-        if (parent[part] && !isArray && parentType == "object") {
-            methodType = typeof parent[part][method];
-            switch (methodType) {
-              case "function":
-                parent[part][method] = [ parent[part][method], route ];
-                return;
-
-              case "object":
-                parent[part][method].push(route);
-                return;
-
-              case "undefined":
-                parent[part][method] = route;
-                return;
-            }
-        } else if (parentType == "undefined") {
-            nested = {};
-            nested[method] = route;
-            parent[part] = nested;
-            return;
-        }
-        throw new Error("Invalid route context: " + parentType);
-    };
-    Router.prototype.extend = function(methods) {
-        var self = this, len = methods.length, i;
-        function extend(method) {
-            self._methods[method] = true;
-            self[method] = function() {
-                var extra = arguments.length === 1 ? [ method, "" ] : [ method ];
-                self.on.apply(self, extra.concat(Array.prototype.slice.call(arguments)));
-            };
-        }
-        for (i = 0; i < len; i++) {
-            extend(methods[i]);
-        }
-    };
-    Router.prototype.mount = function(routes, path) {
-        if (!routes || typeof routes !== "object" || Array.isArray(routes)) {
-            return;
-        }
-        var self = this;
-        path = path || [];
-        if (!Array.isArray(path)) {
-            path = path.split(self.delimiter);
-        }
-        function insertOrMount(route, local) {
-            var rename = route, parts = route.split(self.delimiter), routeType = typeof routes[route], isRoute = parts[0] === "" || !self._methods[parts[0]], event = isRoute ? "on" : rename;
-            if (isRoute) {
-                rename = rename.slice((rename.match(new RegExp("^" + self.delimiter)) || [ "" ])[0].length);
-                parts.shift();
-            }
-            if (isRoute && routeType === "object" && !Array.isArray(routes[route])) {
-                local = local.concat(parts);
-                self.mount(routes[route], local);
-                return;
-            }
-            if (isRoute) {
-                local = local.concat(rename.split(self.delimiter));
-                local = terminator(local, self.delimiter);
-            }
-            self.insert(event, local, routes[route]);
-        }
-        for (var route in routes) {
-            if (routes.hasOwnProperty(route)) {
-                insertOrMount(route, path.slice(0));
-            }
-        }
-    };
-}, function(module, exports) {
-    function EventEmitter() {
-        this._events = this._events || {};
-        this._maxListeners = this._maxListeners || undefined;
-    }
-    module.exports = EventEmitter;
-    EventEmitter.EventEmitter = EventEmitter;
-    EventEmitter.prototype._events = undefined;
-    EventEmitter.prototype._maxListeners = undefined;
-    EventEmitter.defaultMaxListeners = 10;
-    EventEmitter.prototype.setMaxListeners = function(n) {
-        if (!isNumber(n) || n < 0 || isNaN(n)) throw TypeError("n must be a positive number");
-        this._maxListeners = n;
-        return this;
-    };
-    EventEmitter.prototype.emit = function(type) {
-        var er, handler, len, args, i, listeners;
-        if (!this._events) this._events = {};
-        if (type === "error") {
-            if (!this._events.error || isObject(this._events.error) && !this._events.error.length) {
-                er = arguments[1];
-                if (er instanceof Error) {
-                    throw er;
-                } else {
-                    var err = new Error('Uncaught, unspecified "error" event. (' + er + ")");
-                    err.context = er;
-                    throw err;
-                }
-            }
-        }
-        handler = this._events[type];
-        if (isUndefined(handler)) return false;
-        if (isFunction(handler)) {
-            switch (arguments.length) {
-              case 1:
-                handler.call(this);
-                break;
-
-              case 2:
-                handler.call(this, arguments[1]);
-                break;
-
-              case 3:
-                handler.call(this, arguments[1], arguments[2]);
-                break;
-
-              default:
-                args = Array.prototype.slice.call(arguments, 1);
-                handler.apply(this, args);
-            }
-        } else if (isObject(handler)) {
-            args = Array.prototype.slice.call(arguments, 1);
-            listeners = handler.slice();
-            len = listeners.length;
-            for (i = 0; i < len; i++) listeners[i].apply(this, args);
-        }
-        return true;
-    };
-    EventEmitter.prototype.addListener = function(type, listener) {
-        var m;
-        if (!isFunction(listener)) throw TypeError("listener must be a function");
-        if (!this._events) this._events = {};
-        if (this._events.newListener) this.emit("newListener", type, isFunction(listener.listener) ? listener.listener : listener);
-        if (!this._events[type]) this._events[type] = listener; else if (isObject(this._events[type])) this._events[type].push(listener); else this._events[type] = [ this._events[type], listener ];
-        if (isObject(this._events[type]) && !this._events[type].warned) {
-            if (!isUndefined(this._maxListeners)) {
-                m = this._maxListeners;
-            } else {
-                m = EventEmitter.defaultMaxListeners;
-            }
-            if (m && m > 0 && this._events[type].length > m) {
-                this._events[type].warned = true;
-                console.error("(node) warning: possible EventEmitter memory " + "leak detected. %d listeners added. " + "Use emitter.setMaxListeners() to increase limit.", this._events[type].length);
-                if (typeof console.trace === "function") {
-                    console.trace();
-                }
-            }
-        }
-        return this;
-    };
-    EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-    EventEmitter.prototype.once = function(type, listener) {
-        if (!isFunction(listener)) throw TypeError("listener must be a function");
-        var fired = false;
-        function g() {
-            this.removeListener(type, g);
-            if (!fired) {
-                fired = true;
-                listener.apply(this, arguments);
-            }
-        }
-        g.listener = listener;
-        this.on(type, g);
-        return this;
-    };
-    EventEmitter.prototype.removeListener = function(type, listener) {
-        var list, position, length, i;
-        if (!isFunction(listener)) throw TypeError("listener must be a function");
-        if (!this._events || !this._events[type]) return this;
-        list = this._events[type];
-        length = list.length;
-        position = -1;
-        if (list === listener || isFunction(list.listener) && list.listener === listener) {
-            delete this._events[type];
-            if (this._events.removeListener) this.emit("removeListener", type, listener);
-        } else if (isObject(list)) {
-            for (i = length; i-- > 0; ) {
-                if (list[i] === listener || list[i].listener && list[i].listener === listener) {
-                    position = i;
-                    break;
-                }
-            }
-            if (position < 0) return this;
-            if (list.length === 1) {
-                list.length = 0;
-                delete this._events[type];
-            } else {
-                list.splice(position, 1);
-            }
-            if (this._events.removeListener) this.emit("removeListener", type, listener);
-        }
-        return this;
-    };
-    EventEmitter.prototype.removeAllListeners = function(type) {
-        var key, listeners;
-        if (!this._events) return this;
-        if (!this._events.removeListener) {
-            if (arguments.length === 0) this._events = {}; else if (this._events[type]) delete this._events[type];
-            return this;
-        }
-        if (arguments.length === 0) {
-            for (key in this._events) {
-                if (key === "removeListener") continue;
-                this.removeAllListeners(key);
-            }
-            this.removeAllListeners("removeListener");
-            this._events = {};
-            return this;
-        }
-        listeners = this._events[type];
-        if (isFunction(listeners)) {
-            this.removeListener(type, listeners);
-        } else if (listeners) {
-            while (listeners.length) this.removeListener(type, listeners[listeners.length - 1]);
-        }
-        delete this._events[type];
-        return this;
-    };
-    EventEmitter.prototype.listeners = function(type) {
-        var ret;
-        if (!this._events || !this._events[type]) ret = []; else if (isFunction(this._events[type])) ret = [ this._events[type] ]; else ret = this._events[type].slice();
-        return ret;
-    };
-    EventEmitter.prototype.listenerCount = function(type) {
-        if (this._events) {
-            var evlistener = this._events[type];
-            if (isFunction(evlistener)) return 1; else if (evlistener) return evlistener.length;
-        }
-        return 0;
-    };
-    EventEmitter.listenerCount = function(emitter, type) {
-        return emitter.listenerCount(type);
-    };
-    function isFunction(arg) {
-        return typeof arg === "function";
-    }
-    function isNumber(arg) {
-        return typeof arg === "number";
-    }
-    function isObject(arg) {
-        return typeof arg === "object" && arg !== null;
-    }
-    function isUndefined(arg) {
-        return arg === void 0;
-    }
-}, function(module, exports, __webpack_require__) {
-    "use strict";
-    function hasOwnProperty(obj, prop) {
-        return Object.prototype.hasOwnProperty.call(obj, prop);
-    }
-    module.exports = function(qs, sep, eq, options) {
-        sep = sep || "&";
-        eq = eq || "=";
-        var obj = {};
-        if (typeof qs !== "string" || qs.length === 0) {
-            return obj;
-        }
-        var regexp = /\+/g;
-        qs = qs.split(sep);
-        var maxKeys = 1e3;
-        if (options && typeof options.maxKeys === "number") {
-            maxKeys = options.maxKeys;
-        }
-        var len = qs.length;
-        if (maxKeys > 0 && len > maxKeys) {
-            len = maxKeys;
-        }
-        for (var i = 0; i < len; ++i) {
-            var x = qs[i].replace(regexp, "%20"), idx = x.indexOf(eq), kstr, vstr, k, v;
-            if (idx >= 0) {
-                kstr = x.substr(0, idx);
-                vstr = x.substr(idx + 1);
-            } else {
-                kstr = x;
-                vstr = "";
-            }
-            k = decodeURIComponent(kstr);
-            v = decodeURIComponent(vstr);
-            if (!hasOwnProperty(obj, k)) {
-                obj[k] = v;
-            } else if (isArray(obj[k])) {
-                obj[k].push(v);
-            } else {
-                obj[k] = [ obj[k], v ];
-            }
-        }
-        return obj;
-    };
-    var isArray = Array.isArray || function(xs) {
-        return Object.prototype.toString.call(xs) === "[object Array]";
-    };
-}, function(module, exports, __webpack_require__) {
-    "use strict";
-    var stringifyPrimitive = function(v) {
-        switch (typeof v) {
-          case "string":
-            return v;
-
-          case "boolean":
-            return v ? "true" : "false";
-
-          case "number":
-            return isFinite(v) ? v : "";
-
-          default:
-            return "";
-        }
-    };
-    module.exports = function(obj, sep, eq, name) {
-        sep = sep || "&";
-        eq = eq || "=";
-        if (obj === null) {
-            obj = undefined;
-        }
-        if (typeof obj === "object") {
-            return map(objectKeys(obj), function(k) {
-                var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
-                if (isArray(obj[k])) {
-                    return map(obj[k], function(v) {
-                        return ks + encodeURIComponent(stringifyPrimitive(v));
-                    }).join(sep);
-                } else {
-                    return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
-                }
-            }).join(sep);
-        }
-        if (!name) return "";
-        return encodeURIComponent(stringifyPrimitive(name)) + eq + encodeURIComponent(stringifyPrimitive(obj));
-    };
-    var isArray = Array.isArray || function(xs) {
-        return Object.prototype.toString.call(xs) === "[object Array]";
-    };
-    function map(xs, f) {
-        if (xs.map) return xs.map(f);
-        var res = [];
-        for (var i = 0; i < xs.length; i++) {
-            res.push(f(xs[i], i));
-        }
-        return res;
-    }
-    var objectKeys = Object.keys || function(obj) {
-        var res = [];
-        for (var key in obj) {
-            if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
-        }
-        return res;
-    };
-}, function(module, exports, __webpack_require__) {
-    "use strict";
-    exports.decode = exports.parse = __webpack_require__(60);
-    exports.encode = exports.stringify = __webpack_require__(61);
-}, function(module, exports) {
-    if (typeof Object.create === "function") {
-        module.exports = function inherits(ctor, superCtor) {
-            ctor.super_ = superCtor;
-            ctor.prototype = Object.create(superCtor.prototype, {
-                constructor: {
-                    value: ctor,
-                    enumerable: false,
-                    writable: true,
-                    configurable: true
-                }
-            });
-        };
-    } else {
-        module.exports = function inherits(ctor, superCtor) {
-            ctor.super_ = superCtor;
-            var TempCtor = function() {};
-            TempCtor.prototype = superCtor.prototype;
-            ctor.prototype = new TempCtor();
-            ctor.prototype.constructor = ctor;
-        };
-    }
-}, function(module, exports) {
-    module.exports = function isBuffer(arg) {
-        return arg && typeof arg === "object" && typeof arg.copy === "function" && typeof arg.fill === "function" && typeof arg.readUInt8 === "function";
-    };
-}, function(module, exports, __webpack_require__) {
-    exports.Router = __webpack_require__(58).Router;
-    exports.http = __webpack_require__(67);
-    exports.cli = __webpack_require__(66);
-}, function(module, exports, __webpack_require__) {
-    var util = __webpack_require__(57), BaseRouter = __webpack_require__(58).Router;
-    var Router = exports.Router = function(routes) {
-        BaseRouter.call(this, routes);
-        this.recurse = false;
-    };
-    util.inherits(Router, BaseRouter);
-    Router.prototype.configure = function(options) {
-        options = options || {};
-        BaseRouter.prototype.configure.call(this, options);
-        this.delimiter = "\\s";
-        return this;
-    };
-    Router.prototype.dispatch = function(method, path, tty, callback) {
-        path = " " + path;
-        var fns = this.traverse(method, path, this.routes, "");
-        if (!fns || fns.length === 0) {
-            if (typeof this.notfound === "function") {
-                this.notfound.call({
-                    tty: tty,
-                    cmd: path
-                }, callback);
-            } else if (callback) {
-                callback(new Error("Could not find path: " + path));
-            }
-            return false;
-        }
-        if (this.recurse === "forward") {
-            fns = fns.reverse();
-        }
-        this.invoke(this.runlist(fns), {
-            tty: tty,
-            cmd: path
-        }, callback);
-        return true;
-    };
-}, function(module, exports, __webpack_require__) {
-    var events = __webpack_require__(59), qs = __webpack_require__(62), util = __webpack_require__(57), BaseRouter = __webpack_require__(58).Router, responses = __webpack_require__(69);
-    exports.methods = __webpack_require__(68);
-    Object.keys(responses).forEach(function(name) {
-        exports[name] = responses[name];
-    });
-    var Router = exports.Router = function(routes) {
-        this.params = {};
-        this.routes = {};
-        this.methods = [ "on", "after", "before" ];
-        this.scope = [];
-        this._methods = {};
-        this.recurse = "forward";
-        this._attach = [];
-        this.extend(exports.methods.concat([ "before", "after" ]));
-        this.configure();
-        this.mount(routes || {});
-    };
-    util.inherits(Router, BaseRouter);
-    Router.prototype.configure = function(options) {
-        options = options || {};
-        this.stream = options.stream || false;
-        return BaseRouter.prototype.configure.call(this, options);
-    };
-    Router.prototype.on = function(method, path) {
-        var args = Array.prototype.slice.call(arguments, 2), route = args.pop(), options = args.pop(), accept;
-        if (options) {
-            if (options.stream) {
-                route.stream = true;
-            }
-            if (options.accept) {
-                this._hasAccepts = true;
-                accept = options.accept;
-                route.accept = (Array.isArray(accept) ? accept : [ accept ]).map(function(a) {
-                    return typeof a === "string" ? RegExp(a) : a;
-                });
-            }
-        }
-        if (typeof path !== "string" && !path.source) {
-            path = "";
-        }
-        BaseRouter.prototype.on.call(this, method, path, route);
-    };
-    Router.prototype.attach = function(func) {
-        this._attach.push(func);
-    };
-    Router.prototype.dispatch = function(req, res, callback) {
-        var method = req.method === "HEAD" ? "get" : req.method.toLowerCase(), thisArg = {
-            req: req,
-            res: res
-        }, self = this, contentType, runlist, stream, error, fns, url;
-        try {
-            url = decodeURI(req.url.split("?", 1)[0]);
-        } catch (ex) {
-            url = null;
-        }
-        if (url && this._hasAccepts) {
-            contentType = req.headers["content-type"];
-            fns = this.traverse(method, url, this.routes, "", function(route) {
-                return !route.accept || route.accept.some(function(a) {
-                    return a.test(contentType);
-                });
-            });
-        } else if (url) {
-            fns = this.traverse(method, url, this.routes, "");
-        }
-        if (this._attach) {
-            for (var i = 0; i < this._attach.length; i++) {
-                this._attach[i].call(thisArg);
-            }
-        }
-        if (!fns || fns.length === 0) {
-            error = new exports.NotFound("Could not find path: " + req.url);
-            if (typeof this.notfound === "function") {
-                this.notfound.call(thisArg, callback);
-            } else if (callback) {
-                callback.call(thisArg, error, req, res);
-            }
-            return false;
-        }
-        if (this.recurse === "forward") {
-            fns = fns.reverse();
-        }
-        runlist = this.runlist(fns);
-        stream = this.stream || runlist.some(function(fn) {
-            return fn.stream === true;
-        });
-        function parseAndInvoke() {
-            error = self.parse(req);
-            if (error) {
-                if (callback) {
-                    callback.call(thisArg, error, req, res);
-                }
-                return false;
-            }
-            self.invoke(runlist, thisArg, callback);
-        }
-        if (!stream) {
-            if (req.readable) {
-                req.once("end", parseAndInvoke);
-                req.resume();
-            } else {
-                parseAndInvoke();
-            }
-        } else {
-            this.invoke(runlist, thisArg, callback);
-        }
-        return true;
-    };
-    Router.prototype.parsers = {
-        "application/x-www-form-urlencoded": qs.parse,
-        "application/json": JSON.parse
-    };
-    Router.prototype.parse = function(req) {
-        function mime(req) {
-            var str = req.headers["content-type"] || "";
-            return str.split(";")[0];
-        }
-        var parser = this.parsers[mime(req)], body;
-        if (parser) {
-            req.body = req.body || "";
-            if (req.chunks) {
-                req.chunks.forEach(function(chunk) {
-                    req.body += chunk;
-                });
-            }
-            if ("string" === typeof req.body) {
-                try {
-                    req.body = req.body && req.body.length ? parser(req.body) : {};
-                } catch (err) {
-                    return new exports.BadRequest("Malformed data");
-                }
-            }
-        }
-    };
-}, function(module, exports) {
-    var RFC2616 = [ "OPTIONS", "GET", "POST", "PUT", "DELETE", "TRACE", "CONNECT" ];
-    var RFC2518 = [ "PROPFIND", "PROPPATCH", "MKCOL", "COPY", "MOVE", "LOCK", "UNLOCK" ];
-    var RFC3253 = [ "VERSION-CONTROL", "REPORT", "CHECKOUT", "CHECKIN", "UNCHECKOUT", "MKWORKSPACE", "UPDATE", "LABEL", "MERGE", "BASELINE-CONTROL", "MKACTIVITY" ];
-    var RFC3648 = [ "ORDERPATCH" ];
-    var RFC3744 = [ "ACL" ];
-    var RFC5323 = [ "SEARCH" ];
-    var RFC5789 = [ "PATCH" ];
-    module.exports = [].concat(RFC2616, RFC2518, RFC3253, RFC3648, RFC3744, RFC5323, RFC5789).map(function(method) {
-        return method.toLowerCase();
-    });
-}, function(module, exports, __webpack_require__) {
-    var util = __webpack_require__(57);
-    exports.NotModified = function() {
-        this.status = 304;
-        this.options = {
-            removeContentHeaders: true
-        };
-    };
-    util.inherits(exports.NotModified, Error);
-    exports.BadRequest = function(msg) {
-        msg = msg || "Bad request";
-        this.status = 400;
-        this.headers = {};
-        this.message = msg;
-        this.body = {
-            error: msg
-        };
-    };
-    util.inherits(exports.BadRequest, Error);
-    exports.NotAuthorized = function(msg) {
-        msg = msg || "Not Authorized";
-        this.status = 401;
-        this.headers = {};
-        this.message = msg;
-        this.body = {
-            error: msg
-        };
-    };
-    util.inherits(exports.NotAuthorized, Error);
-    exports.Forbidden = function(msg) {
-        msg = msg || "Not Authorized";
-        this.status = 403;
-        this.headers = {};
-        this.message = msg;
-        this.body = {
-            error: msg
-        };
-    };
-    util.inherits(exports.Forbidden, Error);
-    exports.NotFound = function(msg) {
-        msg = msg || "Not Found";
-        this.status = 404;
-        this.headers = {};
-        this.message = msg;
-        this.body = {
-            error: msg
-        };
-    };
-    util.inherits(exports.NotFound, Error);
-    exports.MethodNotAllowed = function(allowed) {
-        var msg = "method not allowed.";
-        this.status = 405;
-        this.headers = {
-            allow: allowed
-        };
-        this.message = msg;
-        this.body = {
-            error: msg
-        };
-    };
-    util.inherits(exports.MethodNotAllowed, Error);
-    exports.NotAcceptable = function(accept) {
-        var msg = 'cannot generate "' + accept + '" response';
-        this.status = 406;
-        this.headers = {};
-        this.message = msg;
-        this.body = {
-            error: msg,
-            only: "application/json"
-        };
-    };
-    util.inherits(exports.NotAcceptable, Error);
-    exports.NotImplemented = function(msg) {
-        msg = msg || "Not Implemented";
-        this.status = 501;
-        this.headers = {};
-        this.message = msg;
-        this.body = {
-            error: msg
-        };
-    };
-    util.inherits(exports.NotImplemented, Error);
-} ]);
+}, function(module, exports) {} ]);

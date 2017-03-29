@@ -30,14 +30,15 @@
     "node-sass": "^4.1.1",
     "sass-loader": "^4.0.2",
     "style-loader": "^0.13.1",
-    "url-loader": "^0.5.7"
+    "url-loader": "^0.5.7",
+    "webpack": "^2.3.2"
   },
   "dependencies": {
     "core-decorators": "^0.14.0",
     "director": "^1.2.8",
     "events": "^1.1.1",
     "jquery": "^3.1.1",
-    "lego-core": "^1.4.6",
+    "lego-core": "^1.8.0",
     "object.observe": "^0.2.6",
     "virtual-dom": "^2.1.1"
   }

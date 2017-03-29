@@ -13,9 +13,10 @@ module.exports = {
         path: path.join(__dirname, 'dist'), //打包输出的路径
         publicPath: "./dist/", //发布地址。
         filename: '[name].js', //打包多个
+        // libraryTarget: 'umd'
     },
     module: {
-        loaders: [{
+        rules: [{
             test: /\.js?$/,
             loader: "babel-loader",
             exclude: /node_modules/,
@@ -25,47 +26,46 @@ module.exports = {
             }
         }, {
             test: /\.scss$/,
-            loader: "style!css!sass",
+            loader: "style-loader!css-loader!sass-loader",
         }, {
             test: /\.css$/,
-            loader: "style!css",
+            loader: "style-loader!css-loader",
         }, {
             test: /\.(png|jpe?g)$/,
-            loader: 'url?prefix=img&limit=10240&name=img/[name].[hash].[ext]'
+            loader: 'url-loader?prefix=img&limit=10240&name=img/[name].[hash].[ext]'
         }, {
             test: /\.woff(2)?(\?t=[0-9]\.[0-9]\.[0-9])?$/,
-            loader: "url?limit=10240&minetype=application/font-woff&name=fonts/[name].[md5:hash:hex:7].[ext]"
+            loader: "url-loader?limit=10240&minetype=application/font-woff&name=fonts/[name].[md5:hash:hex:7].[ext]"
         }, {
             test: /\.(ttf|eot|svg)(\?t=[0-9]\.[0-9]\.[0-9])?$/,
-            loader: "file?name=fonts/[name].[md5:hash:hex:7].[ext]"
+            loader: "file-loader?name=fonts/[name].[md5:hash:hex:7].[ext]"
         }]
     },
     resolve: {
-        extensions: ["", ".js"]
+        extensions: [".js"]
     },
     plugins: [
         new webpack.optimize.UglifyJsPlugin({
             mangle: false,
             compress: false,
             output: {
-                beautify: false,
+                beautify: true,
                 comments: false
             },
         })
     ],
     // devtool: "#source-map",
-    devServer: {
-        contentBase: "./dist",
-        hot: true,
-        inline: true,
-        //其实很简单的，只要配置这个参数就可以了
-        proxy: {
-            '/api/*': {
-                target: 'http://localhost:5000',
-                secure: false
-            }
-        },
-        port: 3000 //Port Number
-    }
+    // devServer: {
+    //     contentBase: "./dist",
+    //     hot: true,
+    //     inline: true,
+    //     //其实很简单的，只要配置这个参数就可以了
+    //     proxy: {
+    //         '/api/*': {
+    //             target: 'http://localhost:5000',
+    //             secure: false
+    //         }
+    //     },
+    //     port: 3000 //Port Number
+    // }
 };
-

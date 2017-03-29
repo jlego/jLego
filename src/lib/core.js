@@ -1,7 +1,10 @@
-import { Router } from 'director';
+// import { Router } from 'director';//v1.8.0之前的版本
+import page from 'page';
+window.page = page;
 
 class Core {
     constructor() {
+        let that = this;
         this.config = {
             alias: 'Lego',
             version: '1.0.0',
@@ -12,14 +15,13 @@ class Core {
             pageEl: '',     //页面渲染容器
             defaultApp: '', //默认应用
             rootUri: '',    //根目录
-            routerConfig: {},   //路由配置
             screenWidth: window.innerWidth  //应用窗口宽度
         };
         this._debugger();
         this.prevApp = ''; //上一个应用名称
         this.currentApp = ''; //当前应用名称
         // 基类
-        this.Router = Router;
+        // this.Route = Router;
 
         this.idCounter = 0;
         // 实例容器
@@ -28,6 +30,11 @@ class Core {
         this.timer = new Map();   //计时器对象
         this.UI = {};
         this.routers = new Map();
+        // 监听hash变化
+        window.onhashchange = function(){
+            let hashStr = location.hash.replace('#', '');
+            if(hashStr) page(hashStr);
+        };
         return this;
     }
     /**
@@ -110,6 +117,7 @@ class Core {
                 Object.assign(this.config, opts[0]);
             }
         }
+        page.base(this.config.routeRoot);
         this._debugger();
         return this;
     }
@@ -299,7 +307,8 @@ class Core {
         if (typeof options.startBefore == 'function') options.startBefore();
         this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js?' + this.config.version, function() {
             if(appPath && appName !== 'index'){
-                that.routers.get(appName).setRoute(appPath);
+                // if(that.routers.get(appName)) that.routers.get(appName).setRoute(appPath);//v1.8.0之前的版本
+                page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
                 let prevId = 'Lego-js-' + that.prevApp;
                 if(document.getElementById(prevId)){
                     document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
@@ -346,7 +355,10 @@ class Core {
      * @return {[type]}         [description]
      */
     getView(el){
-        let _el = el instanceof window.$ ? el[0] : document.querySelector(el);
+        let _el = typeof el == 'string' ? document.querySelector(el) : el;
+        if(window.$ && typeof el == 'object'){
+            _el = el instanceof window.$ ? el[0] : _el;
+        }
         if(this.views.has(_el)){
             return this.views.get(_el);
         }
@@ -374,14 +386,23 @@ class Core {
      * @param  {[type]} routerOption [description]
      * @return {[type]}           [description]
      */
-    router(routerOption){
+    router(routerOption = {}){
         const appName = this.currentApp;
         if(appName == 'index') return;
-        if(!this.routers.has(appName)){
-            const routerObj = this.Router(routerOption).init();
-            this.routers.set(appName, routerObj);
+        if(!this.isEmptyObject(routerOption)){
+            for(let key in routerOption){
+                let value = routerOption[key],
+                    routerName = appName + '_' + key;
+                value = Array.isArray(value) ? value : [value];
+                value.unshift(key);
+                if(!this.routers.get(routerName)){
+                    page(...value);
+                    this.routers.set(routerName, value);
+                }
+                // const routerObj = Router(routerOption).init(); //v1.8.0之前的版本
+            }
+            page();
         }
-        return this.routers.get(appName);
     }
 }
 window.Lego = window.Lego || new Core();
