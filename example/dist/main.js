@@ -529,7 +529,6 @@
             this.routers = new Map();
             window.onhashchange = function() {
                 var hashStr = location.hash.replace("#", "");
-                console.warn(hashStr);
                 if (hashStr) {
                     page(hashStr);
                 }
@@ -825,13 +824,9 @@
         Core.prototype.router = function router(routerOption) {
             var this$1 = this;
             if (routerOption === void 0) routerOption = {};
-            var appName = this.currentApp;
-            if (appName == "index") {
-                return;
-            }
             if (!this.isEmptyObject(routerOption)) {
                 for (var key in routerOption) {
-                    var value = routerOption[key], routerName = appName + "_" + key;
+                    var value = routerOption[key], routerName = key;
                     value = Array.isArray(value) ? value : [ value ];
                     value.unshift(key);
                     if (!this$1.routers.get(routerName)) {
