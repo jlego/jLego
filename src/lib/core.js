@@ -387,12 +387,10 @@ class Core {
      * @return {[type]}           [description]
      */
     router(routerOption = {}){
-        const appName = this.currentApp;
-        if(appName == 'index') return;
         if(!this.isEmptyObject(routerOption)){
             for(let key in routerOption){
                 let value = routerOption[key],
-                    routerName = appName + '_' + key;
+                    routerName = key;
                 value = Array.isArray(value) ? value : [value];
                 value.unshift(key);
                 if(!this.routers.get(routerName)){
@@ -401,7 +399,6 @@ class Core {
                 }
                 // const routerObj = Router(routerOption).init(); //v1.8.0之前的版本
             }
-            page();
         }
     }
 }
