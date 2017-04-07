@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.6
+ * lego.js v1.8.9
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -385,7 +385,7 @@ var View = function View(opts) {
     Object.assign(this.options, opts);
     if (this.options.listener && Lego.Eventer) {
         for (var key in this.options.listener) {
-            Lego.Eventer.on(key, this$1.options.listener[key]);
+            Lego.Eventer.on(key, this$1.options.listener[key].bind(this$1));
         }
     }
     this._renderRootNode();

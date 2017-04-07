@@ -834,7 +834,6 @@
                         this$1.routers.set(routerName, value);
                     }
                 }
-                page();
             }
         };
         window.Lego = window.Lego || new Core();
@@ -853,7 +852,7 @@
             Object.assign(this.options, opts);
             if (this.options.listener && Lego.Eventer) {
                 for (var key in this.options.listener) {
-                    Lego.Eventer.on(key, this$1.options.listener[key]);
+                    Lego.Eventer.on(key, this$1.options.listener[key].bind(this$1));
                 }
             }
             this._renderRootNode();

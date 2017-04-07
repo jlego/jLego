@@ -21,7 +21,7 @@ class View {
         // 监听器
         if(this.options.listener && Lego.Eventer){
             for(let key in this.options.listener){
-                Lego.Eventer.on(key, this.options.listener[key]);
+                Lego.Eventer.on(key, this.options.listener[key].bind(this));
             }
         }
         this._renderRootNode();

@@ -6,8 +6,11 @@ class Router {
     constructor() {
         return {
             '/test': this.index,
-            '/test/list': this.tabs
+            '/test/list': [this.test, this.tabs]
         };
+    }
+    test(ctx, next){
+        next();
     }
     index(){
         console.warn('7777777777777');
