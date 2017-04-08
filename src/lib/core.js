@@ -393,10 +393,10 @@ class Core {
                     routerName = key;
                 value = Array.isArray(value) ? value : [value];
                 value.unshift(key);
-                if(!this.routers.get(routerName)){
+                // if(!this.routers.get(routerName)){
                     page(...value);
                     this.routers.set(routerName, value);
-                }
+                // }
                 // const routerObj = Router(routerOption).init(); //v1.8.0之前的版本
             }
         }

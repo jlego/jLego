@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.9
+ * lego.js v1.8.10
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -358,10 +358,8 @@ Core.prototype.router = function router(routerOption) {
             var value = routerOption[key], routerName = key;
             value = Array.isArray(value) ? value : [ value ];
             value.unshift(key);
-            if (!this$1.routers.get(routerName)) {
-                page.apply(void 0, value);
-                this$1.routers.set(routerName, value);
-            }
+            page.apply(void 0, value);
+            this$1.routers.set(routerName, value);
         }
     }
 };
