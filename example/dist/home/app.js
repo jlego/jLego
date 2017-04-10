@@ -337,7 +337,6 @@
         var Router = function() {
             function Router() {
                 _classCallCheck(this, Router);
-                Lego.setting("routeRoot", "/example/#");
                 return {
                     "/home": this.index,
                     "/home/list": this.tabs

@@ -341,10 +341,16 @@
                 _classCallCheck(this, Router);
                 return {
                     "/test": this.index,
-                    "/test/list": this.tabs
+                    "/test/list": [ this.test, this.tabs ]
                 };
             }
             _createClass(Router, [ {
+                key: "test",
+                value: function test(ctx, next) {
+                    Lego.resethash("#/test");
+                    next();
+                }
+            }, {
                 key: "index",
                 value: function index() {
                     console.warn("7777777777777");
@@ -358,39 +364,7 @@
                 }
             }, {
                 key: "tabs",
-                value: function tabs() {
-                    Lego.create(_list2.default, {
-                        el: Lego.config.pageEl,
-                        data: {
-                            list: [ {
-                                first: "home",
-                                last: "99999"
-                            }, {
-                                first: "test",
-                                last: "mmmmm"
-                            } ]
-                        },
-                        components: [ {
-                            el: "#home",
-                            data: [ {
-                                first: "home2",
-                                last: "999992"
-                            }, {
-                                first: "test2",
-                                last: "mmmmm2"
-                            } ]
-                        }, {
-                            el: "#test",
-                            data: [ {
-                                first: "home3",
-                                last: "999993"
-                            }, {
-                                first: "test3",
-                                last: "mmmmm3"
-                            } ]
-                        } ]
-                    });
-                }
+                value: function tabs() {}
             } ]);
             return Router;
         }();

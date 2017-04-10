@@ -4,7 +4,6 @@ import listData from './data/list';
 
 class Router {
     constructor() {
-        Lego.setting('routeRoot', '/example/#');
         return {
             '/home': this.index,
             '/home/list': this.tabs

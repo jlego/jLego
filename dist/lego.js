@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.6
+ * lego.js v1.8.15
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -270,6 +270,27 @@ Core.prototype.loadScript = function loadScript(url, callback, appName) {
     document.getElementsByTagName("head")[0].appendChild(script);
 };
 
+Core.prototype.loadCss = function loadCss(cssUrl, appName) {
+    var cssLink = document.createElement("link"), theId = "Lego-css-" + appName, version = "?" + (this.config.version || 0);
+    if (cssUrl) {
+        var theCss = cssUrl + version;
+        if (document.getElementById(theId)) {
+            document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
+        }
+        cssLink.setAttribute("id", theId);
+        cssLink.rel = "stylesheet";
+        cssLink.href = theCss;
+        document.getElementsByTagName("head")[0].appendChild(cssLink);
+    }
+};
+
+Core.prototype.removeCss = function removeCss(appName) {
+    var theId = "Lego-css-" + appName, version = "?" + (this.config.version || 0);
+    if (document.getElementById(theId)) {
+        document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
+    }
+};
+
 Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     if (fileName === void 0) fileName = "app";
     if (opts === void 0) opts = {};
@@ -288,8 +309,12 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     if (typeof options.startBefore == "function") {
         options.startBefore();
     }
+    this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName);
     this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js?" + this.config.version, function() {
         if (appPath && appName !== "index") {
+            if (that.prevApp !== "index") {
+                that.removeCss(that.prevApp);
+            }
             page(appPath.indexOf("/") !== 0 ? "/" + appPath : appPath);
             var prevId = "Lego-js-" + that.prevApp;
             if (document.getElementById(prevId)) {
@@ -358,10 +383,8 @@ Core.prototype.router = function router(routerOption) {
             var value = routerOption[key], routerName = key;
             value = Array.isArray(value) ? value : [ value ];
             value.unshift(key);
-            if (!this$1.routers.get(routerName)) {
-                page.apply(void 0, value);
-                this$1.routers.set(routerName, value);
-            }
+            page.apply(void 0, value);
+            this$1.routers.set(routerName, value);
         }
     }
 };
@@ -385,7 +408,7 @@ var View = function View(opts) {
     Object.assign(this.options, opts);
     if (this.options.listener && Lego.Eventer) {
         for (var key in this.options.listener) {
-            Lego.Eventer.on(key, this$1.options.listener[key]);
+            Lego.Eventer.on(key, this$1.options.listener[key].bind(this$1));
         }
     }
     this._renderRootNode();
