@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.16
+ * lego.js v1.8.18
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -270,17 +270,20 @@ Core.prototype.loadScript = function loadScript(url, callback, appName) {
     document.getElementsByTagName("head")[0].appendChild(script);
 };
 
-Core.prototype.loadCss = function loadCss(cssUrl, appName) {
+Core.prototype.loadCss = function loadCss(cssUrl, appName, removeCss) {
+    if (removeCss === void 0) removeCss = true;
     var cssLink = document.createElement("link"), theId = "Lego-css-" + appName, version = "?" + (this.config.version || 0);
     if (cssUrl) {
         var theCss = cssUrl + version;
-        if (document.getElementById(theId)) {
-            document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
+        if (!document.getElementById(theId)) {
+            if (this.prevApp !== "index") {
+                this.removeCss(this.prevApp);
+            }
+            cssLink.setAttribute("id", theId);
+            cssLink.rel = "stylesheet";
+            cssLink.href = theCss;
+            document.getElementsByTagName("head")[0].appendChild(cssLink);
         }
-        cssLink.setAttribute("id", theId);
-        cssLink.rel = "stylesheet";
-        cssLink.href = theCss;
-        document.getElementsByTagName("head")[0].appendChild(cssLink);
     }
 };
 
@@ -310,12 +313,9 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     if (typeof options.startBefore == "function") {
         options.startBefore();
     }
-    this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName);
+    this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName, options.removeCss);
     this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js?" + this.config.version, function() {
         if (appPath && appName !== "index") {
-            if (that.prevApp !== "index" && options.removeCss) {
-                that.removeCss(that.prevApp);
-            }
             page(appPath.indexOf("/") !== 0 ? "/" + appPath : appPath);
             var prevId = "Lego-js-" + that.prevApp;
             if (document.getElementById(prevId)) {
