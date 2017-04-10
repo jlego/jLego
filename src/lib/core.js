@@ -313,6 +313,7 @@ class Core {
      */
     startApp(appPath, fileName = 'app', opts = {}) {
         let options = {
+            removeCss: true,
             startBefore() {},
             startAfter() {}
         }, that = this, appName, index;
@@ -328,7 +329,7 @@ class Core {
         this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName);
         this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js?' + this.config.version, function() {
             if(appPath && appName !== 'index'){
-                if(that.prevApp !== 'index') that.removeCss(that.prevApp);
+                if(that.prevApp !== 'index' && options.removeCss) that.removeCss(that.prevApp);
                 // if(that.routers.get(appName)) that.routers.get(appName).setRoute(appPath);//v1.8.0之前的版本
                 page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
                 let prevId = 'Lego-js-' + that.prevApp;
