@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.15
+ * lego.js v1.8.16
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -295,6 +295,7 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     if (fileName === void 0) fileName = "app";
     if (opts === void 0) opts = {};
     var options = {
+        removeCss: true,
         startBefore: function startBefore() {},
         startAfter: function startAfter() {}
     }, that = this, appName, index;
@@ -312,7 +313,7 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName);
     this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js?" + this.config.version, function() {
         if (appPath && appName !== "index") {
-            if (that.prevApp !== "index") {
+            if (that.prevApp !== "index" && options.removeCss) {
                 that.removeCss(that.prevApp);
             }
             page(appPath.indexOf("/") !== 0 ? "/" + appPath : appPath);
