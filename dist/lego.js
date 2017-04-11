@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.18
+ * lego.js v1.8.19
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -717,7 +717,7 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
                                                 theBody = Lego.param(theBody);
                                             }
                                         }
-                                        req = new Request(option.url.indexOf("http") ? option.url : Lego.config.serviceUri + option.url, {
+                                        req = new Request(option.url.indexOf("http") == 0 ? option.url : Lego.config.serviceUri + option.url, {
                                             method: option.method || "GET",
                                             headers: headers,
                                             mode: "same-origin",
