@@ -92,7 +92,7 @@ class Data {
                         headers: headers,
                         mode: 'same-origin', // same-origin|no-cors（默认）|cors
                         credentials: 'include',  //omit（默认，不带cookie）|same-origin(同源带cookie)|include(总是带cookie)
-                        body: theBody
+                        body: option.method == 'POST' ? theBody : undefined
                     });
                     let response = await fetch(req);
                     return response.json();

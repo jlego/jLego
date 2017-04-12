@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.20
+ * lego.js v1.8.21
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -718,11 +718,11 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
                                             }
                                         }
                                         req = new Request(option.url.indexOf("http") == 0 ? option.url : Lego.config.serviceUri + option.url, {
-                                            method: option.method || "GET",
+                                            method: option.method || "POST",
                                             headers: headers,
                                             mode: "same-origin",
                                             credentials: "include",
-                                            body: theBody
+                                            body: option.method == "POST" ? theBody : undefined
                                         });
                                         context$4$0.next = 14;
                                         return fetch(req);
