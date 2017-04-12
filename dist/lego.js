@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.22
+ * lego.js v1.8.24
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -248,7 +248,7 @@ Core.prototype.ns = function ns(nameSpaceStr, obj) {
 };
 
 Core.prototype.loadScript = function loadScript(url, callback, appName) {
-    var script = document.createElement("script"), theId = "Lego-js-" + appName;
+    var script = document.createElement("script"), theId = "Lego-js-" + appName, version = "?" + (this.config.version || 0);
     script.setAttribute("id", theId);
     script.type = "text/javascript";
     if (script.readyState) {
@@ -263,7 +263,7 @@ Core.prototype.loadScript = function loadScript(url, callback, appName) {
             callback();
         };
     }
-    script.src = url;
+    script.src = url + version;
     if (document.getElementById(theId)) {
         document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
     }
@@ -276,7 +276,7 @@ Core.prototype.loadCss = function loadCss(cssUrl, appName, removeCss) {
     if (cssUrl) {
         var theCss = cssUrl + version;
         if (!document.getElementById(theId)) {
-            if (this.prevApp !== "index") {
+            if (this.prevApp !== "index" && removeCss) {
                 this.removeCss(this.prevApp);
             }
             cssLink.setAttribute("id", theId);
@@ -314,7 +314,7 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
         options.startBefore();
     }
     this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName, options.removeCss);
-    this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js?" + this.config.version, function() {
+    this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js", function() {
         if (appPath && appName !== "index") {
             page(appPath.indexOf("/") !== 0 ? "/" + appPath : appPath);
             var prevId = "Lego-js-" + that.prevApp;
@@ -438,6 +438,7 @@ View.prototype.fetch = function fetch(opts) {
             }
             server.fetch(dataSource.api, dataSource.isAjax && window.$ ? dataSource : {}, function(resp) {
                 this$1.options.data = resp;
+                this$1._dataReady();
                 this$1.dataReady();
                 this$1.components();
                 this$1.refresh();
@@ -571,6 +572,10 @@ View.prototype.$ = function $(selector) {
 };
 
 View.prototype.components = function components() {
+    return this;
+};
+
+View.prototype._dataReady = function _dataReady() {
     return this;
 };
 
