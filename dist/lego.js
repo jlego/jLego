@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.21
+ * lego.js v1.8.22
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -636,6 +636,9 @@ Data.prototype.fetch = function fetch(apis, opts, callback, view) {
             reset: true
         }, that.options[apiName$0] || {}, view ? view.options.dataSource[apiName$0] || {} : {}, opts || {});
         if (window.$ || window.jQuery) {
+            if (option.url.indexOf("http") < 0) {
+                option.url = Lego.config.serviceUri + option.url;
+            }
             if (option.reset) {
                 $.ajax(Lego.extend(option, {
                     success: function(result) {

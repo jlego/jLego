@@ -31,6 +31,7 @@ class Data {
             let apiName = Array.isArray(apis) ? apis[0] : apis;
             let option = Lego.extend({reset: true}, that.options[apiName] || {}, view ? (view.options.dataSource[apiName] || {}) : {}, opts || {});
             if(window.$ || window.jQuery){
+                if(option.url.indexOf('http') < 0) option.url = Lego.config.serviceUri + option.url;
                 if(option.reset){
                     $.ajax(Lego.extend(option, {
                         success: function(result) {
