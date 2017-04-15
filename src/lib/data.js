@@ -31,6 +31,7 @@ class Data {
             let apiName = Array.isArray(apis) ? apis[0] : apis;
             let option = Lego.extend({reset: true}, that.options[apiName] || {}, view ? (view.options.dataSource[apiName] || {}) : {}, opts || {});
             if(window.$ || window.jQuery){
+                if(option.url.indexOf('http') < 0) option.url = Lego.config.serviceUri + option.url;
                 if(option.reset){
                     $.ajax(Lego.extend(option, {
                         success: function(result) {
@@ -74,21 +75,19 @@ class Data {
                     // 取缓存数据
                     return await data;
                 }else if(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(data) || option.reset)){
-                    let headers = option.headers || { "Content-type": "application/x-www-form-urlencoded; charset=UTF-8" };
+                    let headers = option.headers || { "Content-type": "application/json; charset=UTF-8" };
                     let theBody = option.body ? option.body : {};
-                    if(headers["Content-type"] == "application/x-www-form-urlencoded; charset=UTF-8"){
-                        if(theBody && typeof theBody === 'object'){
-                            for(let key in theBody){
-                                if(typeof theBody[key] === 'object'){
-                                    theBody[key] = encodeURIComponent(JSON.stringify(theBody[key]));
-                                }
+                    if(theBody && typeof theBody === 'object'){
+                        for(let key in theBody){
+                            if(typeof theBody[key] === 'object'){
+                                theBody[key] = encodeURIComponent(JSON.stringify(theBody[key]));
                             }
-                            theBody = Lego.param(theBody);
                         }
+                        theBody = Lego.param(theBody);
                     }
                     // 取新数据
-                    let req = new Request( option.url.indexOf('http') ? option.url : (Lego.config.serviceUri + option.url), {
-                        method: option.method || "GET",
+                    let req = new Request( option.url.indexOf('http') == 0 ? option.url : (Lego.config.serviceUri + option.url), {
+                        method: option.method || "POST",
                         headers: headers,
                         mode: 'same-origin', // same-origin|no-cors（默认）|cors
                         credentials: 'include',  //omit（默认，不带cookie）|same-origin(同源带cookie)|include(总是带cookie)

@@ -267,7 +267,8 @@ class Core {
      */
     loadScript(url, callback, appName) {
         let script = document.createElement("script"),
-            theId = 'Lego-js-' + appName;
+            theId = 'Lego-js-' + appName,
+            version = '?' + (this.config.version || 0);
         script.setAttribute('id', theId);
         script.type = "text/javascript";
         if (script.readyState) { // IE
@@ -282,22 +283,24 @@ class Core {
                 callback();
             };
         }
-        script.src = url;
+        script.src = url + version;
         if(document.getElementById(theId)) document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
         document.getElementsByTagName("head")[0].appendChild(script);
     }
     //加载样式表
-    loadCss(cssUrl, appName) {
+    loadCss(cssUrl, appName, removeCss = true) {
         let cssLink = document.createElement("link"),
             theId = 'Lego-css-' + appName,
             version = '?' + (this.config.version || 0);
         if (cssUrl) {
             let theCss = cssUrl + version;
-            if(document.getElementById(theId)) document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
-            cssLink.setAttribute('id', theId);
-            cssLink.rel = "stylesheet";
-            cssLink.href = theCss;
-            document.getElementsByTagName("head")[0].appendChild(cssLink);
+            if(!document.getElementById(theId)){
+                if(this.prevApp !== 'index' && removeCss) this.removeCss(this.prevApp);
+                cssLink.setAttribute('id', theId);
+                cssLink.rel = "stylesheet";
+                cssLink.href = theCss;
+                document.getElementsByTagName("head")[0].appendChild(cssLink);
+            }
         }
     }
     // 移除引入的样式表
@@ -326,10 +329,9 @@ class Core {
         this.prevApp = this.currentApp;
         this.currentApp = !this.currentApp ? 'index' : appName;
         if (typeof options.startBefore == 'function') options.startBefore();
-        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName);
-        this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js?' + this.config.version, function() {
+        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, options.removeCss);
+        this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js', function() {
             if(appPath && appName !== 'index'){
-                if(that.prevApp !== 'index' && options.removeCss) that.removeCss(that.prevApp);
                 // if(that.routers.get(appName)) that.routers.get(appName).setRoute(appPath);//v1.8.0之前的版本
                 page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
                 let prevId = 'Lego-js-' + that.prevApp;

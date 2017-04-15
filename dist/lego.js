@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.16
+ * lego.js v1.8.25
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -248,7 +248,7 @@ Core.prototype.ns = function ns(nameSpaceStr, obj) {
 };
 
 Core.prototype.loadScript = function loadScript(url, callback, appName) {
-    var script = document.createElement("script"), theId = "Lego-js-" + appName;
+    var script = document.createElement("script"), theId = "Lego-js-" + appName, version = "?" + (this.config.version || 0);
     script.setAttribute("id", theId);
     script.type = "text/javascript";
     if (script.readyState) {
@@ -263,24 +263,27 @@ Core.prototype.loadScript = function loadScript(url, callback, appName) {
             callback();
         };
     }
-    script.src = url;
+    script.src = url + version;
     if (document.getElementById(theId)) {
         document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
     }
     document.getElementsByTagName("head")[0].appendChild(script);
 };
 
-Core.prototype.loadCss = function loadCss(cssUrl, appName) {
+Core.prototype.loadCss = function loadCss(cssUrl, appName, removeCss) {
+    if (removeCss === void 0) removeCss = true;
     var cssLink = document.createElement("link"), theId = "Lego-css-" + appName, version = "?" + (this.config.version || 0);
     if (cssUrl) {
         var theCss = cssUrl + version;
-        if (document.getElementById(theId)) {
-            document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
+        if (!document.getElementById(theId)) {
+            if (this.prevApp !== "index" && removeCss) {
+                this.removeCss(this.prevApp);
+            }
+            cssLink.setAttribute("id", theId);
+            cssLink.rel = "stylesheet";
+            cssLink.href = theCss;
+            document.getElementsByTagName("head")[0].appendChild(cssLink);
         }
-        cssLink.setAttribute("id", theId);
-        cssLink.rel = "stylesheet";
-        cssLink.href = theCss;
-        document.getElementsByTagName("head")[0].appendChild(cssLink);
     }
 };
 
@@ -310,12 +313,9 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     if (typeof options.startBefore == "function") {
         options.startBefore();
     }
-    this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName);
-    this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js?" + this.config.version, function() {
+    this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName, options.removeCss);
+    this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js", function() {
         if (appPath && appName !== "index") {
-            if (that.prevApp !== "index" && options.removeCss) {
-                that.removeCss(that.prevApp);
-            }
             page(appPath.indexOf("/") !== 0 ? "/" + appPath : appPath);
             var prevId = "Lego-js-" + that.prevApp;
             if (document.getElementById(prevId)) {
@@ -636,6 +636,9 @@ Data.prototype.fetch = function fetch(apis, opts, callback, view) {
             reset: true
         }, that.options[apiName$0] || {}, view ? view.options.dataSource[apiName$0] || {} : {}, opts || {});
         if (window.$ || window.jQuery) {
+            if (option.url.indexOf("http") < 0) {
+                option.url = Lego.config.serviceUri + option.url;
+            }
             if (option.reset) {
                 $.ajax(Lego.extend(option, {
                     success: function(result) {
@@ -704,21 +707,19 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
                                             break;
                                         }
                                         headers = option.headers || {
-                                            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+                                            "Content-type": "application/json; charset=UTF-8"
                                         };
                                         theBody = option.body ? option.body : {};
-                                        if (headers["Content-type"] == "application/x-www-form-urlencoded; charset=UTF-8") {
-                                            if (theBody && typeof theBody === "object") {
-                                                for (key in theBody) {
-                                                    if (typeof theBody[key] === "object") {
-                                                        theBody[key] = encodeURIComponent(JSON.stringify(theBody[key]));
-                                                    }
+                                        if (theBody && typeof theBody === "object") {
+                                            for (key in theBody) {
+                                                if (typeof theBody[key] === "object") {
+                                                    theBody[key] = encodeURIComponent(JSON.stringify(theBody[key]));
                                                 }
-                                                theBody = Lego.param(theBody);
                                             }
+                                            theBody = Lego.param(theBody);
                                         }
-                                        req = new Request(option.url.indexOf("http") ? option.url : Lego.config.serviceUri + option.url, {
-                                            method: option.method || "GET",
+                                        req = new Request(option.url.indexOf("http") == 0 ? option.url : Lego.config.serviceUri + option.url, {
+                                            method: option.method || "POST",
                                             headers: headers,
                                             mode: "same-origin",
                                             credentials: "include",
