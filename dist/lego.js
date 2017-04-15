@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.25
+ * lego.js v1.8.30
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -523,7 +523,7 @@ View.prototype.addCom = function addCom(comObjs) {
                 return item.el == com.el;
             });
             if (hasOne) {
-                Lego.extend(hasOne, com);
+                Object.assign(hasOne, com);
             } else {
                 that.options.components.push(com);
             }
@@ -683,7 +683,7 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
                     context$2$0.prev = 1;
                     promisesArr = apiArr.map(function(apiName) {
                         return __async(regeneratorRuntime.mark(function callee$3$0() {
-                            var data, option, headers, theBody, key, req, response;
+                            var data, option, url, headers, theBody, method, params, req, response;
                             return regeneratorRuntime.wrap(function callee$3$0$(context$4$0) {
                                 while (1) {
                                     switch (context$4$0.prev = context$4$0.next) {
@@ -703,36 +703,39 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
 
                                       case 7:
                                         if (!(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(data) || option.reset))) {
-                                            context$4$0.next = 16;
+                                            context$4$0.next = 18;
                                             break;
                                         }
+                                        url = /http/.test(option.url) ? option.url : Lego.config.serviceUri + option.url;
                                         headers = option.headers || {
+                                            Accept: "application/json",
                                             "Content-type": "application/json; charset=UTF-8"
                                         };
-                                        theBody = option.body ? option.body : {};
-                                        if (theBody && typeof theBody === "object") {
-                                            for (key in theBody) {
-                                                if (typeof theBody[key] === "object") {
-                                                    theBody[key] = encodeURIComponent(JSON.stringify(theBody[key]));
-                                                }
+                                        theBody = option.body || {};
+                                        method = option.method || "POST";
+                                        if (method == "GET") {
+                                            params = Lego.param(theBody);
+                                            if (url.indexOf("?") > 0) {
+                                                url += "&" + params;
+                                            } else {
+                                                url += "?" + params;
                                             }
-                                            theBody = Lego.param(theBody);
                                         }
-                                        req = new Request(option.url.indexOf("http") == 0 ? option.url : Lego.config.serviceUri + option.url, {
-                                            method: option.method || "POST",
+                                        req = new Request(url, {
+                                            method: method,
                                             headers: headers,
                                             mode: "same-origin",
                                             credentials: "include",
-                                            body: option.method == "POST" ? theBody : undefined
+                                            body: method == "POST" ? JSON.stringify(theBody) : undefined
                                         });
-                                        context$4$0.next = 14;
+                                        context$4$0.next = 16;
                                         return fetch(req);
 
-                                      case 14:
+                                      case 16:
                                         response = context$4$0.sent;
                                         return context$4$0.abrupt("return", response.json());
 
-                                      case 16:
+                                      case 18:
                                       case "end":
                                         return context$4$0.stop();
                                     }

@@ -138,7 +138,7 @@ class View {
                 if(!com.el) return;
                 let hasOne = that.options.components.find(item => item.el == com.el);
                 if(hasOne){
-                    Lego.extend(hasOne, com);
+                    Object.assign(hasOne, com);
                 }else{
                     that.options.components.push(com);
                 }
