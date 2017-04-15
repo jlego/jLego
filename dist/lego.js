@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.24
+ * lego.js v1.8.25
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -438,7 +438,6 @@ View.prototype.fetch = function fetch(opts) {
             }
             server.fetch(dataSource.api, dataSource.isAjax && window.$ ? dataSource : {}, function(resp) {
                 this$1.options.data = resp;
-                this$1._dataReady();
                 this$1.dataReady();
                 this$1.components();
                 this$1.refresh();
@@ -575,10 +574,6 @@ View.prototype.components = function components() {
     return this;
 };
 
-View.prototype._dataReady = function _dataReady() {
-    return this;
-};
-
 View.prototype.dataReady = function dataReady() {
     return this;
 };
@@ -712,18 +707,16 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
                                             break;
                                         }
                                         headers = option.headers || {
-                                            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+                                            "Content-type": "application/json; charset=UTF-8"
                                         };
                                         theBody = option.body ? option.body : {};
-                                        if (headers["Content-type"] == "application/x-www-form-urlencoded; charset=UTF-8") {
-                                            if (theBody && typeof theBody === "object") {
-                                                for (key in theBody) {
-                                                    if (typeof theBody[key] === "object") {
-                                                        theBody[key] = encodeURIComponent(JSON.stringify(theBody[key]));
-                                                    }
+                                        if (theBody && typeof theBody === "object") {
+                                            for (key in theBody) {
+                                                if (typeof theBody[key] === "object") {
+                                                    theBody[key] = encodeURIComponent(JSON.stringify(theBody[key]));
                                                 }
-                                                theBody = Lego.param(theBody);
                                             }
+                                            theBody = Lego.param(theBody);
                                         }
                                         req = new Request(option.url.indexOf("http") == 0 ? option.url : Lego.config.serviceUri + option.url, {
                                             method: option.method || "POST",
