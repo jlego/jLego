@@ -1,5 +1,5 @@
 /**
- * lego.js v1.8.30
+ * lego.js v1.9.0
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -95,8 +95,6 @@ Core.prototype.create = function create(view, opts) {
     if (opts === void 0) opts = {};
     var that = this;
     opts.vid = this.uniqueId("v");
-    opts.createBefore = opts.createBefore && opts.createBefore.bind(this);
-    opts.createAfter = opts.createAfter && opts.createAfter.bind(this);
     if (!view) {
         return;
     }
@@ -107,10 +105,8 @@ Core.prototype.create = function create(view, opts) {
             }
         }
     }
-    typeof opts.createBefore === "function" && opts.createBefore();
     var viewObj = new view(opts);
     this.views.set(viewObj.el, viewObj);
-    typeof opts.createAfter === "function" && opts.createAfter(viewObj);
     return viewObj;
 };
 
@@ -450,7 +446,14 @@ View.prototype.fetch = function fetch(opts) {
 
 View.prototype._renderRootNode = function _renderRootNode() {
     var this$1 = this;
-    this.options.data = typeof this.options.data == "function" ? this.options.data() : this.options.data;
+    var opts = this.options;
+    if (typeof opts.renderBefore == "function") {
+        this.renderBefore = opts.renderBefore.bind(this);
+    }
+    if (typeof opts.renderAfter == "function") {
+        this.renderAfter = opts.renderAfter.bind(this);
+    }
+    opts.data = typeof opts.data == "function" ? opts.data() : opts.data;
     this.renderBefore();
     var content = this.render();
     if (content) {
@@ -460,38 +463,44 @@ View.prototype._renderRootNode = function _renderRootNode() {
     } else {
         this.el = document.createElement("<div></div>");
     }
-    if (this.options.id || this.options.el) {
-        if (this.options.id) {
-            this.el.setAttribute("id", this.options.id);
+    if (opts.id || opts.el) {
+        if (opts.id) {
+            this.el.setAttribute("id", opts.id);
         } else {
-            if (new RegExp(/#/).test(this.options.el)) {
-                var theId = this.options.el.replace(/#/, "");
+            if (new RegExp(/#/).test(opts.el)) {
+                var theId = opts.el.replace(/#/, "");
                 this.el.setAttribute("id", theId);
-                this.options.id = theId;
+                opts.id = theId;
             }
         }
     }
-    this.el.setAttribute("view-id", this.options.vid);
-    if (this.options.style) {
-        for (var key in this.options.style) {
-            if (typeof this$1.options.style[key] == "number") {
-                this$1.options.style[key] += "px";
+    this.el.setAttribute("view-id", opts.vid);
+    if (opts.style) {
+        for (var key in opts.style) {
+            if (typeof opts.style[key] == "number") {
+                opts.style[key] += "px";
             }
-            this$1.el.style[key] = this$1.options.style[key];
+            this$1.el.style[key] = opts.style[key];
         }
     }
-    if (this.options.attr) {
-        for (var key$1 in this.options.attr) {
-            this$1.el.setAttribute(key$1, this$1.options.attr[key$1]);
+    if (opts.attr) {
+        for (var key$1 in opts.attr) {
+            this$1.el.setAttribute(key$1, opts.attr[key$1]);
         }
     }
-    if (this.options.className) {
-        this.el.className += this.options.className;
+    if (opts.className) {
+        this.el.className += opts.className;
     }
     if (window.$) {
         this.$el = window.$(this.el);
     }
-    this.renderAfter();
+    if (!opts.dataSource) {
+        this.renderAfter();
+    } else {
+        if (opts.data.length) {
+            this.renderAfter();
+        }
+    }
 };
 
 View.prototype._renderComponents = function _renderComponents() {

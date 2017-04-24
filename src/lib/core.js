@@ -85,8 +85,6 @@ class Core {
     create(view, opts = {}){
         const that = this;
         opts.vid = this.uniqueId('v');
-        opts.createBefore = opts.createBefore && opts.createBefore.bind(this);
-        opts.createAfter = opts.createAfter && opts.createAfter.bind(this);
         if(!view) return;
         // 操作权限
         if(this.config.permit){
@@ -94,12 +92,10 @@ class Core {
                 if(!this.config.permit(opts.permis)) return;
             }
         }
-        typeof opts.createBefore === 'function' && opts.createBefore();
 
         const viewObj = new view(opts);
         this.views.set(viewObj.el, viewObj);
 
-        typeof opts.createAfter === 'function' && opts.createAfter(viewObj);
         return viewObj;
     }
     /**

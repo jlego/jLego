@@ -65,7 +65,10 @@ class View {
      * @return {[type]} [description]
      */
     _renderRootNode(){
-        this.options.data = typeof this.options.data == 'function' ? this.options.data() : this.options.data;
+        let opts = this.options;
+        if(typeof opts.renderBefore == 'function') this.renderBefore = opts.renderBefore.bind(this);
+        if(typeof opts.renderAfter == 'function') this.renderAfter = opts.renderAfter.bind(this);
+        opts.data = typeof opts.data == 'function' ? opts.data() : opts.data;
         this.renderBefore();
         const content = this.render();
         if(content){
@@ -75,36 +78,41 @@ class View {
         }else{
             this.el = document.createElement('<div></div>');
         }
-        if(this.options.id || this.options.el){
-            if(this.options.id){
-                this.el.setAttribute('id', this.options.id);
+        if(opts.id || opts.el){
+            if(opts.id){
+                this.el.setAttribute('id', opts.id);
             }else{
-                if((new RegExp(/#/)).test(this.options.el)){
-                    const theId = this.options.el.replace(/#/, '');
+                if((new RegExp(/#/)).test(opts.el)){
+                    const theId = opts.el.replace(/#/, '');
                     this.el.setAttribute('id', theId);
-                    this.options.id = theId;
+                    opts.id = theId;
                 }
             }
         }
-        this.el.setAttribute('view-id', this.options.vid);
-        if(this.options.style){
-            for(let key in this.options.style){
-                if(typeof this.options.style[key] == 'number'){
-                    this.options.style[key] += 'px';
+        this.el.setAttribute('view-id', opts.vid);
+        if(opts.style){
+            for(let key in opts.style){
+                if(typeof opts.style[key] == 'number'){
+                    opts.style[key] += 'px';
                 }
-                this.el.style[key] = this.options.style[key];
+                this.el.style[key] = opts.style[key];
             }
         }
-        if(this.options.attr){
-            for(let key in this.options.attr){
-                this.el.setAttribute(key, this.options.attr[key]);
+        if(opts.attr){
+            for(let key in opts.attr){
+                this.el.setAttribute(key, opts.attr[key]);
             }
         }
-        if(this.options.className){
-            this.el.className += this.options.className;
+        if(opts.className){
+            this.el.className += opts.className;
         }
         if(window.$) this.$el = window.$(this.el);
-        this.renderAfter();
+
+        if(!opts.dataSource){
+            this.renderAfter();
+        }else{
+            if(opts.data.length) this.renderAfter();
+        }
     }
     /**
      * [_renderComponents 渲染组件]
