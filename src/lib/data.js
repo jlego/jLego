@@ -4,10 +4,8 @@ class Data {
      * [constructor 构造函数]
      * @param  {Object} options [description]
      *  'apiName': {
-     *      model: null,    //数据模型
-     *      listTarget: '',  //是列表的目标
-     *      url: '' //接口地址
-     *      data: null  //结果数据
+     *      api: '' //接口名称
+     *      server: null  //
      *  },
      * @return {[type]}         [description]
      */
