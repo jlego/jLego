@@ -1,5 +1,5 @@
 /**
- * lego.js v1.9.0
+ * lego.js v1.10.7
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -400,6 +400,7 @@ var View = function View(opts) {
     this.options = {
         context: opts.context || document,
         data: [],
+        dataMap: new Map(),
         components: []
     };
     Object.assign(this.options, opts);
@@ -415,13 +416,44 @@ var View = function View(opts) {
     this.fetch();
 };
 
+View.prototype.makeDatamap = function makeDatamap(data, modelkey, defaultModel) {
+    var this$1 = this;
+    if (modelkey === void 0) modelkey = "id";
+    if (defaultModel === void 0) defaultModel = {};
+    if (Array.isArray(data)) {
+        data = data.map(function(item) {
+            if (item[modelkey]) {
+                item[modelkey] = item[modelkey].toString();
+            }
+            if (typeof item == "object" && !Array.isArray(item)) {
+                return Lego.extend({}, defaultModel, item);
+            } else {
+                return item;
+            }
+        });
+        this.options.dataMap.clear();
+        data.forEach(function(item, index) {
+            if (typeof item == "object" && !Array.isArray(item)) {
+                if (item[modelkey] || item[modelkey] == 0) {
+                    this$1.options.dataMap.set(item[modelkey], item);
+                }
+            }
+        });
+    }
+    return data;
+};
+
 View.prototype.fetch = function fetch(opts) {
     var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this;
     if (this.options.dataSource) {
         var dataSource = this.options.dataSource;
+        var api = "";
         dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
+        if (dataSource.api.length == 1) {
+            api = dataSource.api[0];
+        }
         dataSource.api.forEach(function(apiName) {
             dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
         });
@@ -433,6 +465,7 @@ View.prototype.fetch = function fetch(opts) {
                 server = dataSource.server;
             }
             server.fetch(dataSource.api, dataSource.isAjax && window.$ ? dataSource : {}, function(resp) {
+                console.warn(api, resp);
                 this$1.options.data = resp;
                 this$1.dataReady();
                 this$1.components();

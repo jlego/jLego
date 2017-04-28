@@ -15,6 +15,7 @@ class View {
         this.options = {
             context: opts.context || document,
             data: [],
+            dataMap: new Map(),
             components: []
         };
         Object.assign(this.options, opts);
@@ -30,6 +31,27 @@ class View {
         this.components();
         this.fetch();
     }
+    makeDatamap(data, modelkey = 'id', defaultModel = {}){
+        if(Array.isArray(data)){
+            data = data.map(item => {
+                if(item[modelkey]) item[modelkey] = item[modelkey].toString();
+                if(typeof item == 'object' && !Array.isArray(item)){
+                    return Lego.extend({}, defaultModel, item);
+                }else{
+                    return item;
+                }
+            });
+            this.options.dataMap.clear();
+            data.forEach((item, index) => {
+                if(typeof item == 'object' && !Array.isArray(item)){
+                    if(item[modelkey] || item[modelkey] == 0){
+                        this.options.dataMap.set(item[modelkey], item);
+                    }
+                }
+            });
+        }
+        return data;
+    }
     /**
      * [fetch 拉取数据]
      * @return {[type]} [description]
@@ -38,7 +60,9 @@ class View {
         let that = this;
         if(this.options.dataSource){
             const dataSource = this.options.dataSource;
+            let api = '';
             dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [dataSource.api];
+            if(dataSource.api.length == 1) api = dataSource.api[0];
             dataSource.api.forEach(apiName => {
                 dataSource[apiName] = Lego.extend({}, dataSource.server.options[apiName], dataSource[apiName] || {}, opts);
             });
@@ -50,7 +74,18 @@ class View {
                     server = dataSource.server;
                 }
                 server.fetch(dataSource.api, dataSource.isAjax && window.$ ? dataSource : {}, (resp) => {
-                    this.options.data = resp;
+                    console.warn(api, resp);
+                    // if(api && Array.isArray(resp)){
+                    //     let modelkey = 'id', defaultModel = {};
+                    //     if(server.options[api]){
+                    //         modelkey = server.options[api].modelkey;
+                    //         defaultModel = server.options[api].defaultModel;
+                    //     }
+                    //     this.options.data = this.makeDatamap(resp, modelkey, defaultModel);
+                    //     console.warn('==========', this.options, resp, modelkey, defaultModel);
+                    // }else{
+                        this.options.data = resp;
+                    // }
                     this.dataReady();
                     this.components();
                     this.refresh();
@@ -69,6 +104,7 @@ class View {
         if(typeof opts.renderBefore == 'function') this.renderBefore = opts.renderBefore.bind(this);
         if(typeof opts.renderAfter == 'function') this.renderAfter = opts.renderAfter.bind(this);
         opts.data = typeof opts.data == 'function' ? opts.data() : opts.data;
+        // opts.data = this.makeDatamap(opts.data);
         this.renderBefore();
         const content = this.render();
         if(content){
