@@ -1,5 +1,5 @@
 /**
- * lego.js v1.10.7
+ * lego.js v1.10.12
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -397,10 +397,10 @@ var View = function View(opts) {
     if (opts === void 0) opts = {};
     var that = this;
     this.eventNameSpace = new Map();
+    this.dataMap = new Map();
     this.options = {
         context: opts.context || document,
         data: [],
-        dataMap: new Map(),
         components: []
     };
     Object.assign(this.options, opts);
@@ -421,21 +421,21 @@ View.prototype.makeDatamap = function makeDatamap(data, modelkey, defaultModel) 
     if (modelkey === void 0) modelkey = "id";
     if (defaultModel === void 0) defaultModel = {};
     if (Array.isArray(data)) {
-        data = data.map(function(item) {
-            if (item[modelkey]) {
-                item[modelkey] = item[modelkey].toString();
-            }
+        data.forEach(function(item, index) {
             if (typeof item == "object" && !Array.isArray(item)) {
-                return Lego.extend({}, defaultModel, item);
-            } else {
-                return item;
+                if (item[modelkey]) {
+                    item[modelkey] = item[modelkey].toString();
+                }
+                for (var key in item) {
+                    item[key] = item[key] || defaultModel[key];
+                }
             }
         });
-        this.options.dataMap.clear();
+        this.dataMap.clear();
         data.forEach(function(item, index) {
             if (typeof item == "object" && !Array.isArray(item)) {
                 if (item[modelkey] || item[modelkey] == 0) {
-                    this$1.options.dataMap.set(item[modelkey], item);
+                    this$1.dataMap.set(item[modelkey], item);
                 }
             }
         });
@@ -448,6 +448,9 @@ View.prototype.fetch = function fetch(opts) {
     if (opts === void 0) opts = {};
     var that = this;
     if (this.options.dataSource) {
+        if (this.options.loading) {
+            this._showLoading();
+        }
         var dataSource = this.options.dataSource;
         var api = "";
         dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [ dataSource.api ];
@@ -465,8 +468,19 @@ View.prototype.fetch = function fetch(opts) {
                 server = dataSource.server;
             }
             server.fetch(dataSource.api, dataSource.isAjax && window.$ ? dataSource : {}, function(resp) {
-                console.warn(api, resp);
-                this$1.options.data = resp;
+                if (api && Array.isArray(resp)) {
+                    var modelkey = "id", defaultModel = {};
+                    if (server.options[api]) {
+                        modelkey = server.options[api].modelkey;
+                        defaultModel = server.options[api].defaultModel;
+                    }
+                    this$1.options.data = this$1.makeDatamap(resp, modelkey, defaultModel);
+                } else {
+                    this$1.options.data = resp;
+                }
+                if (this$1.options.loading) {
+                    this$1._hideLoading();
+                }
                 this$1.dataReady();
                 this$1.components();
                 this$1.refresh();
@@ -476,6 +490,10 @@ View.prototype.fetch = function fetch(opts) {
         this._renderComponents();
     }
 };
+
+View.prototype._showLoading = function _showLoading() {};
+
+View.prototype._hideLoading = function _hideLoading() {};
 
 View.prototype._renderRootNode = function _renderRootNode() {
     var this$1 = this;
@@ -487,6 +505,7 @@ View.prototype._renderRootNode = function _renderRootNode() {
         this.renderAfter = opts.renderAfter.bind(this);
     }
     opts.data = typeof opts.data == "function" ? opts.data() : opts.data;
+    opts.data = this.makeDatamap(opts.data);
     this.renderBefore();
     var content = this.render();
     if (content) {

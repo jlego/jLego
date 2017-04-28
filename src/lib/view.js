@@ -12,10 +12,10 @@ class View {
     constructor(opts = {}) {
         const that = this;
         this.eventNameSpace = new Map();
+        this.dataMap = new Map();
         this.options = {
             context: opts.context || document,
             data: [],
-            dataMap: new Map(),
             components: []
         };
         Object.assign(this.options, opts);
@@ -33,19 +33,19 @@ class View {
     }
     makeDatamap(data, modelkey = 'id', defaultModel = {}){
         if(Array.isArray(data)){
-            data = data.map(item => {
-                if(item[modelkey]) item[modelkey] = item[modelkey].toString();
+            data.forEach((item, index) => {
                 if(typeof item == 'object' && !Array.isArray(item)){
-                    return Lego.extend({}, defaultModel, item);
-                }else{
-                    return item;
+                    if(item[modelkey]) item[modelkey] = item[modelkey].toString();
+                    for(let key in item){
+                        item[key] = item[key] || defaultModel[key];
+                    }
                 }
             });
-            this.options.dataMap.clear();
+            this.dataMap.clear();
             data.forEach((item, index) => {
                 if(typeof item == 'object' && !Array.isArray(item)){
                     if(item[modelkey] || item[modelkey] == 0){
-                        this.options.dataMap.set(item[modelkey], item);
+                        this.dataMap.set(item[modelkey], item);
                     }
                 }
             });
@@ -59,6 +59,7 @@ class View {
     fetch(opts = {}){
         let that = this;
         if(this.options.dataSource){
+            if(this.options.loading) this._showLoading();
             const dataSource = this.options.dataSource;
             let api = '';
             dataSource.api = Array.isArray(dataSource.api) ? dataSource.api : [dataSource.api];
@@ -74,18 +75,17 @@ class View {
                     server = dataSource.server;
                 }
                 server.fetch(dataSource.api, dataSource.isAjax && window.$ ? dataSource : {}, (resp) => {
-                    console.warn(api, resp);
-                    // if(api && Array.isArray(resp)){
-                    //     let modelkey = 'id', defaultModel = {};
-                    //     if(server.options[api]){
-                    //         modelkey = server.options[api].modelkey;
-                    //         defaultModel = server.options[api].defaultModel;
-                    //     }
-                    //     this.options.data = this.makeDatamap(resp, modelkey, defaultModel);
-                    //     console.warn('==========', this.options, resp, modelkey, defaultModel);
-                    // }else{
+                    if(api && Array.isArray(resp)){
+                        let modelkey = 'id', defaultModel = {};
+                        if(server.options[api]){
+                            modelkey = server.options[api].modelkey;
+                            defaultModel = server.options[api].defaultModel;
+                        }
+                        this.options.data = this.makeDatamap(resp, modelkey, defaultModel);
+                    }else{
                         this.options.data = resp;
-                    // }
+                    }
+                    if(this.options.loading) this._hideLoading();
                     this.dataReady();
                     this.components();
                     this.refresh();
@@ -96,6 +96,14 @@ class View {
         }
     }
     /**
+     * 显示加载中
+     */
+    _showLoading(){}
+    /**
+     * 隐藏加载条
+     */
+    _hideLoading(){}
+    /**
      * [_renderRootNode 渲染当前视图dom根节点]
      * @return {[type]} [description]
      */
@@ -104,7 +112,7 @@ class View {
         if(typeof opts.renderBefore == 'function') this.renderBefore = opts.renderBefore.bind(this);
         if(typeof opts.renderAfter == 'function') this.renderAfter = opts.renderAfter.bind(this);
         opts.data = typeof opts.data == 'function' ? opts.data() : opts.data;
-        // opts.data = this.makeDatamap(opts.data);
+        opts.data = this.makeDatamap(opts.data);
         this.renderBefore();
         const content = this.render();
         if(content){
