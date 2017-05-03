@@ -225,16 +225,23 @@ class View {
         if(el) {
             let pEl = this.options.context.el || document,
                 _el = typeof el == 'string' ? pEl.querySelector(el) : el;
-            if(el == 'body' || this.options.insert == 'append' || this.options.insert == 'html'){
-                if(this.options.insert !== 'append' || this.options.insert == 'html'){
+            if(el == 'body') this.options.insert = 'html';
+            switch(this.options.insert){
+                case 'html':
                     let childs = _el.childNodes;
                     for(let i = childs.length - 1; i >= 0; i--){
                         _el.removeChild(childs.item(i));
                     }
-                }
-                _el.appendChild(this.el);
-            }else{
-                _el.parentNode.replaceChild(this.el, _el);
+                    _el.appendChild(this.el);
+                    break;
+                case 'append':
+                    _el.appendChild(this.el);
+                    break;
+                case 'prepend':
+                    _el.insertBefore(this.el, _el.childNodes[0]);
+                    break;
+                default:
+                    _el.parentNode.replaceChild(this.el, _el);
             }
         }
     }

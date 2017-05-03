@@ -1,5 +1,5 @@
 /**
- * lego.js v1.10.12
+ * lego.js v1.10.13
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -613,15 +613,27 @@ View.prototype._observe = function _observe() {
 View.prototype.setElement = function setElement(el) {
     if (el) {
         var pEl = this.options.context.el || document, _el = typeof el == "string" ? pEl.querySelector(el) : el;
-        if (el == "body" || this.options.insert == "append" || this.options.insert == "html") {
-            if (this.options.insert !== "append" || this.options.insert == "html") {
-                var childs = _el.childNodes;
-                for (var i = childs.length - 1; i >= 0; i--) {
-                    _el.removeChild(childs.item(i));
-                }
+        if (el == "body") {
+            this.options.insert = "html";
+        }
+        switch (this.options.insert) {
+          case "html":
+            var childs = _el.childNodes;
+            for (var i = childs.length - 1; i >= 0; i--) {
+                _el.removeChild(childs.item(i));
             }
             _el.appendChild(this.el);
-        } else {
+            break;
+
+          case "append":
+            _el.appendChild(this.el);
+            break;
+
+          case "prepend":
+            _el.insertBefore(this.el, _el.childNodes[0]);
+            break;
+
+          default:
             _el.parentNode.replaceChild(this.el, _el);
         }
     }
