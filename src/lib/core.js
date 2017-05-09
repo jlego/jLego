@@ -56,7 +56,7 @@ class Core {
                             if(!Lego.isEmptyObject(source[key])){
                                 target[key] = assign(target[key], source[key]);
                             }else{
-                                target[key] = Object.assign({}, source[key]);
+                                target[key] = {};
                             }
                         }
                     }

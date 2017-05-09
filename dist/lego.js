@@ -1,5 +1,5 @@
 /**
- * lego.js v1.10.13
+ * lego.js v1.10.14
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -69,7 +69,7 @@ Core.prototype.extend = function extend() {
                         if (!Lego.isEmptyObject(source[key])) {
                             target[key] = assign(target[key], source[key]);
                         } else {
-                            target[key] = Object.assign({}, source[key]);
+                            target[key] = {};
                         }
                     }
                 }
