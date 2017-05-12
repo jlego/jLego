@@ -1,5 +1,5 @@
 /**
- * lego.js v1.10.14
+ * lego.js v1.10.15
  * (c) 2017 Ronghui Yu
  * @license MIT
  */

@@ -328,7 +328,6 @@ class Core {
         this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, options.removeCss);
         this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js', function() {
             if(appPath && appName !== 'index'){
-                // if(that.routers.get(appName)) that.routers.get(appName).setRoute(appPath);//v1.8.0之前的版本
                 page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
                 let prevId = 'Lego-js-' + that.prevApp;
                 if(document.getElementById(prevId)){
