@@ -325,7 +325,7 @@ class Core {
         this.prevApp = this.currentApp;
         this.currentApp = !this.currentApp ? 'index' : appName;
         if (typeof options.startBefore == 'function') options.startBefore();
-        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, options.removeCss);
+        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, false);
         this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js', function() {
             if(appPath && appName !== 'index'){
                 page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
@@ -333,6 +333,7 @@ class Core {
                 if(document.getElementById(prevId)){
                     document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
                 }
+                if(that.prevApp !== 'index' && options.removeCss) that.removeCss(that.prevApp);
                 that._clearObj(that.prevApp);
             }
             if (typeof options.startAfter == 'function') options.startAfter();

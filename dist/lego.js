@@ -1,5 +1,5 @@
 /**
- * lego.js v1.10.15
+ * lego.js v1.10.16
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -309,13 +309,16 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     if (typeof options.startBefore == "function") {
         options.startBefore();
     }
-    this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName, options.removeCss);
+    this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName, false);
     this.loadScript(this.config.rootUri + appName + "/" + fileName + ".js", function() {
         if (appPath && appName !== "index") {
             page(appPath.indexOf("/") !== 0 ? "/" + appPath : appPath);
             var prevId = "Lego-js-" + that.prevApp;
             if (document.getElementById(prevId)) {
                 document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
+            }
+            if (that.prevApp !== "index" && options.removeCss) {
+                that.removeCss(that.prevApp);
             }
             that._clearObj(that.prevApp);
         }
