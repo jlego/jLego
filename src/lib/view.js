@@ -13,18 +13,18 @@ class View {
         const that = this;
         this.eventNameSpace = new Map();
         this.dataMap = new Map();
-        this.options = {
-            context: opts.context || document,
-            data: [],
-            components: []
-        };
-        Object.assign(this.options, opts);
+        opts.context = opts.context || document;
+        opts.data = opts.data || [];
+        opts.components = opts.components || [];
+        this.options = opts;
         // 监听器
         if(this.options.listener && Lego.Eventer){
             for(let key in this.options.listener){
                 Lego.Eventer.on(key, this.options.listener[key].bind(this));
             }
         }
+        if(typeof this.options.renderBefore == 'function') this.options.renderBefore = this.options.renderBefore.bind(this);
+        if(typeof this.options.renderAfter == 'function') this.options.renderAfter = this.options.renderAfter.bind(this);
         this._renderRootNode();
         this.setElement(this.options.el);
         this._observe();
@@ -109,11 +109,10 @@ class View {
      */
     _renderRootNode(){
         let opts = this.options;
-        if(typeof opts.renderBefore == 'function') this.renderBefore = opts.renderBefore.bind(this);
-        if(typeof opts.renderAfter == 'function') this.renderAfter = opts.renderAfter.bind(this);
+        if(opts.renderBefore) opts.renderBefore();
+        this.renderBefore();
         opts.data = typeof opts.data == 'function' ? opts.data() : opts.data;
         opts.data = this.makeDatamap(opts.data);
-        this.renderBefore();
         const content = this.render();
         if(content){
             this.oldNode = content;
@@ -153,9 +152,8 @@ class View {
         if(window.$) this.$el = window.$(this.el);
 
         if(!opts.dataSource){
+            if(opts.renderAfter) opts.renderAfter();
             this.renderAfter();
-        }else{
-            if(opts.data.length) this.renderAfter();
         }
     }
     /**
@@ -172,7 +170,7 @@ class View {
                     const tagName = item.el ? that.$(item.el)[0].tagName.toLowerCase() : '';
                     if(tagName){
                         item.context = that;
-                        Lego.create(Lego.UI[tagName], item);
+                        if(Lego.UI[tagName]) Lego.create(Lego.UI[tagName], item);
                     }
                 }
             });
@@ -190,7 +188,8 @@ class View {
                 if(!com.el) return;
                 let hasOne = that.options.components.find(item => item.el == com.el);
                 if(hasOne){
-                    Object.assign(hasOne, com);
+                    // Object.assign(hasOne, com);
+                    hasOne = com
                 }else{
                     that.options.components.push(com);
                 }
@@ -207,12 +206,12 @@ class View {
         if(this.options && typeof this.options === 'object'){
             Object.observe(this.options, (changes) =>{
                 this.options.data = typeof this.options.data == 'function' ? this.options.data() : this.options.data;
-                this.renderBefore();
                 const newNode = this.render();
                 let patches = vdom.diff(this.oldNode, newNode);
                 this.rootNode = vdom.patch(this.rootNode, patches);
                 this.oldNode = newNode;
                 this._renderComponents();
+                if(this.options.renderAfter) this.options.renderAfter();
                 this.renderAfter();
             });
         }

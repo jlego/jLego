@@ -1,5 +1,5 @@
 /**
- * lego.js v1.10.16
+ * lego.js v1.10.23
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -401,16 +401,20 @@ var View = function View(opts) {
     var that = this;
     this.eventNameSpace = new Map();
     this.dataMap = new Map();
-    this.options = {
-        context: opts.context || document,
-        data: [],
-        components: []
-    };
-    Object.assign(this.options, opts);
+    opts.context = opts.context || document;
+    opts.data = opts.data || [];
+    opts.components = opts.components || [];
+    this.options = opts;
     if (this.options.listener && Lego.Eventer) {
         for (var key in this.options.listener) {
             Lego.Eventer.on(key, this$1.options.listener[key].bind(this$1));
         }
+    }
+    if (typeof this.options.renderBefore == "function") {
+        this.options.renderBefore = this.options.renderBefore.bind(this);
+    }
+    if (typeof this.options.renderAfter == "function") {
+        this.options.renderAfter = this.options.renderAfter.bind(this);
     }
     this._renderRootNode();
     this.setElement(this.options.el);
@@ -501,15 +505,12 @@ View.prototype._hideLoading = function _hideLoading() {};
 View.prototype._renderRootNode = function _renderRootNode() {
     var this$1 = this;
     var opts = this.options;
-    if (typeof opts.renderBefore == "function") {
-        this.renderBefore = opts.renderBefore.bind(this);
+    if (opts.renderBefore) {
+        opts.renderBefore();
     }
-    if (typeof opts.renderAfter == "function") {
-        this.renderAfter = opts.renderAfter.bind(this);
-    }
+    this.renderBefore();
     opts.data = typeof opts.data == "function" ? opts.data() : opts.data;
     opts.data = this.makeDatamap(opts.data);
-    this.renderBefore();
     var content = this.render();
     if (content) {
         this.oldNode = content;
@@ -550,11 +551,10 @@ View.prototype._renderRootNode = function _renderRootNode() {
         this.$el = window.$(this.el);
     }
     if (!opts.dataSource) {
-        this.renderAfter();
-    } else {
-        if (opts.data.length) {
-            this.renderAfter();
+        if (opts.renderAfter) {
+            opts.renderAfter();
         }
+        this.renderAfter();
     }
 };
 
@@ -568,7 +568,9 @@ View.prototype._renderComponents = function _renderComponents() {
                 var tagName = item.el ? that.$(item.el)[0].tagName.toLowerCase() : "";
                 if (tagName) {
                     item.context = that;
-                    Lego.create(Lego.UI[tagName], item);
+                    if (Lego.UI[tagName]) {
+                        Lego.create(Lego.UI[tagName], item);
+                    }
                 }
             }
         });
@@ -587,7 +589,7 @@ View.prototype.addCom = function addCom(comObjs) {
                 return item.el == com.el;
             });
             if (hasOne) {
-                Object.assign(hasOne, com);
+                hasOne = com;
             } else {
                 that.options.components.push(com);
             }
@@ -602,12 +604,14 @@ View.prototype._observe = function _observe() {
     if (this.options && typeof this.options === "object") {
         Object.observe(this.options, function(changes) {
             this$1.options.data = typeof this$1.options.data == "function" ? this$1.options.data() : this$1.options.data;
-            this$1.renderBefore();
             var newNode = this$1.render();
             var patches = vdom.diff(this$1.oldNode, newNode);
             this$1.rootNode = vdom.patch(this$1.rootNode, patches);
             this$1.oldNode = newNode;
             this$1._renderComponents();
+            if (this$1.options.renderAfter) {
+                this$1.options.renderAfter();
+            }
             this$1.renderAfter();
         });
     }
