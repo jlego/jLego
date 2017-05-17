@@ -14,7 +14,7 @@ class View {
         this.eventNameSpace = new Map();
         this.dataMap = new Map();
         opts.context = opts.context || document;
-        opts.data = opts.data || [];
+        opts.data = opts.data || null;
         opts.components = opts.components || [];
         this.options = opts;
         // 监听器

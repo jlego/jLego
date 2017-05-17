@@ -1,5 +1,5 @@
 /**
- * lego.js v1.10.23
+ * lego.js v1.10.24
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -402,7 +402,7 @@ var View = function View(opts) {
     this.eventNameSpace = new Map();
     this.dataMap = new Map();
     opts.context = opts.context || document;
-    opts.data = opts.data || [];
+    opts.data = opts.data || null;
     opts.components = opts.components || [];
     this.options = opts;
     if (this.options.listener && Lego.Eventer) {
