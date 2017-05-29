@@ -28,7 +28,7 @@ class View {
         this._renderRootNode();
         this.setElement(this.options.el);
         this._observe();
-        this.components();
+        // this.components();
         this.fetch();
     }
     makeDatamap(data, modelkey = 'id', defaultModel = {}){
@@ -87,7 +87,7 @@ class View {
                     }
                     if(this.options.loading) this._hideLoading();
                     this.dataReady();
-                    this.components();
+                    // this.components();
                     this.refresh();
                 }, this);
             }
@@ -162,6 +162,7 @@ class View {
      */
     _renderComponents(){
         const that = this;
+        this.components();
         let components = this.options.components;
         components = Array.isArray(components) ? components : [components];
         if(components.length) {
@@ -188,8 +189,7 @@ class View {
                 if(!com.el) return;
                 let hasOne = that.options.components.find(item => item.el == com.el);
                 if(hasOne){
-                    // Object.assign(hasOne, com);
-                    hasOne = com
+                    Object.assign(hasOne, com);
                 }else{
                     that.options.components.push(com);
                 }
@@ -205,10 +205,11 @@ class View {
         const that = this;
         if(this.options && typeof this.options === 'object'){
             Object.observe(this.options, (changes) =>{
-                this.options.data = typeof this.options.data == 'function' ? this.options.data() : this.options.data;
+                if(typeof this.options.data == 'function') this.options.data = this.options.data();
                 const newNode = this.render();
                 let patches = vdom.diff(this.oldNode, newNode);
                 this.rootNode = vdom.patch(this.rootNode, patches);
+                this.el = this.rootNode;
                 this.oldNode = newNode;
                 this._renderComponents();
                 if(this.options.renderAfter) this.options.renderAfter();

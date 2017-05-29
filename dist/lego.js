@@ -1,5 +1,5 @@
 /**
- * lego.js v1.10.24
+ * lego.js v1.11.6
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -419,7 +419,6 @@ var View = function View(opts) {
     this._renderRootNode();
     this.setElement(this.options.el);
     this._observe();
-    this.components();
     this.fetch();
 };
 
@@ -489,7 +488,6 @@ View.prototype.fetch = function fetch(opts) {
                     this$1._hideLoading();
                 }
                 this$1.dataReady();
-                this$1.components();
                 this$1.refresh();
             }, this);
         }
@@ -560,6 +558,7 @@ View.prototype._renderRootNode = function _renderRootNode() {
 
 View.prototype._renderComponents = function _renderComponents() {
     var that = this;
+    this.components();
     var components = this.options.components;
     components = Array.isArray(components) ? components : [ components ];
     if (components.length) {
@@ -589,7 +588,7 @@ View.prototype.addCom = function addCom(comObjs) {
                 return item.el == com.el;
             });
             if (hasOne) {
-                hasOne = com;
+                Object.assign(hasOne, com);
             } else {
                 that.options.components.push(com);
             }
@@ -603,10 +602,13 @@ View.prototype._observe = function _observe() {
     var that = this;
     if (this.options && typeof this.options === "object") {
         Object.observe(this.options, function(changes) {
-            this$1.options.data = typeof this$1.options.data == "function" ? this$1.options.data() : this$1.options.data;
+            if (typeof this$1.options.data == "function") {
+                this$1.options.data = this$1.options.data();
+            }
             var newNode = this$1.render();
             var patches = vdom.diff(this$1.oldNode, newNode);
             this$1.rootNode = vdom.patch(this$1.rootNode, patches);
+            this$1.el = this$1.rootNode;
             this$1.oldNode = newNode;
             this$1._renderComponents();
             if (this$1.options.renderAfter) {
