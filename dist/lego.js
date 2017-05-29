@@ -1,5 +1,5 @@
 /**
- * lego.js v1.11.6
+ * lego.js v1.11.8
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -244,7 +244,8 @@ Core.prototype.ns = function ns(nameSpaceStr, obj) {
 };
 
 Core.prototype.loadScript = function loadScript(url, callback, appName) {
-    var script = document.createElement("script"), theId = "Lego-js-" + appName, version = "?" + (this.config.version || 0);
+    if (appName === void 0) appName = "";
+    var script = document.createElement("script"), theId = "Lego-js-" + appName, version = (url.indexOf("?") < 0 ? "?" : "&") + (this.config.version || 0);
     script.setAttribute("id", theId);
     script.type = "text/javascript";
     if (script.readyState) {
@@ -268,7 +269,7 @@ Core.prototype.loadScript = function loadScript(url, callback, appName) {
 
 Core.prototype.loadCss = function loadCss(cssUrl, appName, removeCss) {
     if (removeCss === void 0) removeCss = true;
-    var cssLink = document.createElement("link"), theId = "Lego-css-" + appName, version = "?" + (this.config.version || 0);
+    var cssLink = document.createElement("link"), theId = "Lego-css-" + appName, version = (cssUrl.indexOf("?") < 0 ? "?" : "&") + (this.config.version || 0);
     if (cssUrl) {
         var theCss = cssUrl + version;
         if (!document.getElementById(theId)) {
@@ -284,7 +285,7 @@ Core.prototype.loadCss = function loadCss(cssUrl, appName, removeCss) {
 };
 
 Core.prototype.removeCss = function removeCss(appName) {
-    var theId = "Lego-css-" + appName, version = "?" + (this.config.version || 0);
+    var theId = "Lego-css-" + appName;
     if (document.getElementById(theId)) {
         document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
     }
@@ -548,16 +549,10 @@ View.prototype._renderRootNode = function _renderRootNode() {
     if (window.$) {
         this.$el = window.$(this.el);
     }
-    if (!opts.dataSource) {
-        if (opts.renderAfter) {
-            opts.renderAfter();
-        }
-        this.renderAfter();
-    }
 };
 
 View.prototype._renderComponents = function _renderComponents() {
-    var that = this;
+    var that = this, opts = this.options;
     this.components();
     var components = this.options.components;
     components = Array.isArray(components) ? components : [ components ];
@@ -573,6 +568,12 @@ View.prototype._renderComponents = function _renderComponents() {
                 }
             }
         });
+    }
+    if (!opts.dataSource) {
+        if (opts.renderAfter) {
+            opts.renderAfter();
+        }
+        this.renderAfter();
     }
 };
 
@@ -611,10 +612,6 @@ View.prototype._observe = function _observe() {
             this$1.el = this$1.rootNode;
             this$1.oldNode = newNode;
             this$1._renderComponents();
-            if (this$1.options.renderAfter) {
-                this$1.options.renderAfter();
-            }
-            this$1.renderAfter();
         });
     }
 };

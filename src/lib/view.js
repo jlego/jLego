@@ -150,18 +150,14 @@ class View {
             this.el.className += opts.className;
         }
         if(window.$) this.$el = window.$(this.el);
-
-        if(!opts.dataSource){
-            if(opts.renderAfter) opts.renderAfter();
-            this.renderAfter();
-        }
     }
     /**
      * [_renderComponents 渲染组件]
      * @return {[type]} [description]
      */
     _renderComponents(){
-        const that = this;
+        let that = this,
+            opts = this.options;
         this.components();
         let components = this.options.components;
         components = Array.isArray(components) ? components : [components];
@@ -175,6 +171,10 @@ class View {
                     }
                 }
             });
+        }
+        if(!opts.dataSource){
+            if(opts.renderAfter) opts.renderAfter();
+            this.renderAfter();
         }
     }
     /**
@@ -212,8 +212,6 @@ class View {
                 this.el = this.rootNode;
                 this.oldNode = newNode;
                 this._renderComponents();
-                if(this.options.renderAfter) this.options.renderAfter();
-                this.renderAfter();
             });
         }
     }

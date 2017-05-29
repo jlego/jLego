@@ -261,10 +261,10 @@ class Core {
      * @param  {[type]}   appName  [description]
      * @return {[type]}            [description]
      */
-    loadScript(url, callback, appName) {
+    loadScript(url, callback, appName = '') {
         let script = document.createElement("script"),
             theId = 'Lego-js-' + appName,
-            version = '?' + (this.config.version || 0);
+            version = (url.indexOf('?') < 0 ? '?' : '&') + (this.config.version || 0);
         script.setAttribute('id', theId);
         script.type = "text/javascript";
         if (script.readyState) { // IE
@@ -287,7 +287,7 @@ class Core {
     loadCss(cssUrl, appName, removeCss = true) {
         let cssLink = document.createElement("link"),
             theId = 'Lego-css-' + appName,
-            version = '?' + (this.config.version || 0);
+            version = (cssUrl.indexOf('?') < 0 ? '?' : '&') + (this.config.version || 0);
         if (cssUrl) {
             let theCss = cssUrl + version;
             if(!document.getElementById(theId)){
@@ -301,8 +301,7 @@ class Core {
     }
     // 移除引入的样式表
     removeCss(appName) {
-        let theId = 'Lego-css-' + appName,
-            version = '?' + (this.config.version || 0);
+        let theId = 'Lego-css-' + appName;
         if(document.getElementById(theId)) document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
     }
     /**
