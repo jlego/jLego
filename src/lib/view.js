@@ -147,7 +147,7 @@ class View {
             }
         }
         if(opts.className){
-            this.el.className += opts.className;
+            this.el.className += ' ' + opts.className;
         }
         if(window.$) this.$el = window.$(this.el);
     }

@@ -1,5 +1,5 @@
 /**
- * lego.js v1.11.8
+ * lego.js v1.11.9
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -544,7 +544,7 @@ View.prototype._renderRootNode = function _renderRootNode() {
         }
     }
     if (opts.className) {
-        this.el.className += opts.className;
+        this.el.className += " " + opts.className;
     }
     if (window.$) {
         this.$el = window.$(this.el);
