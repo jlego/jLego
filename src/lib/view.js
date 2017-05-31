@@ -172,10 +172,8 @@ class View {
                 }
             });
         }
-        if(!opts.dataSource){
-            if(opts.renderAfter) opts.renderAfter();
-            this.renderAfter();
-        }
+        if(opts.renderAfter) opts.renderAfter();
+        this.renderAfter();
     }
     /**
      * [addCom 添加视图子组件]
