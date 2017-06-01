@@ -56,7 +56,7 @@ class Core {
                             if(!Lego.isEmptyObject(source[key])){
                                 target[key] = assign(target[key], source[key]);
                             }else{
-                                target[key] = Object.assign({}, source[key]);
+                                target[key] = {};
                             }
                         }
                     }
@@ -85,8 +85,6 @@ class Core {
     create(view, opts = {}){
         const that = this;
         opts.vid = this.uniqueId('v');
-        opts.createBefore = opts.createBefore && opts.createBefore.bind(this);
-        opts.createAfter = opts.createAfter && opts.createAfter.bind(this);
         if(!view) return;
         // 操作权限
         if(this.config.permit){
@@ -94,12 +92,10 @@ class Core {
                 if(!this.config.permit(opts.permis)) return;
             }
         }
-        typeof opts.createBefore === 'function' && opts.createBefore();
 
         const viewObj = new view(opts);
         this.views.set(viewObj.el, viewObj);
 
-        typeof opts.createAfter === 'function' && opts.createAfter(viewObj);
         return viewObj;
     }
     /**
@@ -265,10 +261,10 @@ class Core {
      * @param  {[type]}   appName  [description]
      * @return {[type]}            [description]
      */
-    loadScript(url, callback, appName) {
+    loadScript(url, callback, appName = '') {
         let script = document.createElement("script"),
             theId = 'Lego-js-' + appName,
-            version = '?' + (this.config.version || 0);
+            version = (url.indexOf('?') < 0 ? '?' : '&') + (this.config.version || 0);
         script.setAttribute('id', theId);
         script.type = "text/javascript";
         if (script.readyState) { // IE
@@ -291,7 +287,7 @@ class Core {
     loadCss(cssUrl, appName, removeCss = true) {
         let cssLink = document.createElement("link"),
             theId = 'Lego-css-' + appName,
-            version = '?' + (this.config.version || 0);
+            version = (cssUrl.indexOf('?') < 0 ? '?' : '&') + (this.config.version || 0);
         if (cssUrl) {
             let theCss = cssUrl + version;
             if(!document.getElementById(theId)){
@@ -305,8 +301,7 @@ class Core {
     }
     // 移除引入的样式表
     removeCss(appName) {
-        let theId = 'Lego-css-' + appName,
-            version = '?' + (this.config.version || 0);
+        let theId = 'Lego-css-' + appName;
         if(document.getElementById(theId)) document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
     }
     /**
@@ -329,15 +324,15 @@ class Core {
         this.prevApp = this.currentApp;
         this.currentApp = !this.currentApp ? 'index' : appName;
         if (typeof options.startBefore == 'function') options.startBefore();
-        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, options.removeCss);
+        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, false);
         this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js', function() {
             if(appPath && appName !== 'index'){
-                // if(that.routers.get(appName)) that.routers.get(appName).setRoute(appPath);//v1.8.0之前的版本
                 page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
                 let prevId = 'Lego-js-' + that.prevApp;
                 if(document.getElementById(prevId)){
                     document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
                 }
+                if(that.prevApp !== 'index' && options.removeCss) that.removeCss(that.prevApp);
                 that._clearObj(that.prevApp);
             }
             if (typeof options.startAfter == 'function') options.startAfter();
