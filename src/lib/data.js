@@ -30,7 +30,7 @@ class Data {
             let option = Lego.extend({reset: true}, that.options[apiName] || {}, view ? (view.options.dataSource[apiName] || {}) : {}, opts || {});
             if(window.$ || window.jQuery){
                 if(option.url.indexOf('http') < 0) option.url = Lego.config.serviceUri + option.url;
-                if(option.reset){
+                function getData(option, apiName){
                     $.ajax(Lego.extend(option, {
                         success: function(result) {
                             if (result) {
@@ -42,8 +42,15 @@ class Data {
                             debug.warn("login error: ", xhr);
                         }
                     }));
+                }
+                if(!Lego.isEmptyObject(this.datas.get(apiName))){
+                    if(option.reset){
+                        getData(option, apiName);
+                    }else{
+                        if(typeof callback == 'function') callback(this.parse(this.datas.get(apiName), apiName, view));
+                    }
                 }else{
-                    if(typeof callback == 'function') callback(this.parse(this.datas.get(apiName), apiName, view));
+                    getData(option, apiName);
                 }
             }
         }else{

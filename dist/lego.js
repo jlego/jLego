@@ -1,5 +1,5 @@
 /**
- * lego.js v1.11.10
+ * lego.js v1.12.4
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -428,21 +428,15 @@ View.prototype.makeDatamap = function makeDatamap(data, modelkey, defaultModel) 
     if (modelkey === void 0) modelkey = "id";
     if (defaultModel === void 0) defaultModel = {};
     if (Array.isArray(data)) {
-        data.forEach(function(item, index) {
-            if (typeof item == "object" && !Array.isArray(item)) {
-                if (item[modelkey]) {
-                    item[modelkey] = item[modelkey].toString();
-                }
-                for (var key in item) {
-                    item[key] = item[key] || defaultModel[key];
-                }
-            }
-        });
         this.dataMap.clear();
         data.forEach(function(item, index) {
             if (typeof item == "object" && !Array.isArray(item)) {
                 if (item[modelkey] || item[modelkey] == 0) {
+                    item[modelkey] = item[modelkey].toString();
                     this$1.dataMap.set(item[modelkey], item);
+                }
+                for (var key in item) {
+                    item[key] = typeof item[key] == "undefined" || item[key] == "null" ? defaultModel[key] : item[key];
                 }
             }
         });
@@ -716,13 +710,13 @@ Data.prototype.fetch = function fetch(apis, opts, callback, view) {
             if (option.url.indexOf("http") < 0) {
                 option.url = Lego.config.serviceUri + option.url;
             }
-            if (option.reset) {
+            function getData(option, apiName) {
                 $.ajax(Lego.extend(option, {
                     success: function(result) {
                         if (result) {
-                            that.datas.set(apiName$0, result);
+                            that.datas.set(apiName, result);
                             if (typeof callback == "function") {
-                                callback(that.parse(result, apiName$0, view));
+                                callback(that.parse(result, apiName, view));
                             }
                         }
                     },
@@ -730,10 +724,17 @@ Data.prototype.fetch = function fetch(apis, opts, callback, view) {
                         debug.warn("login error: ", xhr);
                     }
                 }));
-            } else {
-                if (typeof callback == "function") {
-                    callback(this.parse(this.datas.get(apiName$0), apiName$0, view));
+            }
+            if (!Lego.isEmptyObject(this.datas.get(apiName$0))) {
+                if (option.reset) {
+                    getData(option, apiName$0);
+                } else {
+                    if (typeof callback == "function") {
+                        callback(this.parse(this.datas.get(apiName$0), apiName$0, view));
+                    }
                 }
+            } else {
+                getData(option, apiName$0);
             }
         }
     } else {

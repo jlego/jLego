@@ -31,21 +31,18 @@ class View {
         // this.components();
         this.fetch();
     }
+    // 生成视图数据map, 主要用于数组型数据，增强查询效率
     makeDatamap(data, modelkey = 'id', defaultModel = {}){
         if(Array.isArray(data)){
-            data.forEach((item, index) => {
-                if(typeof item == 'object' && !Array.isArray(item)){
-                    if(item[modelkey]) item[modelkey] = item[modelkey].toString();
-                    for(let key in item){
-                        item[key] = item[key] || defaultModel[key];
-                    }
-                }
-            });
             this.dataMap.clear();
             data.forEach((item, index) => {
                 if(typeof item == 'object' && !Array.isArray(item)){
                     if(item[modelkey] || item[modelkey] == 0){
+                        item[modelkey] = item[modelkey].toString();
                         this.dataMap.set(item[modelkey], item);
+                    }
+                    for(let key in item){
+                        item[key] = (typeof item[key] == 'undefined' || item[key] == 'null') ? defaultModel[key] : item[key];
                     }
                 }
             });

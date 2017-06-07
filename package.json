@@ -1,6 +1,6 @@
 {
   "name": "lego-core",
-  "version": "1.11.10",
+  "version": "1.12.4",
   "description": "ES6 front end framework",
   "main": "dist/lego.js",
   "directories": {
