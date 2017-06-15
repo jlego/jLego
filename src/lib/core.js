@@ -10,8 +10,8 @@ class Core {
             version: '1.0.0',
             isDebug: true,
             isAnimate: false,  //是否开启动画
-            permit(){},  //操作权限
             isMultiWindow: false, //是否多窗口
+            permit(){},  //操作权限
             pageEl: '',     //页面渲染容器
             defaultApp: '', //默认应用
             rootUri: '',    //根目录
@@ -92,7 +92,6 @@ class Core {
                 if(!this.config.permit(opts.permis)) return;
             }
         }
-
         const viewObj = new view(opts);
         this.views.set(viewObj.el, viewObj);
 
