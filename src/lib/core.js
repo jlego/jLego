@@ -283,7 +283,7 @@ class Core {
         document.getElementsByTagName("head")[0].appendChild(script);
     }
     //加载样式表
-    loadCss(cssUrl, appName, removeCss = true) {
+    loadCss(cssUrl, callback, appName, removeCss = true) {
         let cssLink = document.createElement("link"),
             theId = 'Lego-css-' + appName,
             version = (cssUrl.indexOf('?') < 0 ? '?' : '&') + (this.config.version || 0);
@@ -294,6 +294,9 @@ class Core {
                 cssLink.setAttribute('id', theId);
                 cssLink.rel = "stylesheet";
                 cssLink.href = theCss;
+                cssLink.onload = function(){
+                    if(typeof callback == 'function') callback();
+                }
                 document.getElementsByTagName("head")[0].appendChild(cssLink);
             }
         }
@@ -323,19 +326,20 @@ class Core {
         this.prevApp = this.currentApp;
         this.currentApp = !this.currentApp ? 'index' : appName;
         if (typeof options.startBefore == 'function') options.startBefore();
-        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, false);
-        this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js', function() {
-            if(appPath && appName !== 'index'){
-                page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
-                let prevId = 'Lego-js-' + that.prevApp;
-                if(document.getElementById(prevId)){
-                    document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
+        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', function(){
+            that.loadScript(that.config.rootUri + appName + '/' + fileName + '.js', function() {
+                if(appPath && appName !== 'index'){
+                    page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
+                    let prevId = 'Lego-js-' + that.prevApp;
+                    if(document.getElementById(prevId)){
+                        document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
+                    }
+                    if(that.prevApp !== 'index' && options.removeCss) that.removeCss(that.prevApp);
+                    that._clearObj(that.prevApp);
                 }
-                if(that.prevApp !== 'index' && options.removeCss) that.removeCss(that.prevApp);
-                that._clearObj(that.prevApp);
-            }
-            if (typeof options.startAfter == 'function') options.startAfter();
-        }, appName);
+                if (typeof options.startAfter == 'function') options.startAfter();
+            }, appName);
+        }, appName, false);
     }
     /**
      * getUrlParam 获取网址参数
