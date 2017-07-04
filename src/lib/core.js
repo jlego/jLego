@@ -213,9 +213,6 @@ class Core {
                 clearInterval(value);
                 that.timer.delete(key);
             });
-            // if(!this.config.isMultiWindow){
-            //     this.routers.delete(appName);
-            // }
         }
     }
     /**
@@ -326,13 +323,16 @@ class Core {
         this.prevApp = this.currentApp;
         this.currentApp = !this.currentApp ? 'index' : appName;
         if (typeof options.startBefore == 'function') options.startBefore();
+        if(!this.config.isMultiWindow){
+            page.stop();
+            this.routers.delete(appName);
+        }
         this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, false);
         if(this.theTimer) clearTimeout(this.theTimer);
         this.theTimer = setTimeout(function(){
             that.loadScript(that.config.rootUri + appName + '/' + fileName + '.js', function() {
                 if(appPath && appName !== 'index'){
-                    page();
-                    // page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
+                    page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
                     let prevId = 'Lego-js-' + that.prevApp;
                     if(document.getElementById(prevId)){
                         document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
@@ -412,14 +412,19 @@ class Core {
      * @param  {[type]} routerOption [description]
      * @return {[type]}           [description]
      */
-    router(routerOption = {}){
-        if(!this.isEmptyObject(routerOption)){
-            for(let key in routerOption){
-                let value = routerOption[key],
-                    routerName = key;
-                value = Array.isArray(value) ? value : [value];
-                value.unshift(key);
-                page(...value);
+    router(router = {}){
+        if(!this.isEmptyObject(router)){
+            let currentApp = this.getAppName();
+            if(!this.routers.get(currentApp)){
+                let routerOption = router.pages ? router.pages : (typeof router == 'function' ? new router() : router);
+                for(let key in routerOption){
+                    let value = routerOption[key],
+                        routerName = key;
+                    value = Array.isArray(value) ? value : [value];
+                    value.unshift(key);
+                    page(...value);
+                }
+                this.routers.set(currentApp, router);
             }
         }
     }
