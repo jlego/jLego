@@ -283,7 +283,7 @@ class Core {
         document.getElementsByTagName("head")[0].appendChild(script);
     }
     //加载样式表
-    loadCss(cssUrl, callback, appName, removeCss = true) {
+    loadCss(cssUrl, appName, removeCss = true) {
         let cssLink = document.createElement("link"),
             theId = 'Lego-css-' + appName,
             version = (cssUrl.indexOf('?') < 0 ? '?' : '&') + (this.config.version || 0);
@@ -294,9 +294,9 @@ class Core {
                 cssLink.setAttribute('id', theId);
                 cssLink.rel = "stylesheet";
                 cssLink.href = theCss;
-                cssLink.onload = function(){
-                    if(typeof callback == 'function') callback();
-                }
+                // cssLink.onload = function(){
+                //     if(typeof callback == 'function') callback();
+                // }
                 document.getElementsByTagName("head")[0].appendChild(cssLink);
             }
         }
@@ -326,7 +326,9 @@ class Core {
         this.prevApp = this.currentApp;
         this.currentApp = !this.currentApp ? 'index' : appName;
         if (typeof options.startBefore == 'function') options.startBefore();
-        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', function(){
+        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, false);
+        if(this.theTimer) clearTimeout(this.theTimer);
+        this.theTimer = setTimeout(function(){
             that.loadScript(that.config.rootUri + appName + '/' + fileName + '.js', function() {
                 if(appPath && appName !== 'index'){
                     page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
@@ -339,7 +341,7 @@ class Core {
                 }
                 if (typeof options.startAfter == 'function') options.startAfter();
             }, appName);
-        }, appName, false);
+        }, 200);
     }
     /**
      * getUrlParam 获取网址参数

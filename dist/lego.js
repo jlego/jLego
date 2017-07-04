@@ -1,5 +1,5 @@
 /**
- * lego.js v1.12.6
+ * lego.js v1.12.8
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -267,7 +267,7 @@ Core.prototype.loadScript = function loadScript(url, callback, appName) {
     document.getElementsByTagName("head")[0].appendChild(script);
 };
 
-Core.prototype.loadCss = function loadCss(cssUrl, callback, appName, removeCss) {
+Core.prototype.loadCss = function loadCss(cssUrl, appName, removeCss) {
     if (removeCss === void 0) removeCss = true;
     var cssLink = document.createElement("link"), theId = "Lego-css-" + appName, version = (cssUrl.indexOf("?") < 0 ? "?" : "&") + (this.config.version || 0);
     if (cssUrl) {
@@ -279,11 +279,6 @@ Core.prototype.loadCss = function loadCss(cssUrl, callback, appName, removeCss) 
             cssLink.setAttribute("id", theId);
             cssLink.rel = "stylesheet";
             cssLink.href = theCss;
-            cssLink.onload = function() {
-                if (typeof callback == "function") {
-                    callback();
-                }
-            };
             document.getElementsByTagName("head")[0].appendChild(cssLink);
         }
     }
@@ -315,7 +310,11 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     if (typeof options.startBefore == "function") {
         options.startBefore();
     }
-    this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", function() {
+    this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName, false);
+    if (this.theTimer) {
+        clearTimeout(this.theTimer);
+    }
+    this.theTimer = setTimeout(function() {
         that.loadScript(that.config.rootUri + appName + "/" + fileName + ".js", function() {
             if (appPath && appName !== "index") {
                 page(appPath.indexOf("/") !== 0 ? "/" + appPath : appPath);
@@ -332,7 +331,7 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
                 options.startAfter();
             }
         }, appName);
-    }, appName, false);
+    }, 200);
 };
 
 Core.prototype.getUrlParam = function getUrlParam(name) {
