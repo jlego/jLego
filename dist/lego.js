@@ -1,5 +1,5 @@
 /**
- * lego.js v1.12.8
+ * lego.js v1.12.12
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -206,9 +206,6 @@ Core.prototype._clearObj = function _clearObj(appName) {
             clearInterval(value);
             that.timer.delete(key);
         });
-        if (!this.config.isMultiWindow) {
-            this.routers.delete(appName);
-        }
     }
 };
 
@@ -317,7 +314,7 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     this.theTimer = setTimeout(function() {
         that.loadScript(that.config.rootUri + appName + "/" + fileName + ".js", function() {
             if (appPath && appName !== "index") {
-                page(appPath.indexOf("/") !== 0 ? "/" + appPath : appPath);
+                page();
                 var prevId = "Lego-js-" + that.prevApp;
                 if (document.getElementById(prevId)) {
                     document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
@@ -382,7 +379,6 @@ Core.prototype.setTimer = function setTimer(name, timer) {
 };
 
 Core.prototype.router = function router(routerOption) {
-    var this$1 = this;
     if (routerOption === void 0) routerOption = {};
     if (!this.isEmptyObject(routerOption)) {
         for (var key in routerOption) {
@@ -390,7 +386,6 @@ Core.prototype.router = function router(routerOption) {
             value = Array.isArray(value) ? value : [ value ];
             value.unshift(key);
             page.apply(void 0, value);
-            this$1.routers.set(routerName, value);
         }
     }
 };

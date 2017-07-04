@@ -213,9 +213,9 @@ class Core {
                 clearInterval(value);
                 that.timer.delete(key);
             });
-            if(!this.config.isMultiWindow){
-                this.routers.delete(appName);
-            }
+            // if(!this.config.isMultiWindow){
+            //     this.routers.delete(appName);
+            // }
         }
     }
     /**
@@ -331,7 +331,8 @@ class Core {
         this.theTimer = setTimeout(function(){
             that.loadScript(that.config.rootUri + appName + '/' + fileName + '.js', function() {
                 if(appPath && appName !== 'index'){
-                    page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
+                    page();
+                    // page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
                     let prevId = 'Lego-js-' + that.prevApp;
                     if(document.getElementById(prevId)){
                         document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
@@ -418,11 +419,7 @@ class Core {
                     routerName = key;
                 value = Array.isArray(value) ? value : [value];
                 value.unshift(key);
-                // if(!this.routers.get(routerName)){
-                    page(...value);
-                    this.routers.set(routerName, value);
-                // }
-                // const routerObj = Router(routerOption).init(); //v1.8.0之前的版本
+                page(...value);
             }
         }
     }
