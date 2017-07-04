@@ -1,5 +1,5 @@
 /**
- * lego.js v1.12.17
+ * lego.js v1.12.26
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -45,7 +45,9 @@ var Core = function Core() {
     window.onhashchange = function() {
         var hashStr = location.hash.replace("#", "");
         if (hashStr) {
-            page(hashStr);
+            if (hashStr.split("/").length > 2) {
+                page(hashStr);
+            }
         }
     };
     return this;
@@ -309,7 +311,7 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
     }
     if (!this.config.isMultiWindow) {
         page.stop();
-        this.routers.delete(appName);
+        this.routers.delete(this.prevApp);
     }
     this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName, false);
     if (this.theTimer) {
@@ -319,14 +321,16 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
         that.loadScript(that.config.rootUri + appName + "/" + fileName + ".js", function() {
             if (appPath && appName !== "index") {
                 page(appPath.indexOf("/") !== 0 ? "/" + appPath : appPath);
-                var prevId = "Lego-js-" + that.prevApp;
-                if (document.getElementById(prevId)) {
-                    document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
+                if (!that.config.isMultiWindow) {
+                    var prevId = "Lego-js-" + that.prevApp;
+                    if (document.getElementById(prevId)) {
+                        document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
+                    }
+                    if (that.prevApp !== "index" && options.removeCss) {
+                        that.removeCss(that.prevApp);
+                    }
+                    that._clearObj(that.prevApp);
                 }
-                if (that.prevApp !== "index" && options.removeCss) {
-                    that.removeCss(that.prevApp);
-                }
-                that._clearObj(that.prevApp);
             }
             if (typeof options.startAfter == "function") {
                 options.startAfter();

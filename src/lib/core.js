@@ -33,7 +33,9 @@ class Core {
         // 监听hash变化
         window.onhashchange = function(){
             let hashStr = location.hash.replace('#', '');
-            if(hashStr) page(hashStr);
+            if(hashStr){
+                if(hashStr.split('/').length > 2) page(hashStr);
+            }
         };
         return this;
     }
@@ -325,7 +327,7 @@ class Core {
         if (typeof options.startBefore == 'function') options.startBefore();
         if(!this.config.isMultiWindow){
             page.stop();
-            this.routers.delete(appName);
+            this.routers.delete(this.prevApp);
         }
         this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, false);
         if(this.theTimer) clearTimeout(this.theTimer);
@@ -333,12 +335,14 @@ class Core {
             that.loadScript(that.config.rootUri + appName + '/' + fileName + '.js', function() {
                 if(appPath && appName !== 'index'){
                     page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
-                    let prevId = 'Lego-js-' + that.prevApp;
-                    if(document.getElementById(prevId)){
-                        document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
+                    if(!that.config.isMultiWindow){
+                        let prevId = 'Lego-js-' + that.prevApp;
+                        if(document.getElementById(prevId)){
+                            document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
+                        }
+                        if(that.prevApp !== 'index' && options.removeCss) that.removeCss(that.prevApp);
+                        that._clearObj(that.prevApp);
                     }
-                    if(that.prevApp !== 'index' && options.removeCss) that.removeCss(that.prevApp);
-                    that._clearObj(that.prevApp);
                 }
                 if (typeof options.startAfter == 'function') options.startAfter();
             }, appName);
