@@ -18,7 +18,7 @@ Create the application entry file `/src/main.js`
 import jQuery from 'jquery';
 import Lego from 'lego-core';
 window.$ = window.jQuery = jQuery;
-Lego.init({
+Lego.setting({
     alias: 'Lego', //Lego instance alias
     version: '20161202', //The version number of the release
     pageEl: '#container', //Page rendering container
