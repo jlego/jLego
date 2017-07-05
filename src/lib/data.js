@@ -4,10 +4,8 @@ class Data {
      * [constructor 构造函数]
      * @param  {Object} options [description]
      *  'apiName': {
-     *      model: null,    //数据模型
-     *      listTarget: '',  //是列表的目标
-     *      url: '' //接口地址
-     *      data: null  //结果数据
+     *      api: '' //接口名称
+     *      server: null  //
      *  },
      * @return {[type]}         [description]
      */
@@ -32,7 +30,7 @@ class Data {
             let option = Lego.extend({reset: true}, that.options[apiName] || {}, view ? (view.options.dataSource[apiName] || {}) : {}, opts || {});
             if(window.$ || window.jQuery){
                 if(option.url.indexOf('http') < 0) option.url = Lego.config.serviceUri + option.url;
-                if(option.reset){
+                function getData(option, apiName){
                     $.ajax(Lego.extend(option, {
                         success: function(result) {
                             if (result) {
@@ -44,8 +42,15 @@ class Data {
                             debug.warn("login error: ", xhr);
                         }
                     }));
+                }
+                if(!Lego.isEmptyObject(this.datas.get(apiName))){
+                    if(option.reset){
+                        getData(option, apiName);
+                    }else{
+                        if(typeof callback == 'function') callback(this.parse(this.datas.get(apiName), apiName, view));
+                    }
                 }else{
-                    if(typeof callback == 'function') callback(this.parse(this.datas.get(apiName), apiName, view));
+                    getData(option, apiName);
                 }
             }
         }else{
@@ -75,23 +80,25 @@ class Data {
                     // 取缓存数据
                     return await data;
                 }else if(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(data) || option.reset)){
-                    let headers = option.headers || { "Content-type": "application/json; charset=UTF-8" };
-                    let theBody = option.body ? option.body : {};
-                    if(theBody && typeof theBody === 'object'){
-                        for(let key in theBody){
-                            if(typeof theBody[key] === 'object'){
-                                theBody[key] = encodeURIComponent(JSON.stringify(theBody[key]));
-                            }
+                    let url = /http/.test(option.url) ? option.url : (Lego.config.serviceUri + option.url);
+                    let headers = option.headers || { "Accept": "application/json", "Content-type": "application/json; charset=UTF-8" };
+                    let theBody = option.body || {};
+                    let method = option.method || "POST";
+                    if(method == 'GET'){
+                        let params = Lego.param(theBody);
+                        if(url.indexOf('?') > 0){
+                            url += '&' + params;
+                        }else{
+                            url += '?' + params;
                         }
-                        theBody = Lego.param(theBody);
                     }
                     // 取新数据
-                    let req = new Request( option.url.indexOf('http') == 0 ? option.url : (Lego.config.serviceUri + option.url), {
-                        method: option.method || "POST",
+                    let req = new Request( url, {
+                        method: method,
                         headers: headers,
                         mode: 'same-origin', // same-origin|no-cors（默认）|cors
                         credentials: 'include',  //omit（默认，不带cookie）|same-origin(同源带cookie)|include(总是带cookie)
-                        body: option.method == 'POST' ? theBody : undefined
+                        body: method == 'POST' ? JSON.stringify(theBody) : undefined
                     });
                     let response = await fetch(req);
                     return response.json();

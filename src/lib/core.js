@@ -10,8 +10,8 @@ class Core {
             version: '1.0.0',
             isDebug: true,
             isAnimate: false,  //是否开启动画
-            permit(){},  //操作权限
             isMultiWindow: false, //是否多窗口
+            permit(){},  //操作权限
             pageEl: '',     //页面渲染容器
             defaultApp: '', //默认应用
             rootUri: '',    //根目录
@@ -33,7 +33,9 @@ class Core {
         // 监听hash变化
         window.onhashchange = function(){
             let hashStr = location.hash.replace('#', '');
-            if(hashStr) page(hashStr);
+            if(hashStr){
+                if(hashStr.split('/').length > 2) page(hashStr);
+            }
         };
         return this;
     }
@@ -56,7 +58,7 @@ class Core {
                             if(!Lego.isEmptyObject(source[key])){
                                 target[key] = assign(target[key], source[key]);
                             }else{
-                                target[key] = Object.assign({}, source[key]);
+                                target[key] = {};
                             }
                         }
                     }
@@ -85,8 +87,6 @@ class Core {
     create(view, opts = {}){
         const that = this;
         opts.vid = this.uniqueId('v');
-        opts.createBefore = opts.createBefore && opts.createBefore.bind(this);
-        opts.createAfter = opts.createAfter && opts.createAfter.bind(this);
         if(!view) return;
         // 操作权限
         if(this.config.permit){
@@ -94,12 +94,9 @@ class Core {
                 if(!this.config.permit(opts.permis)) return;
             }
         }
-        typeof opts.createBefore === 'function' && opts.createBefore();
-
         const viewObj = new view(opts);
         this.views.set(viewObj.el, viewObj);
 
-        typeof opts.createAfter === 'function' && opts.createAfter(viewObj);
         return viewObj;
     }
     /**
@@ -218,9 +215,6 @@ class Core {
                 clearInterval(value);
                 that.timer.delete(key);
             });
-            if(!this.config.isMultiWindow){
-                this.routers.delete(appName);
-            }
         }
     }
     /**
@@ -265,10 +259,10 @@ class Core {
      * @param  {[type]}   appName  [description]
      * @return {[type]}            [description]
      */
-    loadScript(url, callback, appName) {
+    loadScript(url, callback, appName = '') {
         let script = document.createElement("script"),
             theId = 'Lego-js-' + appName,
-            version = '?' + (this.config.version || 0);
+            version = (url.indexOf('?') < 0 ? '?' : '&') + (this.config.version || 0);
         script.setAttribute('id', theId);
         script.type = "text/javascript";
         if (script.readyState) { // IE
@@ -291,7 +285,7 @@ class Core {
     loadCss(cssUrl, appName, removeCss = true) {
         let cssLink = document.createElement("link"),
             theId = 'Lego-css-' + appName,
-            version = '?' + (this.config.version || 0);
+            version = (cssUrl.indexOf('?') < 0 ? '?' : '&') + (this.config.version || 0);
         if (cssUrl) {
             let theCss = cssUrl + version;
             if(!document.getElementById(theId)){
@@ -299,14 +293,16 @@ class Core {
                 cssLink.setAttribute('id', theId);
                 cssLink.rel = "stylesheet";
                 cssLink.href = theCss;
+                // cssLink.onload = function(){
+                //     if(typeof callback == 'function') callback();
+                // }
                 document.getElementsByTagName("head")[0].appendChild(cssLink);
             }
         }
     }
     // 移除引入的样式表
     removeCss(appName) {
-        let theId = 'Lego-css-' + appName,
-            version = '?' + (this.config.version || 0);
+        let theId = 'Lego-css-' + appName;
         if(document.getElementById(theId)) document.getElementsByTagName("head")[0].removeChild(document.getElementById(theId));
     }
     /**
@@ -329,19 +325,28 @@ class Core {
         this.prevApp = this.currentApp;
         this.currentApp = !this.currentApp ? 'index' : appName;
         if (typeof options.startBefore == 'function') options.startBefore();
-        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, options.removeCss);
-        this.loadScript(this.config.rootUri + appName + '/' + fileName + '.js', function() {
-            if(appPath && appName !== 'index'){
-                // if(that.routers.get(appName)) that.routers.get(appName).setRoute(appPath);//v1.8.0之前的版本
-                page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
-                let prevId = 'Lego-js-' + that.prevApp;
-                if(document.getElementById(prevId)){
-                    document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
+        if(!this.config.isMultiWindow){
+            page.stop();
+            this.routers.delete(this.prevApp);
+        }
+        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, false);
+        if(this.theTimer) clearTimeout(this.theTimer);
+        this.theTimer = setTimeout(function(){
+            that.loadScript(that.config.rootUri + appName + '/' + fileName + '.js', function() {
+                if(appPath && appName !== 'index'){
+                    page(appPath.indexOf('/') !== 0 ? ('/' + appPath) : appPath);
+                    if(!that.config.isMultiWindow){
+                        let prevId = 'Lego-js-' + that.prevApp;
+                        if(document.getElementById(prevId)){
+                            document.getElementsByTagName("head")[0].removeChild(document.getElementById(prevId));
+                        }
+                        if(that.prevApp !== 'index' && options.removeCss) that.removeCss(that.prevApp);
+                        that._clearObj(that.prevApp);
+                    }
                 }
-                that._clearObj(that.prevApp);
-            }
-            if (typeof options.startAfter == 'function') options.startAfter();
-        }, appName);
+                if (typeof options.startAfter == 'function') options.startAfter();
+            }, appName);
+        }, 200);
     }
     /**
      * getUrlParam 获取网址参数
@@ -411,18 +416,19 @@ class Core {
      * @param  {[type]} routerOption [description]
      * @return {[type]}           [description]
      */
-    router(routerOption = {}){
-        if(!this.isEmptyObject(routerOption)){
-            for(let key in routerOption){
-                let value = routerOption[key],
-                    routerName = key;
-                value = Array.isArray(value) ? value : [value];
-                value.unshift(key);
-                // if(!this.routers.get(routerName)){
+    router(router = {}){
+        if(!this.isEmptyObject(router)){
+            let currentApp = this.getAppName();
+            if(!this.routers.get(currentApp)){
+                let routerOption = router.pages ? router.pages : (typeof router == 'function' ? new router() : router);
+                for(let key in routerOption){
+                    let value = routerOption[key],
+                        routerName = key;
+                    value = Array.isArray(value) ? value : [value];
+                    value.unshift(key);
                     page(...value);
-                    this.routers.set(routerName, value);
-                // }
-                // const routerObj = Router(routerOption).init(); //v1.8.0之前的版本
+                }
+                this.routers.set(currentApp, router);
             }
         }
     }

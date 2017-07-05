@@ -1,7 +1,7 @@
 {
   "name": "lego-core",
-  "version": "1.8.25",
-  "description": "ES6 front end framework",
+  "version": "1.12.26",
+  "description": "web组件化前端框架, virtual-dom + ES6 + webpack + sass",
   "main": "dist/lego.js",
   "directories": {
     "test": "test"
