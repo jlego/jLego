@@ -46,6 +46,7 @@ class Core {
      */
     extend(...opts){
         let that = this;
+        if(window.$) return $.extend(...opts);
         function assign(target = {}, source = {}){
             if(typeof source == 'object' && !Array.isArray(source) && !!source){
                 for (let key in source) {
@@ -180,6 +181,7 @@ class Core {
      * @return {Boolean}   [description]
      */
     isEmptyObject(obj = {}) {
+        if(window.$) return $.isEmptyObject(obj);
         if(obj != null && typeof obj == 'object'){
             for (let val in obj) return !1;
         }

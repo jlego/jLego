@@ -1,5 +1,5 @@
 /**
- * lego.js v1.12.43
+ * lego.js v1.12.44
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -59,6 +59,9 @@ Core.prototype.extend = function extend() {
     var opts = [], len = arguments.length;
     while (len--) opts[len] = arguments[len];
     var that = this;
+    if (window.$) {
+        return $.extend.apply($, opts);
+    }
     function assign(target, source) {
         if (target === void 0) target = {};
         if (source === void 0) source = {};
@@ -178,6 +181,9 @@ Core.prototype.uniqueId = function uniqueId(prefix) {
 
 Core.prototype.isEmptyObject = function isEmptyObject(obj) {
     if (obj === void 0) obj = {};
+    if (window.$) {
+        return $.isEmptyObject(obj);
+    }
     if (obj != null && typeof obj == "object") {
         for (var val in obj) {
             return !1;
