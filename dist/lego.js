@@ -1,5 +1,5 @@
 /**
- * lego.js v1.12.26
+ * lego.js v1.12.43
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -16,6 +16,8 @@ var object_observe = require("object.observe");
 var hyperx = _interopDefault(require("hyperx"));
 
 var vdom = _interopDefault(require("virtual-dom"));
+
+var whatwgFetch = require("whatwg-fetch");
 
 window.page = page;
 
@@ -60,18 +62,20 @@ Core.prototype.extend = function extend() {
     function assign(target, source) {
         if (target === void 0) target = {};
         if (source === void 0) source = {};
-        for (var key in source) {
-            if (source.hasOwnProperty(key)) {
-                if (typeof source[key] !== "object") {
-                    target[key] = source[key];
-                } else {
-                    if (Array.isArray(source[key])) {
-                        target[key] = Array.from(source[key]);
+        if (typeof source == "object" && !Array.isArray(source) && !!source) {
+            for (var key in source) {
+                if (Object.prototype.hasOwnProperty.call(source, key)) {
+                    if (typeof source[key] !== "object") {
+                        target[key] = source[key];
                     } else {
-                        if (!Lego.isEmptyObject(source[key])) {
-                            target[key] = assign(target[key], source[key]);
+                        if (Array.isArray(source[key])) {
+                            target[key] = Array.from(source[key]);
                         } else {
-                            target[key] = {};
+                            if (!Lego.isEmptyObject(source[key]) && !!source[key]) {
+                                target[key] = assign(target[key], source[key]);
+                            } else {
+                                target[key] = {};
+                            }
                         }
                     }
                 }
@@ -81,14 +85,14 @@ Core.prototype.extend = function extend() {
     }
     if (opts.length > 0) {
         var result = opts[0];
-        if (typeof result == "object" && !Array.isArray(result)) {
+        if (typeof result == "object" && !Array.isArray(result) && !!result) {
             for (var i = 1; i < opts.length; i++) {
-                if (typeof opts[i] == "object" && !Array.isArray(opts[i])) {
+                if (typeof opts[i] == "object" && !Array.isArray(opts[i]) && !!opts[i]) {
                     result = assign(result, opts[i]);
                 }
             }
+            return result;
         }
-        return result;
     }
     return {};
 };
@@ -169,13 +173,15 @@ Core.prototype.randomKey = function randomKey(len) {
 
 Core.prototype.uniqueId = function uniqueId(prefix) {
     var id = ++this.idCounter + "";
-    return prefix ? prefix + id : id;
+    return !!prefix ? prefix + id : id;
 };
 
 Core.prototype.isEmptyObject = function isEmptyObject(obj) {
     if (obj === void 0) obj = {};
-    for (var val in obj) {
-        return !1;
+    if (obj != null && typeof obj == "object") {
+        for (var val in obj) {
+            return !1;
+        }
     }
     return !0;
 };
@@ -266,15 +272,11 @@ Core.prototype.loadScript = function loadScript(url, callback, appName) {
     document.getElementsByTagName("head")[0].appendChild(script);
 };
 
-Core.prototype.loadCss = function loadCss(cssUrl, appName, removeCss) {
-    if (removeCss === void 0) removeCss = true;
+Core.prototype.loadCss = function loadCss(cssUrl, appName) {
     var cssLink = document.createElement("link"), theId = "Lego-css-" + appName, version = (cssUrl.indexOf("?") < 0 ? "?" : "&") + (this.config.version || 0);
     if (cssUrl) {
         var theCss = cssUrl + version;
         if (!document.getElementById(theId)) {
-            if (this.prevApp !== "index" && removeCss) {
-                this.removeCss(this.prevApp);
-            }
             cssLink.setAttribute("id", theId);
             cssLink.rel = "stylesheet";
             cssLink.href = theCss;
@@ -313,7 +315,7 @@ Core.prototype.startApp = function startApp(appPath, fileName, opts) {
         page.stop();
         this.routers.delete(this.prevApp);
     }
-    this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName, false);
+    this.loadCss(this.config.rootUri + appName + "/" + fileName + ".css", appName);
     if (this.theTimer) {
         clearTimeout(this.theTimer);
     }
@@ -812,15 +814,15 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
                                                 url += "?" + params;
                                             }
                                         }
-                                        req = new Request(url, {
+                                        req = {
                                             method: method,
                                             headers: headers,
                                             mode: "same-origin",
                                             credentials: "include",
                                             body: method == "POST" ? JSON.stringify(theBody) : undefined
-                                        });
+                                        };
                                         context$4$0.next = 16;
-                                        return fetch(req);
+                                        return fetch(url, req);
 
                                       case 16:
                                         response = context$4$0.sent;
@@ -860,7 +862,7 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
                   case 14:
                     context$2$0.prev = 14;
                     context$2$0.t0 = context$2$0["catch"](1);
-                    debug.log(context$2$0.t0);
+                    debug.log("data has error:", context$2$0.t0);
 
                   case 17:
                     return context$2$0.abrupt("return", results);

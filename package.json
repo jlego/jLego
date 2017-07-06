@@ -1,6 +1,6 @@
 {
   "name": "lego-core",
-  "version": "1.12.26",
+  "version": "1.12.43",
   "description": "web组件化前端框架, virtual-dom + ES6 + webpack + sass",
   "main": "dist/lego.js",
   "directories": {
@@ -37,10 +37,13 @@
     "babel-preset-stage-0": "^6.16.0",
     "babel-register": "^6.18.0",
     "babelrc-rollup": "^3.0.0",
+    "bluebird": "^3.5.0",
     "buble": "^0.14.2",
+    "es6-promise-polyfill": "^1.2.0",
     "eslint": "^3.11.1",
     "fs": "0.0.1-security",
     "lodash": "^4.17.2",
+    "promise-polyfill": "^6.0.2",
     "rollup": "^0.36.4",
     "rollup-plugin-alias": "^1.2.0",
     "rollup-plugin-async": "^1.2.0",

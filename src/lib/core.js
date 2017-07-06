@@ -47,18 +47,20 @@ class Core {
     extend(...opts){
         let that = this;
         function assign(target = {}, source = {}){
-            for (let key in source) {
-                if (source.hasOwnProperty(key)) {
-                    if(typeof source[key] !== 'object'){
-                        target[key] = source[key];
-                    }else{
-                        if(Array.isArray(source[key])){
-                            target[key] = Array.from(source[key]);
+            if(typeof source == 'object' && !Array.isArray(source) && !!source){
+                for (let key in source) {
+                    if (Object.prototype.hasOwnProperty.call(source, key)) {
+                        if(typeof source[key] !== 'object'){
+                            target[key] = source[key];
                         }else{
-                            if(!Lego.isEmptyObject(source[key])){
-                                target[key] = assign(target[key], source[key]);
+                            if(Array.isArray(source[key])){
+                                target[key] = Array.from(source[key]);
                             }else{
-                                target[key] = {};
+                                if(!Lego.isEmptyObject(source[key]) && !!source[key]){
+                                    target[key] = assign(target[key], source[key]);
+                                }else{
+                                    target[key] = {};
+                                }
                             }
                         }
                     }
@@ -68,14 +70,14 @@ class Core {
         }
         if(opts.length > 0){
             let result = opts[0];
-            if(typeof result == 'object' && !Array.isArray(result)){
+            if(typeof result == 'object' && !Array.isArray(result) && !!result){
                 for(let i = 1; i < opts.length; i++){
-                    if(typeof opts[i] == 'object' && !Array.isArray(opts[i])){
+                    if(typeof opts[i] == 'object' && !Array.isArray(opts[i]) && !!opts[i]){
                         result = assign(result, opts[i]);
                     }
                 }
+                return result;
             }
-            return result;
         }
         return {};
     }
@@ -169,8 +171,8 @@ class Core {
      * @return {[type]}        [description]
      */
     uniqueId(prefix) {
-        const id = ++this.idCounter + '';
-        return prefix ? prefix + id : id;
+        let id = ++this.idCounter + '';
+        return !!prefix ? (prefix + id) : id;
     }
     /**
      * [isEmptyObject description]
@@ -178,7 +180,9 @@ class Core {
      * @return {Boolean}   [description]
      */
     isEmptyObject(obj = {}) {
-        for (let val in obj) return !1;
+        if(obj != null && typeof obj == 'object'){
+            for (let val in obj) return !1;
+        }
         return !0;
     }
     /**
@@ -282,14 +286,13 @@ class Core {
         document.getElementsByTagName("head")[0].appendChild(script);
     }
     //加载样式表
-    loadCss(cssUrl, appName, removeCss = true) {
+    loadCss(cssUrl, appName) {
         let cssLink = document.createElement("link"),
             theId = 'Lego-css-' + appName,
             version = (cssUrl.indexOf('?') < 0 ? '?' : '&') + (this.config.version || 0);
         if (cssUrl) {
             let theCss = cssUrl + version;
             if(!document.getElementById(theId)){
-                if(this.prevApp !== 'index' && removeCss) this.removeCss(this.prevApp);
                 cssLink.setAttribute('id', theId);
                 cssLink.rel = "stylesheet";
                 cssLink.href = theCss;
@@ -329,7 +332,7 @@ class Core {
             page.stop();
             this.routers.delete(this.prevApp);
         }
-        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, false);
+        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName);
         if(this.theTimer) clearTimeout(this.theTimer);
         this.theTimer = setTimeout(function(){
             that.loadScript(that.config.rootUri + appName + '/' + fileName + '.js', function() {
