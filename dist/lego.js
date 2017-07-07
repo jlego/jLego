@@ -1,5 +1,5 @@
 /**
- * lego.js v1.12.44
+ * lego.js v1.12.46
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -60,42 +60,37 @@ Core.prototype.extend = function extend() {
     while (len--) opts[len] = arguments[len];
     var that = this;
     if (window.$) {
-        return $.extend.apply($, opts);
+        return $.extend.apply($, [ true ].concat(opts));
     }
-    function assign(target, source) {
-        if (target === void 0) target = {};
-        if (source === void 0) source = {};
-        if (typeof source == "object" && !Array.isArray(source) && !!source) {
-            for (var key in source) {
-                if (Object.prototype.hasOwnProperty.call(source, key)) {
-                    if (typeof source[key] !== "object") {
-                        target[key] = source[key];
-                    } else {
-                        if (Array.isArray(source[key])) {
-                            target[key] = Array.from(source[key]);
+    if (opts.length > 0) {
+        var result = opts[0];
+        if (typeof result !== "object" && typeof result !== "function") {
+            result = {};
+        }
+        for (var i = 1; i < opts.length; i++) {
+            var source = opts[i];
+            if (source != null) {
+                var keys = Object.keys(source);
+                if (result === source) {
+                    continue;
+                }
+                for (var t = 0; t < keys.length; t++) {
+                    var key = keys[t];
+                    if (Object.prototype.hasOwnProperty.call(source, key)) {
+                        if (typeof source[key] !== "object") {
+                            result[key] = source[key];
                         } else {
-                            if (!Lego.isEmptyObject(source[key]) && !!source[key]) {
-                                target[key] = assign(target[key], source[key]);
+                            if (Array.isArray(source[key])) {
+                                result[key] = Array.from(source[key]);
                             } else {
-                                target[key] = {};
+                                result[key] = Lego.extend(result[key], source[key]);
                             }
                         }
                     }
                 }
             }
         }
-        return target;
-    }
-    if (opts.length > 0) {
-        var result = opts[0];
-        if (typeof result == "object" && !Array.isArray(result) && !!result) {
-            for (var i = 1; i < opts.length; i++) {
-                if (typeof opts[i] == "object" && !Array.isArray(opts[i]) && !!opts[i]) {
-                    result = assign(result, opts[i]);
-                }
-            }
-            return result;
-        }
+        return result;
     }
     return {};
 };
