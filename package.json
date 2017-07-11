@@ -1,6 +1,6 @@
 {
   "name": "lego-core",
-  "version": "1.12.46",
+  "version": "1.13.7",
   "description": "web组件化前端框架, virtual-dom + ES6 + webpack + sass",
   "main": "dist/lego.js",
   "directories": {
@@ -66,6 +66,7 @@
     "core-decorators": "^0.14.0",
     "director": "^1.2.8",
     "events": "^1.1.1",
+    "html5-history-api": "^4.2.8",
     "hyperx": "^2.0.5",
     "object.observe": "^0.2.6",
     "page": "^1.7.1",

@@ -1,6 +1,8 @@
 // import { Router } from 'director';//v1.8.0之前的版本
+import 'html5-history-api';
 import page from 'page';
 window.page = page;
+let location = window.history.location || window.location;
 
 class Core {
     constructor() {

@@ -1,5 +1,5 @@
 /**
- * lego.js v1.12.46
+ * lego.js v1.13.7
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -8,6 +8,8 @@
 function _interopDefault(ex) {
     return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
 }
+
+var html5HistoryApi = require("html5-history-api");
 
 var page = _interopDefault(require("page"));
 
@@ -20,6 +22,8 @@ var vdom = _interopDefault(require("virtual-dom"));
 var whatwgFetch = require("whatwg-fetch");
 
 window.page = page;
+
+var location = window.history.location || window.location;
 
 var Core = function Core() {
     var that = this;
