@@ -29,7 +29,7 @@ class View {
         this.setElement(this.options.el);
         this._observe();
         // this.components();
-        this.fetch();
+        if(!this.options.stopFetch) this.fetch();
     }
     // 生成视图数据map, 主要用于数组型数据，增强查询效率
     makeDatamap(data, modelkey = 'id', defaultModel = {}){
@@ -293,7 +293,12 @@ class View {
      * @return {[type]} [description]
      */
     remove(){
-        if(this.el) this.el.remove();
+        if(this.$el) {
+            this.$el.off();
+            this.$el.remove();
+        }else{
+            this.el.remove();
+        }
     }
 }
 export default View;

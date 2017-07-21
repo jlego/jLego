@@ -32,6 +32,7 @@ class Core {
         this.timer = new Map();   //计时器对象
         this.UI = {};
         this.routers = new Map();
+
         // 监听hash变化
         window.onhashchange = function(){
             let hashStr = location.hash.replace('#', '');
@@ -54,7 +55,7 @@ class Core {
             if(typeof result !== "object" && typeof result !== 'function') result = {};
             for(let i = 1; i < opts.length; i++){
                 let source = opts[i];
-                if(source != null){
+                if(source != null && typeof source == "object"){
                     let keys = Object.keys(source);
                     if(result === source) continue;
                     for (let t = 0; t < keys.length; t++) {
@@ -63,11 +64,7 @@ class Core {
                             if(typeof source[key] !== 'object'){
                                 result[key] = source[key];
                             }else{
-                                if(Array.isArray(source[key])){
-                                    result[key] = Array.from(source[key]);
-                                }else{
-                                    result[key] = Lego.extend(result[key], source[key]);
-                                }
+                                result[key] = Lego.extend(result[key], source[key]);
                             }
                         }
                     }
@@ -252,6 +249,28 @@ class Core {
             }
         }
         return getNameSpace(this, 1);
+    }
+    // 添加事件监听
+    addEvent(target, type, func){
+        if(target.addEventListener){
+            //监听IE9，谷歌和火狐
+            target.addEventListener(type, func, false);
+        }else if(target.attachEvent){
+            target.attachEvent("on" + type, func);
+        }else{
+            target["on" + type] = func;
+        }
+    }
+    // 删除事件监听
+    removeEvent(target, type, func) {
+        if (target.removeEventListener){
+            //监听IE9，谷歌和火狐
+            target.removeEventListener(type, func, false);
+        } else if (target.detachEvent){
+            target.detachEvent("on" + type, func);
+        } else {
+            delete target["on" + type];
+        }
     }
     /**
      * [loadScript 加载js]
