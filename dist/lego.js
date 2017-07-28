@@ -1,5 +1,5 @@
 /**
- * lego.js v1.13.7
+ * lego.js v1.13.14
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -73,7 +73,7 @@ Core.prototype.extend = function extend() {
         }
         for (var i = 1; i < opts.length; i++) {
             var source = opts[i];
-            if (source != null) {
+            if (source != null && typeof source == "object") {
                 var keys = Object.keys(source);
                 if (result === source) {
                     continue;
@@ -84,11 +84,7 @@ Core.prototype.extend = function extend() {
                         if (typeof source[key] !== "object") {
                             result[key] = source[key];
                         } else {
-                            if (Array.isArray(source[key])) {
-                                result[key] = Array.from(source[key]);
-                            } else {
-                                result[key] = Lego.extend(result[key], source[key]);
-                            }
+                            result[key] = Lego.extend(result[key], source[key]);
                         }
                     }
                 }
@@ -251,6 +247,26 @@ Core.prototype.ns = function ns(nameSpaceStr, obj) {
         }
     }
     return getNameSpace(this, 1);
+};
+
+Core.prototype.addEvent = function addEvent(target, type, func) {
+    if (target.addEventListener) {
+        target.addEventListener(type, func, false);
+    } else if (target.attachEvent) {
+        target.attachEvent("on" + type, func);
+    } else {
+        target["on" + type] = func;
+    }
+};
+
+Core.prototype.removeEvent = function removeEvent(target, type, func) {
+    if (target.removeEventListener) {
+        target.removeEventListener(type, func, false);
+    } else if (target.detachEvent) {
+        target.detachEvent("on" + type, func);
+    } else {
+        delete target["on" + type];
+    }
 };
 
 Core.prototype.loadScript = function loadScript(url, callback, appName) {
@@ -440,7 +456,9 @@ var View = function View(opts) {
     this._renderRootNode();
     this.setElement(this.options.el);
     this._observe();
-    this.fetch();
+    if (!this.options.stopFetch) {
+        this.fetch();
+    }
 };
 
 View.prototype.makeDatamap = function makeDatamap(data, modelkey, defaultModel) {
@@ -631,28 +649,33 @@ View.prototype._observe = function _observe() {
 View.prototype.setElement = function setElement(el) {
     if (el) {
         var pEl = this.options.context.el || document, _el = typeof el == "string" ? pEl.querySelector(el) : el;
+        if (!_el) {
+            _el = document.querySelector(el);
+        }
         if (el == "body") {
             this.options.insert = "html";
         }
-        switch (this.options.insert) {
-          case "html":
-            var childs = _el.childNodes;
-            for (var i = childs.length - 1; i >= 0; i--) {
-                _el.removeChild(childs.item(i));
+        if (_el) {
+            switch (this.options.insert) {
+              case "html":
+                var childs = _el.childNodes;
+                for (var i = childs.length - 1; i >= 0; i--) {
+                    _el.removeChild(childs.item(i));
+                }
+                _el.appendChild(this.el);
+                break;
+
+              case "append":
+                _el.appendChild(this.el);
+                break;
+
+              case "prepend":
+                _el.insertBefore(this.el, _el.childNodes[0]);
+                break;
+
+              default:
+                _el.parentNode.replaceChild(this.el, _el);
             }
-            _el.appendChild(this.el);
-            break;
-
-          case "append":
-            _el.appendChild(this.el);
-            break;
-
-          case "prepend":
-            _el.insertBefore(this.el, _el.childNodes[0]);
-            break;
-
-          default:
-            _el.parentNode.replaceChild(this.el, _el);
         }
     }
 };
@@ -686,7 +709,10 @@ View.prototype.refresh = function refresh() {
 };
 
 View.prototype.remove = function remove() {
-    if (this.el) {
+    if (this.$el) {
+        this.$el.off();
+        this.$el.remove();
+    } else {
         this.el.remove();
     }
 };
