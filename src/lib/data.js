@@ -1,4 +1,5 @@
-// import 'whatwg-fetch'
+import 'whatwg-fetch';
+
 class Data {
     /**
      * [constructor 构造函数]
@@ -93,14 +94,14 @@ class Data {
                         }
                     }
                     // 取新数据
-                    let req = new Request( url, {
+                    let req = {
                         method: method,
                         headers: headers,
                         mode: 'same-origin', // same-origin|no-cors（默认）|cors
                         credentials: 'include',  //omit（默认，不带cookie）|same-origin(同源带cookie)|include(总是带cookie)
                         body: method == 'POST' ? JSON.stringify(theBody) : undefined
-                    });
-                    let response = await fetch(req);
+                    };
+                    let response = await fetch(url, req);
                     return response.json();
                 }
             });
@@ -110,7 +111,7 @@ class Data {
                 results.push(res);
             }
         } catch (err) {
-            debug.log(err);
+            debug.log('data has error:', err);
         }
         return results;
     }

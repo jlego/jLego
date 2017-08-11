@@ -29,7 +29,7 @@ class View {
         this.setElement(this.options.el);
         this._observe();
         // this.components();
-        this.fetch();
+        if(!this.options.stopFetch) this.fetch();
     }
     // 生成视图数据map, 主要用于数组型数据，增强查询效率
     makeDatamap(data, modelkey = 'id', defaultModel = {}){
@@ -218,23 +218,26 @@ class View {
         if(el) {
             let pEl = this.options.context.el || document,
                 _el = typeof el == 'string' ? pEl.querySelector(el) : el;
+            if(!_el) _el = document.querySelector(el);
             if(el == 'body') this.options.insert = 'html';
-            switch(this.options.insert){
-                case 'html':
-                    let childs = _el.childNodes;
-                    for(let i = childs.length - 1; i >= 0; i--){
-                        _el.removeChild(childs.item(i));
-                    }
-                    _el.appendChild(this.el);
-                    break;
-                case 'append':
-                    _el.appendChild(this.el);
-                    break;
-                case 'prepend':
-                    _el.insertBefore(this.el, _el.childNodes[0]);
-                    break;
-                default:
-                    _el.parentNode.replaceChild(this.el, _el);
+            if(_el){
+                switch(this.options.insert){
+                    case 'html':
+                        let childs = _el.childNodes;
+                        for(let i = childs.length - 1; i >= 0; i--){
+                            _el.removeChild(childs.item(i));
+                        }
+                        _el.appendChild(this.el);
+                        break;
+                    case 'append':
+                        _el.appendChild(this.el);
+                        break;
+                    case 'prepend':
+                        _el.insertBefore(this.el, _el.childNodes[0]);
+                        break;
+                    default:
+                        _el.parentNode.replaceChild(this.el, _el);
+                }
             }
         }
     }
@@ -293,7 +296,12 @@ class View {
      * @return {[type]} [description]
      */
     remove(){
-        if(this.el) this.el.remove();
+        if(this.$el) {
+            this.$el.off();
+            this.$el.remove();
+        }else{
+            this.el.remove();
+        }
     }
 }
 export default View;

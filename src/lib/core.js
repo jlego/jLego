@@ -1,6 +1,8 @@
 // import { Router } from 'director';//v1.8.0之前的版本
+import 'html5-history-api';
 import page from 'page';
 window.page = page;
+let location = window.history.location || window.location;
 
 class Core {
     constructor() {
@@ -30,6 +32,7 @@ class Core {
         this.timer = new Map();   //计时器对象
         this.UI = {};
         this.routers = new Map();
+
         // 监听hash变化
         window.onhashchange = function(){
             let hashStr = location.hash.replace('#', '');
@@ -46,32 +49,24 @@ class Core {
      */
     extend(...opts){
         let that = this;
-        function assign(target = {}, source = {}){
-            for (let key in source) {
-                if (source.hasOwnProperty(key)) {
-                    if(typeof source[key] !== 'object'){
-                        target[key] = source[key];
-                    }else{
-                        if(Array.isArray(source[key])){
-                            target[key] = Array.from(source[key]);
-                        }else{
-                            if(!Lego.isEmptyObject(source[key])){
-                                target[key] = assign(target[key], source[key]);
-                            }else{
-                                target[key] = {};
-                            }
-                        }
-                    }
-                }
-            }
-            return target;
-        }
+        if(window.$) return $.extend(true, ...opts);
         if(opts.length > 0){
             let result = opts[0];
-            if(typeof result == 'object' && !Array.isArray(result)){
-                for(let i = 1; i < opts.length; i++){
-                    if(typeof opts[i] == 'object' && !Array.isArray(opts[i])){
-                        result = assign(result, opts[i]);
+            if(typeof result !== "object" && typeof result !== 'function') result = {};
+            for(let i = 1; i < opts.length; i++){
+                let source = opts[i];
+                if(source != null && typeof source == "object"){
+                    let keys = Object.keys(source);
+                    if(result === source) continue;
+                    for (let t = 0; t < keys.length; t++) {
+                        let key = keys[t];
+                        if (Object.prototype.hasOwnProperty.call(source, key)) {
+                            if(typeof source[key] !== 'object'){
+                                result[key] = source[key];
+                            }else{
+                                result[key] = Lego.extend(result[key], source[key]);
+                            }
+                        }
                     }
                 }
             }
@@ -169,8 +164,8 @@ class Core {
      * @return {[type]}        [description]
      */
     uniqueId(prefix) {
-        const id = ++this.idCounter + '';
-        return prefix ? prefix + id : id;
+        let id = ++this.idCounter + '';
+        return !!prefix ? (prefix + id) : id;
     }
     /**
      * [isEmptyObject description]
@@ -178,7 +173,10 @@ class Core {
      * @return {Boolean}   [description]
      */
     isEmptyObject(obj = {}) {
-        for (let val in obj) return !1;
+        if(window.$) return $.isEmptyObject(obj);
+        if(obj != null && typeof obj == 'object'){
+            for (let val in obj) return !1;
+        }
         return !0;
     }
     /**
@@ -252,6 +250,28 @@ class Core {
         }
         return getNameSpace(this, 1);
     }
+    // 添加事件监听
+    addEvent(target, type, func){
+        if(target.addEventListener){
+            //监听IE9，谷歌和火狐
+            target.addEventListener(type, func, false);
+        }else if(target.attachEvent){
+            target.attachEvent("on" + type, func);
+        }else{
+            target["on" + type] = func;
+        }
+    }
+    // 删除事件监听
+    removeEvent(target, type, func) {
+        if (target.removeEventListener){
+            //监听IE9，谷歌和火狐
+            target.removeEventListener(type, func, false);
+        } else if (target.detachEvent){
+            target.detachEvent("on" + type, func);
+        } else {
+            delete target["on" + type];
+        }
+    }
     /**
      * [loadScript 加载js]
      * @param  {[type]}   url      [description]
@@ -282,14 +302,13 @@ class Core {
         document.getElementsByTagName("head")[0].appendChild(script);
     }
     //加载样式表
-    loadCss(cssUrl, appName, removeCss = true) {
+    loadCss(cssUrl, appName) {
         let cssLink = document.createElement("link"),
             theId = 'Lego-css-' + appName,
             version = (cssUrl.indexOf('?') < 0 ? '?' : '&') + (this.config.version || 0);
         if (cssUrl) {
             let theCss = cssUrl + version;
             if(!document.getElementById(theId)){
-                if(this.prevApp !== 'index' && removeCss) this.removeCss(this.prevApp);
                 cssLink.setAttribute('id', theId);
                 cssLink.rel = "stylesheet";
                 cssLink.href = theCss;
@@ -329,7 +348,7 @@ class Core {
             page.stop();
             this.routers.delete(this.prevApp);
         }
-        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName, false);
+        this.loadCss(this.config.rootUri + appName + '/' + fileName + '.css', appName);
         if(this.theTimer) clearTimeout(this.theTimer);
         this.theTimer = setTimeout(function(){
             that.loadScript(that.config.rootUri + appName + '/' + fileName + '.js', function() {
