@@ -1,5 +1,5 @@
 /**
- * lego.js v1.13.14
+ * lego.js v1.13.22
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -43,7 +43,8 @@ var Core = function Core() {
     this.prevApp = "";
     this.currentApp = "";
     this.idCounter = 0;
-    this.views = new WeakMap();
+    this.viewsMap = new WeakMap();
+    this.views = {};
     this.datas = {};
     this.timer = new Map();
     this.UI = {};
@@ -96,6 +97,7 @@ Core.prototype.extend = function extend() {
 };
 
 Core.prototype.create = function create(view, opts) {
+    var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this;
     opts.vid = this.uniqueId("v");
@@ -110,7 +112,16 @@ Core.prototype.create = function create(view, opts) {
         }
     }
     var viewObj = new view(opts);
-    this.views.set(viewObj.el, viewObj);
+    this.viewsMap.set(viewObj.el, opts.vid);
+    for (var key in this.views) {
+        var view$1 = this$1.views[key], vidStr = "[view-id=" + key + "]", $el = window.$ ? $(vidStr) : document.querySelector(vidStr);
+        if (!$el.length) {
+            this$1.viewsMap.delete(view$1.el);
+            view$1.remove();
+            delete this$1.views[key];
+        }
+    }
+    this.views[opts.vid] = viewObj;
     return viewObj;
 };
 
@@ -391,8 +402,9 @@ Core.prototype.getView = function getView(el) {
     if (window.$ && typeof el == "object") {
         _el = el instanceof window.$ ? el[0] : _el;
     }
-    if (this.views.has(_el)) {
-        return this.views.get(_el);
+    if (this.viewsMap.has(_el)) {
+        var vid = this.viewsMap.get(_el);
+        return this.views[vid];
     }
     return null;
 };
