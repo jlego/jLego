@@ -29,6 +29,7 @@ class Core {
         // 实例容器
         this.viewsMap = new WeakMap(); //视图映射表
         this.views = {}; //视图容器
+        this.oldViews = {},
         this.datas = {};    //数据容器
         this.timer = new Map();   //计时器对象
         this.UI = {};
@@ -91,21 +92,45 @@ class Core {
             }
         }
         const viewObj = new view(opts);
+        function addOldViews(el){
+            let theView = that.getView(el);
+            that.oldViews[theView.options.vid] = theView.options.id;
+        }
+
+        if(opts.insert == 'html'){
+            this.removeOldViews();
+            let subViewsEl = viewObj.$('[view-id]');
+            if(subViewsEl.length){
+                if(window.$){
+                    subViewsEl.each(function(index, el){
+                        addOldViews(el);
+                    });
+                }else{
+                    for (let i = 0; i < subViewsEl.length; i++) {
+                        addOldViews(subViewsEl[i]);
+                    }
+                }
+            }
+            this.oldViews[opts.vid] = viewObj.options.id;
+        }
         this.viewsMap.set(viewObj.el, opts.vid);
-        // 清除无用的视图对象
-        for(let key in this.views){
+        this.views[opts.vid] = viewObj;
+
+        return viewObj;
+    }
+    // 清除无用的视图对象
+    removeOldViews(){
+        for(let key in this.oldViews){
             let view = this.views[key],
-                vidStr = `[view-id=${key}]`,
+                vidStr = `#${this.oldViews[key]}`,
                 $el = window.$ ? $(vidStr) : document.querySelector(vidStr);
             if(!$el.length){
                 this.viewsMap.delete(view.el);
                 view.remove();
                 delete this.views[key];
+                delete this.oldViews[key];
             }
         }
-        this.views[opts.vid] = viewObj;
-
-        return viewObj;
     }
     /**
      * [init 初始化系统]

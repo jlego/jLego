@@ -1,5 +1,5 @@
 /**
- * lego.js v1.13.22
+ * lego.js v1.14.5
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -45,7 +45,7 @@ var Core = function Core() {
     this.idCounter = 0;
     this.viewsMap = new WeakMap();
     this.views = {};
-    this.datas = {};
+    this.oldViews = {}, this.datas = {};
     this.timer = new Map();
     this.UI = {};
     this.routers = new Map();
@@ -97,7 +97,6 @@ Core.prototype.extend = function extend() {
 };
 
 Core.prototype.create = function create(view, opts) {
-    var this$1 = this;
     if (opts === void 0) opts = {};
     var that = this;
     opts.vid = this.uniqueId("v");
@@ -112,17 +111,42 @@ Core.prototype.create = function create(view, opts) {
         }
     }
     var viewObj = new view(opts);
-    this.viewsMap.set(viewObj.el, opts.vid);
-    for (var key in this.views) {
-        var view$1 = this$1.views[key], vidStr = "[view-id=" + key + "]", $el = window.$ ? $(vidStr) : document.querySelector(vidStr);
-        if (!$el.length) {
-            this$1.viewsMap.delete(view$1.el);
-            view$1.remove();
-            delete this$1.views[key];
-        }
+    function addOldViews(el) {
+        var theView = that.getView(el);
+        that.oldViews[theView.options.vid] = theView.options.id;
     }
+    if (opts.insert == "html") {
+        this.removeOldViews();
+        var subViewsEl = viewObj.$("[view-id]");
+        if (subViewsEl.length) {
+            if (window.$) {
+                subViewsEl.each(function(index, el) {
+                    addOldViews(el);
+                });
+            } else {
+                for (var i = 0; i < subViewsEl.length; i++) {
+                    addOldViews(subViewsEl[i]);
+                }
+            }
+        }
+        this.oldViews[opts.vid] = viewObj.options.id;
+    }
+    this.viewsMap.set(viewObj.el, opts.vid);
     this.views[opts.vid] = viewObj;
     return viewObj;
+};
+
+Core.prototype.removeOldViews = function removeOldViews() {
+    var this$1 = this;
+    for (var key in this.oldViews) {
+        var view = this$1.views[key], vidStr = "#" + this$1.oldViews[key], $el = window.$ ? $(vidStr) : document.querySelector(vidStr);
+        if (!$el.length) {
+            this$1.viewsMap.delete(view.el);
+            view.remove();
+            delete this$1.views[key];
+            delete this$1.oldViews[key];
+        }
+    }
 };
 
 Core.prototype.setting = function setting() {
@@ -570,6 +594,9 @@ View.prototype._renderRootNode = function _renderRootNode() {
                 var theId = opts.el.replace(/#/, "");
                 this.el.setAttribute("id", theId);
                 opts.id = theId;
+            } else {
+                this.el.setAttribute("id", opts.vid);
+                opts.id = opts.vid;
             }
         }
     }

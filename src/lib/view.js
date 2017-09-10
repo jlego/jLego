@@ -126,6 +126,9 @@ class View {
                     const theId = opts.el.replace(/#/, '');
                     this.el.setAttribute('id', theId);
                     opts.id = theId;
+                }else{
+                    this.el.setAttribute('id', opts.vid);
+                    opts.id = opts.vid;
                 }
             }
         }
