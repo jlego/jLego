@@ -1,5 +1,5 @@
 /**
- * lego.js v1.14.5
+ * lego.js v1.14.9
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -141,10 +141,9 @@ Core.prototype.removeOldViews = function removeOldViews() {
     for (var key in this.oldViews) {
         var view = this$1.views[key], vidStr = "#" + this$1.oldViews[key], $el = window.$ ? $(vidStr) : document.querySelector(vidStr);
         if (!$el.length) {
-            this$1.viewsMap.delete(view.el);
-            view.remove();
-            delete this$1.views[key];
-            delete this$1.oldViews[key];
+            if (view) {
+                view.remove();
+            }
         }
     }
 };
@@ -422,6 +421,12 @@ Core.prototype.getAppName = function getAppName() {
 };
 
 Core.prototype.getView = function getView(el) {
+    if (typeof el == "string") {
+        var result = this.views[el];
+        if (result) {
+            return result;
+        }
+    }
     var _el = typeof el == "string" ? document.querySelector(el) : el;
     if (window.$ && typeof el == "object") {
         _el = el instanceof window.$ ? el[0] : _el;
@@ -480,7 +485,7 @@ var View = function View(opts) {
     this.options = opts;
     if (this.options.listener && Lego.Eventer) {
         for (var key in this.options.listener) {
-            Lego.Eventer.on(key, this$1.options.listener[key].bind(this$1));
+            Lego.Eventer.on(key, this$1.options.listener[key], this$1);
         }
     }
     if (typeof this.options.renderBefore == "function") {
@@ -748,6 +753,9 @@ View.prototype.refresh = function refresh() {
 };
 
 View.prototype.remove = function remove() {
+    Lego.Eventer.off(null, null, this);
+    Lego.viewsMap.delete(this.el);
+    delete Lego.views[this.options.vid];
     if (this.$el) {
         this.$el.off();
         this.$el.remove();
@@ -967,52 +975,85 @@ var Event = function Event(opts) {
     this.listener = new Map();
 };
 
-Event.prototype.on = function on(eventName, callback) {
+Event.prototype.on = function on(eventName, callback, context) {
     if (eventName) {
         if (typeof callback !== "function") {
             return;
         }
-        var eventFunName = Symbol(callback.name).toString();
-        if (eventName.indexOf(".") >= 0) {
-            var eventsArr = eventName.split(".");
-            eventName = eventsArr.shift();
-            eventFunName = eventsArr.join(".");
+        if (context) {
+            callback = callback.bind(context);
         }
+        var key = context || Symbol(), callbackObj = {
+            callback: callback
+        };
         if (this.listener.has(eventName)) {
             var listenerMap = this.listener.get(eventName);
-            if (listenerMap.has(eventFunName)) {
-                var listenerArr = listenerMap.get(eventFunName);
-                listenerArr.push(callback);
+            if (listenerMap.has(key)) {
+                var listenerArr = listenerMap.get(key);
+                listenerArr.push(callbackObj);
             } else {
-                listenerMap.set(eventFunName, [ callback ]);
+                listenerMap.set(key, [ callbackObj ]);
             }
         } else {
             var listenerMap$1 = new Map();
-            listenerMap$1.set(eventFunName, [ callback ]);
+            listenerMap$1.set(key, [ callbackObj ]);
             this.listener.set(eventName, listenerMap$1);
         }
     }
 };
 
-Event.prototype.off = function off(eventName) {
-    if (eventName) {
-        if (eventName.indexOf(".") >= 0) {
-            var eventsArr = eventName.split(".");
-            eventName = eventsArr.shift();
-            eventFunName = eventsArr.join(".");
-            if (this.listener.has(eventName)) {
-                var listenerMap = this.listener.get(eventName);
-                if (listenerMap.has(eventFunName)) {
-                    listenerMap.delete(eventFunName);
-                }
+Event.prototype.off = function off(eventName, callback, context) {
+    if (!eventName && !callback && !context) {
+        this.listener.clear();
+    } else if (!eventName && !callback && context) {
+        this.listener.forEach(function(listenerMap, eventName) {
+            listenerMap.delete(context);
+        });
+    } else if (!eventName && callback && !context) {
+        this.listener.forEach(function(listenerMap, eventName) {
+            listenerMap.forEach(function(listenerArr, key) {
+                listenerArr = listenerArr.filter(function(item) {
+                    return item.callback !== callback;
+                });
+            });
+        });
+    } else if (!eventName && callback && context) {
+        this.listener.forEach(function(listenerMap, eventName) {
+            var listenerArr = listenerMap.get(context);
+            if (listenerArr) {
+                listenerArr = listenerArr.filter(function(item) {
+                    return item.callback !== callback;
+                });
             }
-        } else {
-            if (this.listener.has(eventName)) {
-                this.listener.delete(eventName);
+        });
+    } else if (eventName && !callback && !context) {
+        if (this.listener.has(eventName)) {
+            this.listener.delete(eventName);
+        }
+    } else if (eventName && !callback && context) {
+        var listenerMap = this.listener.get(eventName);
+        if (listenerMap) {
+            listenerMap.delete(context);
+        }
+    } else if (eventName && callback && !context) {
+        var listenerMap$1 = this.listener.get(eventName);
+        if (listenerMap$1) {
+            listenerMap$1.forEach(function(listenerArr, key) {
+                listenerArr = listenerArr.filter(function(item) {
+                    return item.callback !== callback;
+                });
+            });
+        }
+    } else if (eventName && callback && context) {
+        var listenerMap$2 = this.listener.get(eventName);
+        if (listenerMap$2) {
+            var listenerArr = listenerMap$2.get(context);
+            if (listenerArr) {
+                listenerArr = listenerArr.filter(function(item) {
+                    return item.callback !== callback;
+                });
             }
         }
-    } else {
-        this.listener.clear();
     }
 };
 
@@ -1021,30 +1062,16 @@ Event.prototype.trigger = function trigger() {
     var args = [], len = arguments.length;
     while (len--) args[len] = arguments[len];
     if (args.length) {
-        var eventName = args.shift(), eventFunName = "";
-        if (eventName.indexOf(".") >= 0) {
-            var eventsArr = eventName.split(".");
-            eventName = eventsArr.shift();
-            eventFunName = eventsArr.join(".");
-        }
+        var eventName = args.shift();
         if (this.listener.has(eventName)) {
             var listenerMap = this.listener.get(eventName);
-            if (eventFunName) {
-                var listenerArr = listenerMap.get(eventFunName);
-                listenerArr.forEach(function(listener) {
-                    if (typeof listener == "function") {
-                        listener.apply(this$1, args);
+            listenerMap.forEach(function(listenerArr, key) {
+                listenerArr.forEach(function(item) {
+                    if (typeof item.callback == "function") {
+                        item.callback.apply(this$1, args);
                     }
                 });
-            } else {
-                listenerMap.forEach(function(listenerArr, key) {
-                    listenerArr.forEach(function(listener) {
-                        if (typeof listener == "function") {
-                            listener.apply(this$1, args);
-                        }
-                    });
-                });
-            }
+            });
         }
     }
 };

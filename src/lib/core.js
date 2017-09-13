@@ -125,10 +125,7 @@ class Core {
                 vidStr = `#${this.oldViews[key]}`,
                 $el = window.$ ? $(vidStr) : document.querySelector(vidStr);
             if(!$el.length){
-                this.viewsMap.delete(view.el);
-                view.remove();
-                delete this.views[key];
-                delete this.oldViews[key];
+                if(view) view.remove();
             }
         }
     }
@@ -442,7 +439,14 @@ class Core {
      * @return {[type]}         [description]
      */
     getView(el){
+        // el为vid
+        if(typeof el == 'string'){
+            let result = this.views[el];
+            if(result) return result;
+        }
+        // el为其他字符串
         let _el = typeof el == 'string' ? document.querySelector(el) : el;
+        // el为jquery对象
         if(window.$ && typeof el == 'object'){
             _el = el instanceof window.$ ? el[0] : _el;
         }

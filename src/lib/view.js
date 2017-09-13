@@ -20,7 +20,7 @@ class View {
         // 监听器
         if(this.options.listener && Lego.Eventer){
             for(let key in this.options.listener){
-                Lego.Eventer.on(key, this.options.listener[key].bind(this));
+                Lego.Eventer.on(key, this.options.listener[key], this);
             }
         }
         if(typeof this.options.renderBefore == 'function') this.options.renderBefore = this.options.renderBefore.bind(this);
@@ -299,6 +299,9 @@ class View {
      * @return {[type]} [description]
      */
     remove(){
+        Lego.Eventer.off(null, null, this);
+        Lego.viewsMap.delete(this.el);
+        delete Lego.views[this.options.vid];
         if(this.$el) {
             this.$el.off();
             this.$el.remove();

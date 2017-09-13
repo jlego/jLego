@@ -9,27 +9,23 @@ class Event {
      * @param  {Function} callback  [description]
      * @return {[type]}             [description]
      */
-    on(eventName, callback) {
+    on(eventName, callback, context) {
         if(eventName){
             if(typeof callback !== 'function') return;
-            let eventFunName = Symbol(callback.name).toString();
-            // 事件命名空间
-            if(eventName.indexOf('.') >= 0){
-                let eventsArr = eventName.split('.');
-                eventName = eventsArr.shift();
-                eventFunName = eventsArr.join('.');
-            }
+            if(context) callback = callback.bind(context);
+            let key = context || Symbol(),
+                callbackObj = {callback: callback};
             if(this.listener.has(eventName)){
                 let listenerMap = this.listener.get(eventName);
-                if(listenerMap.has(eventFunName)){
-                    let listenerArr = listenerMap.get(eventFunName);
-                    listenerArr.push(callback);
+                if(listenerMap.has(key)){
+                    let listenerArr = listenerMap.get(key);
+                    listenerArr.push(callbackObj);
                 }else{
-                    listenerMap.set(eventFunName, [callback]);
+                    listenerMap.set(key, [callbackObj]);
                 }
             }else{
                 let listenerMap = new Map();
-                listenerMap.set(eventFunName, [callback]);
+                listenerMap.set(key, [callbackObj]);
                 this.listener.set(eventName, listenerMap);
             }
         }
@@ -39,25 +35,46 @@ class Event {
      * @param  {[type]} eventName [description]
      * @return {[type]}           [description]
      */
-    off(eventName){
-        if(eventName){
-            if(eventName.indexOf('.') >= 0){
-                let eventsArr = eventName.split('.');
-                eventName = eventsArr.shift();
-                eventFunName = eventsArr.join('.');
-                if(this.listener.has(eventName)){
-                    let listenerMap = this.listener.get(eventName);
-                    if(listenerMap.has(eventFunName)){
-                        listenerMap.delete(eventFunName);
-                    }
+    off(eventName, callback, context){
+        if(!eventName && !callback && !context){
+            this.listener.clear();
+        }else if(!eventName && !callback && context){
+            this.listener.forEach((listenerMap, eventName) => {
+                listenerMap.delete(context);
+            });
+        }else if(!eventName && callback && !context){
+            this.listener.forEach((listenerMap, eventName) => {
+                listenerMap.forEach((listenerArr, key) => {
+                    listenerArr = listenerArr.filter(item => item.callback !== callback);
+                });
+            });
+        }else if(!eventName && callback && context){
+            this.listener.forEach((listenerMap, eventName) => {
+                let listenerArr = listenerMap.get(context);
+                if(listenerArr){
+                    listenerArr = listenerArr.filter(item => item.callback !== callback);
                 }
-            }else{
-                if(this.listener.has(eventName)){
-                    this.listener.delete(eventName);
+            });
+        }else if(eventName && !callback && !context){
+            if(this.listener.has(eventName)) this.listener.delete(eventName);
+        }else if(eventName && !callback && context){
+            let listenerMap = this.listener.get(eventName);
+            if(listenerMap) listenerMap.delete(context);
+        }else if(eventName && callback && !context){
+            let listenerMap = this.listener.get(eventName);
+            if(listenerMap) {
+                listenerMap.forEach((listenerArr, key) => {
+                    listenerArr = listenerArr.filter(item => item.callback !== callback);
+                });
+            }
+        }else if(eventName && callback && context){
+            let listenerMap = this.listener.get(eventName);
+            if(listenerMap) {
+                let listenerArr = listenerMap.get(context);
+                if(listenerArr){
+                    listenerArr = listenerArr.filter(item => item.callback !== callback);
                 }
             }
-        }else{
-            this.listener.clear();
         }
     }
     /**
@@ -67,27 +84,14 @@ class Event {
      */
     trigger(...args) {
         if(args.length){
-            let eventName = args.shift(),
-                eventFunName = '';
-            if(eventName.indexOf('.') >= 0){
-                let eventsArr = eventName.split('.');
-                eventName = eventsArr.shift();
-                eventFunName = eventsArr.join('.');
-            }
+            let eventName = args.shift();
             if(this.listener.has(eventName)){
                 let listenerMap = this.listener.get(eventName);
-                if(eventFunName){
-                    let listenerArr = listenerMap.get(eventFunName);
-                    listenerArr.forEach(listener => {
-                        if(typeof listener == 'function') listener.apply(this, args);
+                listenerMap.forEach((listenerArr, key) => {
+                    listenerArr.forEach(item => {
+                        if(typeof item.callback == 'function') item.callback.apply(this, args);
                     });
-                }else{
-                    listenerMap.forEach((listenerArr, key) => {
-                        listenerArr.forEach(listener => {
-                            if(typeof listener == 'function') listener.apply(this, args);
-                        });
-                    });
-                }
+                });
             }
         }
     }
