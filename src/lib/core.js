@@ -121,11 +121,14 @@ class Core {
     // 清除无用的视图对象
     removeOldViews(){
         for(let key in this.oldViews){
-            let view = this.views[key],
-                vidStr = `#${this.oldViews[key]}`,
-                $el = window.$ ? $(vidStr) : document.querySelector(vidStr);
-            if(!$el.length){
-                if(view) view.remove();
+            let view = this.getView(key);
+            if(!view){
+                delete this.oldViews[key];
+                delete this.views[key];
+            }else{
+                this.Eventer.off(null, null, view);
+                this.viewsMap.delete(view.el);
+                view.remove();
             }
         }
     }

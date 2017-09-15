@@ -1,5 +1,5 @@
 /**
- * lego.js v1.14.9
+ * lego.js v1.14.14
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -139,11 +139,14 @@ Core.prototype.create = function create(view, opts) {
 Core.prototype.removeOldViews = function removeOldViews() {
     var this$1 = this;
     for (var key in this.oldViews) {
-        var view = this$1.views[key], vidStr = "#" + this$1.oldViews[key], $el = window.$ ? $(vidStr) : document.querySelector(vidStr);
-        if (!$el.length) {
-            if (view) {
-                view.remove();
-            }
+        var view = this$1.getView(key);
+        if (!view) {
+            delete this$1.oldViews[key];
+            delete this$1.views[key];
+        } else {
+            this$1.Eventer.off(null, null, view);
+            this$1.viewsMap.delete(view.el);
+            view.remove();
         }
     }
 };
