@@ -27,7 +27,9 @@ class Core {
 
         this.idCounter = 0;
         // 实例容器
-        this.views = new WeakMap(); //视图容器
+        this.viewsMap = new WeakMap(); //视图映射表
+        this.views = {}; //视图容器
+        this.oldViews = {},
         this.datas = {};    //数据容器
         this.timer = new Map();   //计时器对象
         this.UI = {};
@@ -90,9 +92,45 @@ class Core {
             }
         }
         const viewObj = new view(opts);
-        this.views.set(viewObj.el, viewObj);
+        function addOldViews(el){
+            let theView = that.getView(el);
+            that.oldViews[theView.options.vid] = theView.options.id;
+        }
+
+        if(opts.insert == 'html'){
+            this.removeOldViews();
+            let subViewsEl = viewObj.$('[view-id]');
+            if(subViewsEl.length){
+                if(window.$){
+                    subViewsEl.each(function(index, el){
+                        addOldViews(el);
+                    });
+                }else{
+                    for (let i = 0; i < subViewsEl.length; i++) {
+                        addOldViews(subViewsEl[i]);
+                    }
+                }
+            }
+            this.oldViews[opts.vid] = viewObj.options.id;
+        }
+        this.viewsMap.set(viewObj.el, opts.vid);
+        this.views[opts.vid] = viewObj;
 
         return viewObj;
+    }
+    // 清除无用的视图对象
+    removeOldViews(){
+        for(let key in this.oldViews){
+            let view = this.getView(key);
+            if(!view){
+                delete this.oldViews[key];
+                delete this.views[key];
+            }else{
+                this.Eventer.off(null, null, view);
+                this.viewsMap.delete(view.el);
+                view.remove();
+            }
+        }
     }
     /**
      * [init 初始化系统]
@@ -404,12 +442,20 @@ class Core {
      * @return {[type]}         [description]
      */
     getView(el){
+        // el为vid
+        if(typeof el == 'string'){
+            let result = this.views[el];
+            if(result) return result;
+        }
+        // el为其他字符串
         let _el = typeof el == 'string' ? document.querySelector(el) : el;
+        // el为jquery对象
         if(window.$ && typeof el == 'object'){
             _el = el instanceof window.$ ? el[0] : _el;
         }
-        if(this.views.has(_el)){
-            return this.views.get(_el);
+        if(this.viewsMap.has(_el)){
+            let vid = this.viewsMap.get(_el);
+            return this.views[vid];
         }
         return null;
     }

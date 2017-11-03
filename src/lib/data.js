@@ -83,9 +83,9 @@ class Data {
                 }else if(that.datas.has(apiName) && option.url && (Lego.isEmptyObject(data) || option.reset)){
                     let url = /http/.test(option.url) ? option.url : (Lego.config.serviceUri + option.url);
                     let headers = option.headers || { "Accept": "application/json", "Content-type": "application/json; charset=UTF-8" };
-                    let theBody = option.body || {};
+                    let theBody = option.body;
                     let method = option.method || "POST";
-                    if(method == 'GET'){
+                    if(method == 'GET' && theBody){
                         let params = Lego.param(theBody);
                         if(url.indexOf('?') > 0){
                             url += '&' + params;

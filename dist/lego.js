@@ -1,5 +1,5 @@
 /**
- * lego.js v1.13.14
+ * lego.js v1.14.15
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -43,8 +43,9 @@ var Core = function Core() {
     this.prevApp = "";
     this.currentApp = "";
     this.idCounter = 0;
-    this.views = new WeakMap();
-    this.datas = {};
+    this.viewsMap = new WeakMap();
+    this.views = {};
+    this.oldViews = {}, this.datas = {};
     this.timer = new Map();
     this.UI = {};
     this.routers = new Map();
@@ -110,8 +111,44 @@ Core.prototype.create = function create(view, opts) {
         }
     }
     var viewObj = new view(opts);
-    this.views.set(viewObj.el, viewObj);
+    function addOldViews(el) {
+        var theView = that.getView(el);
+        that.oldViews[theView.options.vid] = theView.options.id;
+    }
+    if (opts.insert == "html") {
+        this.removeOldViews();
+        var subViewsEl = viewObj.$("[view-id]");
+        if (subViewsEl.length) {
+            if (window.$) {
+                subViewsEl.each(function(index, el) {
+                    addOldViews(el);
+                });
+            } else {
+                for (var i = 0; i < subViewsEl.length; i++) {
+                    addOldViews(subViewsEl[i]);
+                }
+            }
+        }
+        this.oldViews[opts.vid] = viewObj.options.id;
+    }
+    this.viewsMap.set(viewObj.el, opts.vid);
+    this.views[opts.vid] = viewObj;
     return viewObj;
+};
+
+Core.prototype.removeOldViews = function removeOldViews() {
+    var this$1 = this;
+    for (var key in this.oldViews) {
+        var view = this$1.getView(key);
+        if (!view) {
+            delete this$1.oldViews[key];
+            delete this$1.views[key];
+        } else {
+            this$1.Eventer.off(null, null, view);
+            this$1.viewsMap.delete(view.el);
+            view.remove();
+        }
+    }
 };
 
 Core.prototype.setting = function setting() {
@@ -387,12 +424,19 @@ Core.prototype.getAppName = function getAppName() {
 };
 
 Core.prototype.getView = function getView(el) {
+    if (typeof el == "string") {
+        var result = this.views[el];
+        if (result) {
+            return result;
+        }
+    }
     var _el = typeof el == "string" ? document.querySelector(el) : el;
     if (window.$ && typeof el == "object") {
         _el = el instanceof window.$ ? el[0] : _el;
     }
-    if (this.views.has(_el)) {
-        return this.views.get(_el);
+    if (this.viewsMap.has(_el)) {
+        var vid = this.viewsMap.get(_el);
+        return this.views[vid];
     }
     return null;
 };
@@ -444,7 +488,7 @@ var View = function View(opts) {
     this.options = opts;
     if (this.options.listener && Lego.Eventer) {
         for (var key in this.options.listener) {
-            Lego.Eventer.on(key, this$1.options.listener[key].bind(this$1));
+            Lego.Eventer.on(key, this$1.options.listener[key], this$1);
         }
     }
     if (typeof this.options.renderBefore == "function") {
@@ -558,6 +602,9 @@ View.prototype._renderRootNode = function _renderRootNode() {
                 var theId = opts.el.replace(/#/, "");
                 this.el.setAttribute("id", theId);
                 opts.id = theId;
+            } else {
+                this.el.setAttribute("id", opts.vid);
+                opts.id = opts.vid;
             }
         }
     }
@@ -709,6 +756,9 @@ View.prototype.refresh = function refresh() {
 };
 
 View.prototype.remove = function remove() {
+    Lego.Eventer.off(null, null, this);
+    Lego.viewsMap.delete(this.el);
+    delete Lego.views[this.options.vid];
     if (this.$el) {
         this.$el.off();
         this.$el.remove();
@@ -835,9 +885,9 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
                                             Accept: "application/json",
                                             "Content-type": "application/json; charset=UTF-8"
                                         };
-                                        theBody = option.body || {};
+                                        theBody = option.body;
                                         method = option.method || "POST";
-                                        if (method == "GET") {
+                                        if (method == "GET" && theBody) {
                                             params = Lego.param(theBody);
                                             if (url.indexOf("?") > 0) {
                                                 url += "&" + params;
@@ -928,52 +978,85 @@ var Event = function Event(opts) {
     this.listener = new Map();
 };
 
-Event.prototype.on = function on(eventName, callback) {
+Event.prototype.on = function on(eventName, callback, context) {
     if (eventName) {
         if (typeof callback !== "function") {
             return;
         }
-        var eventFunName = Symbol(callback.name).toString();
-        if (eventName.indexOf(".") >= 0) {
-            var eventsArr = eventName.split(".");
-            eventName = eventsArr.shift();
-            eventFunName = eventsArr.join(".");
+        if (context) {
+            callback = callback.bind(context);
         }
+        var key = context || Symbol(), callbackObj = {
+            callback: callback
+        };
         if (this.listener.has(eventName)) {
             var listenerMap = this.listener.get(eventName);
-            if (listenerMap.has(eventFunName)) {
-                var listenerArr = listenerMap.get(eventFunName);
-                listenerArr.push(callback);
+            if (listenerMap.has(key)) {
+                var listenerArr = listenerMap.get(key);
+                listenerArr.push(callbackObj);
             } else {
-                listenerMap.set(eventFunName, [ callback ]);
+                listenerMap.set(key, [ callbackObj ]);
             }
         } else {
             var listenerMap$1 = new Map();
-            listenerMap$1.set(eventFunName, [ callback ]);
+            listenerMap$1.set(key, [ callbackObj ]);
             this.listener.set(eventName, listenerMap$1);
         }
     }
 };
 
-Event.prototype.off = function off(eventName) {
-    if (eventName) {
-        if (eventName.indexOf(".") >= 0) {
-            var eventsArr = eventName.split(".");
-            eventName = eventsArr.shift();
-            eventFunName = eventsArr.join(".");
-            if (this.listener.has(eventName)) {
-                var listenerMap = this.listener.get(eventName);
-                if (listenerMap.has(eventFunName)) {
-                    listenerMap.delete(eventFunName);
-                }
+Event.prototype.off = function off(eventName, callback, context) {
+    if (!eventName && !callback && !context) {
+        this.listener.clear();
+    } else if (!eventName && !callback && context) {
+        this.listener.forEach(function(listenerMap, eventName) {
+            listenerMap.delete(context);
+        });
+    } else if (!eventName && callback && !context) {
+        this.listener.forEach(function(listenerMap, eventName) {
+            listenerMap.forEach(function(listenerArr, key) {
+                listenerArr = listenerArr.filter(function(item) {
+                    return item.callback !== callback;
+                });
+            });
+        });
+    } else if (!eventName && callback && context) {
+        this.listener.forEach(function(listenerMap, eventName) {
+            var listenerArr = listenerMap.get(context);
+            if (listenerArr) {
+                listenerArr = listenerArr.filter(function(item) {
+                    return item.callback !== callback;
+                });
             }
-        } else {
-            if (this.listener.has(eventName)) {
-                this.listener.delete(eventName);
+        });
+    } else if (eventName && !callback && !context) {
+        if (this.listener.has(eventName)) {
+            this.listener.delete(eventName);
+        }
+    } else if (eventName && !callback && context) {
+        var listenerMap = this.listener.get(eventName);
+        if (listenerMap) {
+            listenerMap.delete(context);
+        }
+    } else if (eventName && callback && !context) {
+        var listenerMap$1 = this.listener.get(eventName);
+        if (listenerMap$1) {
+            listenerMap$1.forEach(function(listenerArr, key) {
+                listenerArr = listenerArr.filter(function(item) {
+                    return item.callback !== callback;
+                });
+            });
+        }
+    } else if (eventName && callback && context) {
+        var listenerMap$2 = this.listener.get(eventName);
+        if (listenerMap$2) {
+            var listenerArr = listenerMap$2.get(context);
+            if (listenerArr) {
+                listenerArr = listenerArr.filter(function(item) {
+                    return item.callback !== callback;
+                });
             }
         }
-    } else {
-        this.listener.clear();
     }
 };
 
@@ -982,30 +1065,16 @@ Event.prototype.trigger = function trigger() {
     var args = [], len = arguments.length;
     while (len--) args[len] = arguments[len];
     if (args.length) {
-        var eventName = args.shift(), eventFunName = "";
-        if (eventName.indexOf(".") >= 0) {
-            var eventsArr = eventName.split(".");
-            eventName = eventsArr.shift();
-            eventFunName = eventsArr.join(".");
-        }
+        var eventName = args.shift();
         if (this.listener.has(eventName)) {
             var listenerMap = this.listener.get(eventName);
-            if (eventFunName) {
-                var listenerArr = listenerMap.get(eventFunName);
-                listenerArr.forEach(function(listener) {
-                    if (typeof listener == "function") {
-                        listener.apply(this$1, args);
+            listenerMap.forEach(function(listenerArr, key) {
+                listenerArr.forEach(function(item) {
+                    if (typeof item.callback == "function") {
+                        item.callback.apply(this$1, args);
                     }
                 });
-            } else {
-                listenerMap.forEach(function(listenerArr, key) {
-                    listenerArr.forEach(function(listener) {
-                        if (typeof listener == "function") {
-                            listener.apply(this$1, args);
-                        }
-                    });
-                });
-            }
+            });
         }
     }
 };
