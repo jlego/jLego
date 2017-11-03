@@ -1,5 +1,5 @@
 /**
- * lego.js v1.14.14
+ * lego.js v1.14.15
  * (c) 2017 Ronghui Yu
  * @license MIT
  */
@@ -885,9 +885,9 @@ Data.prototype.__fetch = function __fetch(apis, opts, view) {
                                             Accept: "application/json",
                                             "Content-type": "application/json; charset=UTF-8"
                                         };
-                                        theBody = option.body || {};
+                                        theBody = option.body;
                                         method = option.method || "POST";
-                                        if (method == "GET") {
+                                        if (method == "GET" && theBody) {
                                             params = Lego.param(theBody);
                                             if (url.indexOf("?") > 0) {
                                                 url += "&" + params;
